@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LoveJan — Owner Console</title>
+<style>
+  :root{
+    --bg:#0b0910; --panel:#141019; --panel2:#1c1726; --panel3:#241d31; --line:#2a2438;
+    --txt:#f4f1f8; --mut:#a49cb6; --dim:#6f6883;
+    --pink:#ff3b6b; --purple:#8b5cf6; --blue:#60a5fa;
+    --good:#34d399; --warn:#fbbf24; --bad:#fb7185; --r:14px;
+    --grad:linear-gradient(135deg,var(--pink),var(--purple));
+  }
+  *{box-sizing:border-box} html,body{margin:0;height:100%}
+  body{background:
+      radial-gradient(1100px 560px at 100% -12%,rgba(139,92,246,.16),transparent),
+      radial-gradient(900px 480px at -10% 112%,rgba(255,59,107,.12),transparent),var(--bg);
+    color:var(--txt);
+    font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  button{font:inherit;cursor:pointer;border:0} a{color:var(--pink)}
+  .hidden{display:none!important}
+  .num{font-variant-numeric:tabular-nums}
+  ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#2a2438;border-radius:8px}
+
+  /* Login */
+  #login{min-height:100vh;display:grid;place-items:center;padding:24px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+  .login-card{width:400px;max-width:100%;padding:34px}
+  .brand{display:flex;align-items:center;gap:11px;font-size:22px;font-weight:800;letter-spacing:-.01em}
+  .dot{width:30px;height:30px;border-radius:9px;background:var(--grad);box-shadow:0 6px 20px rgba(255,59,107,.35)}
+  .sub{color:var(--mut);margin:6px 0 22px}
+  label{display:block;font-size:12px;color:var(--mut);margin:14px 0 6px;font-weight:600}
+  input,select{width:100%;padding:11px 12px;background:var(--panel2);border:1px solid var(--line);
+        border-radius:10px;color:var(--txt);outline:none;font:inherit}
+  input:focus,select:focus{border-color:var(--purple)}
+  .btn{padding:11px 14px;border-radius:10px;color:#fff;font-weight:700;background:var(--grad)}
+  .btn.block{width:100%;margin-top:16px}
+  .btn.sm{padding:7px 11px;font-weight:600;font-size:13px;border-radius:9px}
+  .btn.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--txt)}
+  .btn.danger{background:linear-gradient(135deg,#f43f5e,#b91c1c)}
+  .btn.good{background:linear-gradient(135deg,#10b981,#059669)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .linkbtn{background:none;color:var(--mut);font-size:13px;margin-top:14px;text-decoration:underline}
+  .err{color:var(--bad);margin-top:12px;min-height:18px;font-size:13px}
+  .ok{color:var(--good)}
+  .seg{display:flex;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:4px;margin-bottom:6px}
+  .seg button{flex:1;background:none;color:var(--mut);border-radius:7px;padding:8px;font-weight:600}
+  .seg button.on{background:var(--panel3);color:var(--txt)}
+
+  /* Shell */
+  #app{display:grid;grid-template-columns:238px 1fr;min-height:100vh}
+  aside{background:linear-gradient(180deg,var(--panel),#100c17);border-right:1px solid var(--line);
+    padding:20px 14px;display:flex;flex-direction:column;gap:3px;position:sticky;top:0;height:100vh}
+  aside .brand{font-size:18px;padding:4px 8px 16px}
+  nav a{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;color:var(--mut);
+        text-decoration:none;font-weight:600;font-size:14px}
+  nav a .ic{width:18px;text-align:center;opacity:.9}
+  nav a.active{background:var(--panel3);color:var(--txt)} nav a:hover{background:var(--panel2);color:var(--txt)}
+  nav a .badge{margin-left:auto;font-size:11px;font-weight:800;background:var(--pink);color:#fff;border-radius:999px;padding:1px 7px}
+  .spacer{flex:1}
+  main{padding:24px 30px 60px;overflow:auto}
+  .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;gap:12px;flex-wrap:wrap}
+  h1{font-size:24px;margin:0;letter-spacing:-.02em}
+  h2{font-size:12px;color:var(--dim);margin:28px 0 12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+  .pill{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);color:var(--mut);font-weight:600}
+  .pill.on{color:var(--good);border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+  .pill.off{color:var(--warn);border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.07)}
+
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(158px,1fr))}
+  .kpi{padding:16px 18px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);position:relative;overflow:hidden}
+  .kpi .v{font-size:30px;font-weight:800;letter-spacing:-.03em}
+  .kpi .l{color:var(--mut);font-size:12px;margin-top:3px;font-weight:500}
+  .kpi .d{font-size:11px;margin-top:6px;font-weight:700}
+  .kpi .d.up{color:var(--good)} .kpi .d.down{color:var(--bad)}
+  .kpi.accent{background:linear-gradient(135deg,rgba(255,59,107,.15),rgba(139,92,246,.13));border-color:rgba(139,92,246,.32)}
+  .cols{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+  .cols.c3{grid-template-columns:1fr 1fr 1fr}
+  @media(max-width:1000px){.cols,.cols.c3{grid-template-columns:1fr}}
+  .panel{padding:18px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line)}
+  .panel h3{margin:0 0 4px;font-size:15px} .panel .cap{color:var(--mut);font-size:12px;margin:0 0 12px}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);font-size:13px}
+  th{color:var(--dim);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  tbody tr:hover{background:var(--panel2)}
+  .clk{cursor:pointer}
+  .tag{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:700;white-space:nowrap}
+  .tag.susp{background:rgba(251,113,133,.16);color:var(--bad)} .tag.prem{background:rgba(139,92,246,.2);color:#c4b5fd}
+  .tag.ok{background:rgba(52,211,153,.14);color:var(--good)} .tag.ver{background:rgba(96,165,250,.18);color:#93c5fd}
+  .row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .field{margin-bottom:12px} .muted{color:var(--mut)} .dim{color:var(--dim)}
+  .toast{position:fixed;right:20px;bottom:20px;background:var(--panel3);border:1px solid var(--line);
+    padding:12px 16px;border-radius:12px;opacity:0;transform:translateY(8px);transition:.2s;max-width:360px;z-index:60;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+  .toast.show{opacity:1;transform:none}
+  .switch{position:relative;width:48px;height:27px;flex:none}
+  .switch input{display:none}
+  .switch span{position:absolute;inset:0;background:var(--panel2);border:1px solid var(--line);border-radius:999px;transition:.2s}
+  .switch span::after{content:"";position:absolute;width:21px;height:21px;border-radius:50%;background:#fff;top:2px;left:2px;transition:.2s}
+  .switch input:checked + span{background:var(--grad)} .switch input:checked + span::after{left:24px}
+
+  /* Drawer */
+  .scrim{position:fixed;inset:0;background:rgba(4,2,8,.6);backdrop-filter:blur(2px);z-index:40;opacity:0;pointer-events:none;transition:.2s}
+  .scrim.show{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100vh;width:min(560px,96vw);background:var(--panel);border-left:1px solid var(--line);
+    z-index:50;transform:translateX(100%);transition:.24s cubic-bezier(.2,.7,.2,1);overflow:auto;padding:22px 24px}
+  .drawer.show{transform:none}
+  .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+  .photo{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:3/4;background:var(--panel2);border:1px solid var(--line)}
+  .photo img{width:100%;height:100%;object-fit:cover;display:block}
+  .photo .del{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.6);border-radius:8px;padding:4px 7px;font-size:11px;color:#fff;font-weight:700}
+  .msg{padding:9px 12px;border-radius:12px;margin:6px 0;max-width:80%;font-size:13px;position:relative}
+  .msg .who{font-size:11px;color:var(--dim);margin-bottom:2px}
+  .msg .x{position:absolute;top:4px;right:6px;color:var(--bad);font-size:11px;cursor:pointer;opacity:.6}
+  .msg:hover .x{opacity:1}
+  .statline{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:78px}
+  .stat .n{font-size:19px;font-weight:800} .stat .k{font-size:11px;color:var(--mut)}
+  svg .grid-l{stroke:var(--line);stroke-width:1}
+  .lgd{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:8px}
+  .lgd i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+</style>
+</head>
+<body>
+  <!-- LOGIN -->
+  <div id="login">
+    <div class="card login-card">
+      <div class="brand"><div class="dot"></div> LoveJan</div>
+      <p class="sub">Owner console</p>
+      <div class="seg"><button id="tabOtp" class="on">Email code</button><button id="tabPw">Password</button></div>
+
+      <div id="paneOtp">
+        <label>Email</label>
+        <input id="otpEmail" type="email" autocomplete="username" placeholder="you@gmail.com" />
+        <div id="otpStep2" class="hidden">
+          <label>6-digit code (check your email)</label>
+          <input id="otpCode" inputmode="numeric" placeholder="••••••" />
+        </div>
+        <button class="btn block" id="otpBtn">Send code</button>
+      </div>
+
+      <div id="panePw" class="hidden">
+        <label>Email</label>
+        <input id="pwEmail" type="email" autocomplete="username" placeholder="you@lovejan.app" />
+        <label>Password</label>
+        <input id="pwPass" type="password" autocomplete="current-password" placeholder="••••••••" />
+        <button class="btn block" id="pwBtn">Sign in</button>
+      </div>
+
+      <div class="err" id="loginErr"></div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+    <aside>
+      <div class="brand"><div class="dot"></div> LoveJan</div>
+      <nav id="nav">
+        <a data-view="overview" class="active"><span class="ic">📊</span> Overview</a>
+        <a data-view="growth"><span class="ic">📈</span> Growth</a>
+        <a data-view="engagement"><span class="ic">⚡</span> Engagement</a>
+        <a data-view="moderation"><span class="ic">🛡️</span> Moderation <span id="modBadge"></span></a>
+        <a data-view="users"><span class="ic">👤</span> Users</a>
+        <a data-view="config"><span class="ic">⚙️</span> Config</a>
+        <a data-view="audit"><span class="ic">📜</span> Audit</a>
+        <a data-view="admins"><span class="ic">🔑</span> Admins</a>
+      </nav>
+      <div class="spacer"></div>
+      <div class="dim" style="padding:6px 10px;font-size:12px" id="whoami"></div>
+      <button class="btn ghost sm" id="signout">Sign out</button>
+    </aside>
+    <main>
+      <div class="head">
+        <h1 id="title">Overview</h1>
+        <div class="row">
+          <span id="monPill" class="pill"></span>
+          <button class="btn ghost sm" id="refresh">↻ Refresh</button>
+        </div>
+      </div>
+      <div id="view"></div>
+    </main>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <div class="drawer" id="drawer"></div>
+  <div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://ipynejgeycjyczmuisbj.supabase.co";
+const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlweW5lamdleWNqeWN6bXVpc2JqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MzkxNjIsImV4cCI6MjA5NzIxNTE2Mn0._N5Xzi6nCC7o3IFOkNB2TkFJSszvOaszCWmX3GOFybg";
+const $ = s=>document.querySelector(s);
+const el = (h)=>{const t=document.createElement("template");t.innerHTML=h.trim();return t.content.firstChild;};
+const esc = s=> (s??"").toString().replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const view = $("#view");
+let session = JSON.parse(localStorage.getItem("lj_admin_session")||"null");
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2800);}
+
+// ---------- raw-fetch API (no SDK/CDN — maximum stability) ----------
+function saveSession(d){ session={access_token:d.access_token,refresh_token:d.refresh_token,email:d.user?.email||session?.email}; localStorage.setItem("lj_admin_session",JSON.stringify(session)); }
+async function authHeaders(){ return {apikey:ANON,"Content-Type":"application/json",Authorization:"Bearer "+(session?.access_token||"")}; }
+async function refreshToken(){
+  if(!session?.refresh_token) return false;
+  const r = await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:{apikey:ANON,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:session.refresh_token})});
+  if(!r.ok){ return false; } saveSession(await r.json()); return true;
+}
+async function call(path, opts, retry=true){
+  const res = await fetch(SUPABASE_URL+path, {...opts, headers:{...(await authHeaders()),...(opts.headers||{})}});
+  if(res.status===401 && retry && await refreshToken()) return call(path,opts,false);
+  return res;
+}
+async function rpc(fn, params={}){
+  const res = await call("/rest/v1/rpc/"+fn,{method:"POST",body:JSON.stringify(params)});
+  const txt = await res.text(); let d=null; try{d=txt?JSON.parse(txt):null;}catch{d=txt;}
+  if(!res.ok) throw new Error((d&&d.message)||("HTTP "+res.status));
+  return d;
+}
+async function tget(q){ const res=await call("/rest/v1/"+q,{method:"GET"}); const d=await res.json(); if(!res.ok) throw new Error(d.message||"HTTP "+res.status); return d; }
+async function edge(name, body){ const res=await call("/functions/v1/"+name,{method:"POST",body:JSON.stringify(body)}); const d=await res.json().catch(()=>({})); if(!res.ok) throw new Error(d.error||("HTTP "+res.status)); return d; }
+
+// ---------- auth ----------
+$("#tabOtp").onclick=()=>{$("#tabOtp").classList.add("on");$("#tabPw").classList.remove("on");$("#paneOtp").classList.remove("hidden");$("#panePw").classList.add("hidden");};
+$("#tabPw").onclick=()=>{$("#tabPw").classList.add("on");$("#tabOtp").classList.remove("on");$("#panePw").classList.remove("hidden");$("#paneOtp").classList.add("hidden");};
+let otpSent=false;
+$("#otpBtn").onclick=async()=>{
+  $("#loginErr").textContent="";
+  const email=$("#otpEmail").value.trim();
+  if(!otpSent){
+    try{
+      const r=await fetch(SUPABASE_URL+"/auth/v1/otp",{method:"POST",headers:{apikey:ANON,"Content-Type":"application/json"},body:JSON.stringify({email,create_user:true})});
+      if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.msg||e.error_description||("HTTP "+r.status));}
+      otpSent=true;$("#otpStep2").classList.remove("hidden");$("#otpBtn").textContent="Verify & sign in";
+      $("#loginErr").innerHTML="<span class='ok'>Code sent — check "+esc(email)+"</span>";
+    }catch(e){$("#loginErr").textContent=e.message;}
+    return;
+  }
+  try{
+    const r=await fetch(SUPABASE_URL+"/auth/v1/verify",{method:"POST",headers:{apikey:ANON,"Content-Type":"application/json"},body:JSON.stringify({email,token:$("#otpCode").value.trim(),type:"email"})});
+    const d=await r.json(); if(!r.ok) throw new Error(d.msg||d.error_description||"Invalid code");
+    saveSession(d); await gate();
+  }catch(e){$("#loginErr").textContent=e.message;}
+};
+$("#pwBtn").onclick=async()=>{
+  $("#loginErr").textContent="";
+  try{
+    const r=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=password",{method:"POST",headers:{apikey:ANON,"Content-Type":"application/json"},body:JSON.stringify({email:$("#pwEmail").value.trim(),password:$("#pwPass").value})});
+    const d=await r.json(); if(!r.ok) throw new Error(d.msg||d.error_description||"Sign-in failed");
+    saveSession(d); await gate();
+  }catch(e){$("#loginErr").textContent=e.message;}
+};
+$("#signout").onclick=()=>{ localStorage.removeItem("lj_admin_session"); session=null; location.reload(); };
+
+// Promote owner (by email) then verify admin, then enter.
+async function gate(){
+  try{ await rpc("bootstrap_owner"); }catch{}
+  let isAdmin=false; try{ isAdmin = await rpc("am_i_admin")===true; }catch{}
+  if(!isAdmin){ $("#loginErr").textContent="This account isn't an owner/admin."; localStorage.removeItem("lj_admin_session"); session=null; return; }
+  $("#whoami").textContent=session?.email||"admin";
+  $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); route("overview");
+}
+
+// ---------- SVG charts (self-contained) ----------
+function fmt(n){ n=+n||0; return n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?(n/1e3).toFixed(1)+"k":(""+Math.round(n)); }
+function areaChart(data, color="#ff3b6b", h=210){
+  const W=600,pad={l:34,r:10,t:12,b:22},n=data.length;
+  const ys=data.map(d=>+d.y||0),maxY=Math.max(1,...ys);
+  const X=i=> pad.l+(n<=1?0:i/(n-1))*(W-pad.l-pad.r);
+  const Y=v=> h-pad.b-(v/maxY)*(h-pad.t-pad.b);
+  let line="",area="";
+  data.forEach((d,i)=>{const x=X(i),y=Y(+d.y||0);line+=(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)+" ";});
+  area=line+`L ${X(n-1).toFixed(1)} ${h-pad.b} L ${X(0).toFixed(1)} ${h-pad.b} Z`;
+  let grid="";for(let g=0;g<=3;g++){const gy=pad.t+g/3*(h-pad.t-pad.b);grid+=`<line class="grid-l" x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}"/>`;
+    grid+=`<text x="4" y="${gy+3}" fill="#6f6883" font-size="10">${fmt(maxY*(1-g/3))}</text>`;}
+  const step=Math.max(1,Math.floor(n/6));let lbl="";
+  data.forEach((d,i)=>{if(i%step===0||i===n-1)lbl+=`<text x="${X(i)}" y="${h-6}" fill="#6f6883" font-size="9" text-anchor="middle">${esc((d.x||"").slice(5))}</text>`;});
+  const last=data[n-1]||{y:0};
+  return `<svg viewBox="0 0 ${W} ${h}" style="width:100%;height:auto" preserveAspectRatio="none">
+    <defs><linearGradient id="g${color.slice(1)}" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="${color}" stop-opacity=".33"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
+    ${grid}<path d="${area}" fill="url(#g${color.slice(1)})"/><path d="${line}" fill="none" stroke="${color}" stroke-width="2.2"/>
+    <circle cx="${X(n-1)}" cy="${Y(+last.y||0)}" r="3.4" fill="${color}"/>${lbl}</svg>`;
+}
+function barsH(data, color="#8b5cf6"){
+  const max=Math.max(1,...data.map(d=>+d.value||0));
+  return `<div style="display:flex;flex-direction:column;gap:9px">${data.map(d=>`
+    <div class="row" style="gap:10px"><div style="width:120px;font-size:12px" class="muted">${esc(d.label)}</div>
+      <div style="flex:1;background:var(--panel2);border-radius:6px;overflow:hidden;height:16px">
+        <div style="height:100%;width:${(+d.value/max*100).toFixed(1)}%;background:${color};border-radius:6px"></div></div>
+      <div class="num" style="width:52px;text-align:right;font-weight:700">${fmt(d.value)}</div></div>`).join("")}</div>`;
+}
+function donut(data){
+  const colors=["#ff3b6b","#8b5cf6","#34d399","#fbbf24","#60a5fa","#f472b6","#a78bfa","#fb7185","#22d3ee","#f59e0b"];
+  const total=Math.max(1,data.reduce((s,d)=>s+(+d.value||0),0));let a=-Math.PI/2,seg="";
+  data.forEach((d,i)=>{const frac=(+d.value||0)/total,a2=a+frac*2*Math.PI,x1=60+42*Math.cos(a),y1=60+42*Math.sin(a),x2=60+42*Math.cos(a2),y2=60+42*Math.sin(a2),large=frac>.5?1:0;
+    seg+=`<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A 42 42 0 ${large} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="${colors[i%colors.length]}" stroke-width="16"/>`;a=a2;});
+  const lgd=data.map((d,i)=>`<span><i style="background:${colors[i%colors.length]}"></i>${esc(d.label)} <b class="num">${fmt(d.value)}</b></span>`).join("");
+  return `<div class="row" style="gap:16px"><svg viewBox="0 0 120 120" width="120" height="120">${seg}</svg><div class="lgd" style="flex-direction:column;gap:6px">${lgd}</div></div>`;
+}
+
+// ---------- routing ----------
+const titles={overview:"Overview",growth:"Growth",engagement:"Engagement",moderation:"Moderation",users:"Users",config:"Config",audit:"Audit log",admins:"Admins"};
+$("#nav").addEventListener("click",e=>{const a=e.target.closest("a[data-view]");if(!a)return;route(a.dataset.view);});
+$("#refresh").onclick=()=>route(current);
+let current="overview";
+async function route(v){
+  current=v; document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("active",a.dataset.view===v));
+  $("#title").textContent=titles[v];
+  ({overview,growth,engagement,moderation,users,config,audit,admins}[v]||overview)();
+}
+async function withLoad(fn){ view.innerHTML="<p class='muted'>Loading…</p>"; try{await fn();}catch(e){view.innerHTML="<div class='panel'><p class='err'>"+esc(e.message)+"</p></div>";} }
+
+let METRICS=null;
+async function loadMetrics(){ METRICS=await rpc("admin_metrics"); $("#monPill").className="pill "+(METRICS.monetization_enabled?"on":"off"); $("#monPill").textContent="Monetization "+(METRICS.monetization_enabled?"ON":"OFF (free)"); $("#modBadge").innerHTML=METRICS.reports_pending?`<span class="badge">${METRICS.reports_pending}</span>`:""; return METRICS; }
+
+// ---------- Overview ----------
+function overview(){ withLoad(async()=>{
+  const m=await loadMetrics(); const ts=await rpc("admin_timeseries",{p_days:30});
+  const likeRate=m.swipes?Math.round(m.likes/m.swipes*100):0, matchRate=m.likes?Math.round(m.matches*2/m.likes*100):0;
+  const dauToday=(ts[ts.length-1]||{}).dau||0;
+  const kpi=(v,l,a,d)=>`<div class="kpi ${a?'accent':''}"><div class="v num">${fmt(v)}</div><div class="l">${l}</div>${d?`<div class="d ${d[0]}">${d[1]}</div>`:""}</div>`;
+  view.innerHTML=`
+    <div class="grid">
+      ${kpi(m.profiles,"Profiles",1,["up","+"+m.signups_7d+" this week"])}
+      ${kpi(dauToday,"Active today")}
+      ${kpi(m.matches,"Matches",1)}
+      ${kpi(m.messages,"Messages")}
+      ${kpi(m.verified,"Verified")}
+      ${kpi(m.premium_active+m.founding,"Entitled",1)}
+      ${kpi(matchRate+"%","Like→Match")}
+      ${kpi(m.reports_pending,"Reports")}
+    </div>
+    <div class="cols" style="margin-top:18px">
+      <div class="panel"><h3>New signups</h3><p class="cap">Last 30 days</p><div id="c1"></div></div>
+      <div class="panel"><h3>Engagement funnel</h3><p class="cap">All-time</p>
+        <table>
+          <tr><td>Swipes</td><td style="text-align:right"><b class="num">${fmt(m.swipes)}</b></td></tr>
+          <tr><td>Likes</td><td style="text-align:right"><b class="num">${fmt(m.likes)}</b> <span class="dim">(${likeRate}%)</span></td></tr>
+          <tr><td>Matches</td><td style="text-align:right"><b class="num">${fmt(m.matches)}</b> <span class="dim">(${matchRate}% like→match)</span></td></tr>
+          <tr><td>Messages</td><td style="text-align:right"><b class="num">${fmt(m.messages)}</b></td></tr>
+        </table>
+        <h2 style="margin-top:18px">Status</h2>
+        <table>
+          <tr><td>Suspended</td><td style="text-align:right"><b class="num">${m.suspended}</b></td></tr>
+          <tr><td>Comp premium (active)</td><td style="text-align:right"><b class="num">${m.comp_active}</b></td></tr>
+          <tr><td>Free daily like cap</td><td style="text-align:right"><b class="num">${m.free_daily_like_cap??'—'}</b></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="cols" style="margin-top:16px">
+      <div class="panel"><h3>Top cities</h3><p class="cap">Profiles by home city</p><div id="c2"></div></div>
+      <div class="panel"><h3>By country</h3><p class="cap">Distribution</p><div id="c3"></div></div>
+    </div>`;
+  $("#c1").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.signups})),"#ff3b6b");
+  $("#c2").innerHTML=barsH((m.top_cities||[]).slice(0,7).map(c=>({label:c.city,value:c.n})));
+  $("#c3").innerHTML=donut((m.by_country||[]).map(c=>({label:c.country||"—",value:c.n})));
+}); }
+
+// ---------- Growth ----------
+function growth(){ withLoad(async()=>{
+  const ts=await rpc("admin_timeseries",{p_days:60}); let cum=0; const cumSeries=ts.map(d=>({x:d.d,y:(cum+=d.signups)}));
+  const m=METRICS||await loadMetrics();
+  view.innerHTML=`
+    <div class="cols">
+      <div class="panel"><h3>Daily signups</h3><p class="cap">Last 60 days</p><div id="g1"></div></div>
+      <div class="panel"><h3>Cumulative users</h3><p class="cap">Growth curve</p><div id="g2"></div></div>
+    </div>
+    <div class="cols" style="margin-top:16px">
+      <div class="panel"><h3>Top cities (liquidity)</h3><p class="cap">Where your market is forming</p><div id="g3"></div></div>
+      <div class="panel"><h3>By country</h3><div id="g4"></div></div>
+    </div>`;
+  $("#g1").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.signups})),"#ff3b6b");
+  $("#g2").innerHTML=areaChart(cumSeries,"#8b5cf6");
+  $("#g3").innerHTML=barsH((m.top_cities||[]).map(c=>({label:c.city,value:c.n})),"#ff3b6b");
+  $("#g4").innerHTML=donut((m.by_country||[]).map(c=>({label:c.country||"—",value:c.n})));
+}); }
+
+// ---------- Engagement ----------
+function engagement(){ withLoad(async()=>{
+  const ts=await rpc("admin_timeseries",{p_days:30});
+  view.innerHTML=`
+    <div class="cols">
+      <div class="panel"><h3>Active users / day</h3><p class="cap">Distinct swipers · 30d</p><div id="e1"></div></div>
+      <div class="panel"><h3>Likes / day</h3><p class="cap">30d</p><div id="e2"></div></div>
+    </div>
+    <div class="cols" style="margin-top:16px">
+      <div class="panel"><h3>Matches / day</h3><p class="cap">30d</p><div id="e3"></div></div>
+      <div class="panel"><h3>Messages / day</h3><p class="cap">30d</p><div id="e4"></div></div>
+    </div>`;
+  $("#e1").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.dau})),"#60a5fa");
+  $("#e2").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.likes})),"#ff3b6b");
+  $("#e3").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.matches})),"#8b5cf6");
+  $("#e4").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.messages})),"#34d399");
+}); }
+
+// ---------- Moderation ----------
+function moderation(){ withLoad(async()=>{
+  const data=await rpc("admin_recent_reports",{p_limit:100});
+  if(!data.length){ view.innerHTML="<div class='panel'>No reports. 🎉</div>"; return; }
+  view.innerHTML=`<div class="panel"><table><thead><tr><th>User</th><th>Reason</th><th>Reporters</th><th>When</th><th>Status</th><th></th></tr></thead><tbody>
+    ${data.map(r=>`<tr>
+      <td class="clk" data-open="${r.reported_id}"><b>${esc(r.reported_name)||'—'}</b> ${r.reported_suspended?'<span class="tag susp">suspended</span>':''}</td>
+      <td>${esc(r.reason)||'—'}</td><td class="num">${r.distinct_reporters}</td>
+      <td class="dim">${new Date(r.created_at).toLocaleDateString()}</td>
+      <td><span class="tag ${r.status==='pending'?'off':(r.status==='actioned'?'susp':'ok')}">${esc(r.status)}</span></td>
+      <td class="row">
+        <button class="btn danger sm" data-act="suspend" data-id="${r.report_id}">Suspend</button>
+        <button class="btn ghost sm" data-act="dismiss" data-id="${r.report_id}">Dismiss</button>
+      </td></tr>`).join("")}
+  </tbody></table></div>`;
+  view.querySelectorAll("[data-open]").forEach(t=>t.onclick=()=>openUser(t.dataset.open));
+  view.querySelectorAll("button[data-act]").forEach(b=>b.onclick=async()=>{
+    try{ await rpc("moderate_report",{report_id:b.dataset.id,action:b.dataset.act}); toast("Report "+b.dataset.act+"ed"); moderation(); }
+    catch(e){ toast("Failed: "+e.message); }
+  });
+}); }
+
+// ---------- Users ----------
+function users(){
+  view.innerHTML=`<div class="panel">
+    <div class="row" style="margin-bottom:14px"><input id="uq" placeholder="Search by display name… (blank = recent)" style="max-width:340px"/>
+      <button class="btn sm" id="usearch">Search</button></div>
+    <div id="urows"><p class="muted">Loading…</p></div></div>`;
+  const run=async()=>{
+    try{
+      const data=await rpc("admin_search_users",{p_q:$("#uq").value.trim()});
+      $("#urows").innerHTML=`<table><thead><tr><th>Name</th><th>Location</th><th>Joined</th><th>Status</th></tr></thead><tbody>
+        ${data.map(u=>`<tr class="clk" data-open="${u.id}"><td><b>${esc(u.name)||'—'}</b></td>
+          <td class="muted">${esc(u.city)||'—'}${u.country?', '+esc(u.country):''}</td>
+          <td class="dim">${new Date(u.created_at).toLocaleDateString()}</td>
+          <td>${u.suspended?'<span class="tag susp">suspended</span>':'<span class="tag ok">active</span>'} ${u.verified?'<span class="tag ver">verified ✓</span>':''} ${u.entitled?'<span class="tag prem">premium</span>':''}</td>
+        </tr>`).join("")}</tbody></table>`;
+      $("#urows").querySelectorAll("[data-open]").forEach(t=>t.onclick=()=>openUser(t.dataset.open));
+    }catch(e){ $("#urows").innerHTML="<p class='err'>"+esc(e.message)+"</p>"; }
+  };
+  $("#usearch").onclick=run; $("#uq").addEventListener("keydown",e=>{if(e.key==="Enter")run();});
+  run();
+}
+
+// ---------- User detail drawer ----------
+const scrim=$("#scrim"),drawer=$("#drawer");
+scrim.onclick=closeDrawer;
+function closeDrawer(){ scrim.classList.remove("show"); drawer.classList.remove("show"); }
+async function openUser(id){
+  scrim.classList.add("show"); drawer.classList.add("show"); drawer.innerHTML="<p class='muted'>Loading…</p>";
+  let u; try{ u=await rpc("admin_user_detail",{p_user:id}); }catch(e){ drawer.innerHTML="<p class='err'>"+esc(e.message)+"</p>"; return; }
+  const c=u.counts||{}; const age=u.birth_date?Math.floor((Date.now()-new Date(u.birth_date))/3.15576e10):"";
+  drawer.innerHTML=`
+    <div class="row" style="justify-content:space-between"><h1 style="font-size:20px">${esc(u.name)||'—'} ${age?`<span class="dim">${age}</span>`:""}</h1>
+      <button class="btn ghost sm" id="dClose">Close</button></div>
+    <div class="row" style="margin:6px 0 4px">
+      ${u.suspended?'<span class="tag susp">suspended</span>':'<span class="tag ok">active</span>'}
+      ${u.verified?'<span class="tag ver">verified ✓</span>':''} ${u.entitled?'<span class="tag prem">premium</span>':''}
+      ${u.incognito?'<span class="tag" style="background:#33313d;color:#c9c4d6">incognito</span>':''}</div>
+    <div class="dim" style="font-size:12px">${esc(u.occupation)||''} ${u.city?'· '+esc(u.city):''}${u.country?', '+esc(u.country):''} · joined ${u.created_at?new Date(u.created_at).toLocaleDateString():'—'}</div>
+    ${u.suspended&&u.suspended_reason?`<div class="dim" style="font-size:12px;margin-top:4px">Reason: ${esc(u.suspended_reason)}</div>`:""}
+    <div class="statline">
+      <div class="stat"><div class="n num">${c.matches||0}</div><div class="k">matches</div></div>
+      <div class="stat"><div class="n num">${c.messages_sent||0}</div><div class="k">msgs sent</div></div>
+      <div class="stat"><div class="n num">${c.likes_received||0}</div><div class="k">likes in</div></div>
+      <div class="stat"><div class="n num">${c.likes_given||0}</div><div class="k">likes out</div></div>
+      <div class="stat"><div class="n num" style="color:${c.reports_against?'#fb7185':'inherit'}">${c.reports_against||0}</div><div class="k">reports</div></div>
+    </div>
+    ${u.bio?`<div class="panel" style="margin:10px 0;padding:12px"><div class="dim" style="font-size:11px;margin-bottom:4px">BIO</div>${esc(u.bio)}</div>`:""}
+    <div class="row" style="margin:12px 0;gap:8px">
+      <button class="btn ${u.suspended?'good':'danger'} sm" id="aSusp">${u.suspended?'Unsuspend':'Suspend'}</button>
+      <button class="btn ghost sm" id="aVer">${u.verified?'Unverify':'Verify ✓'}</button>
+      <button class="btn ghost sm" id="aComp">Grant comp 1y</button>
+    </div>
+    <h2>Photos <span class="dim">(${(u.photos||[]).length})</span></h2>
+    <div class="photos" id="dPhotos"><p class="dim">Loading photos…</p></div>
+    <h2 style="margin-top:20px">Conversations</h2>
+    <div id="dConvos"><p class="dim">Loading…</p></div>`;
+  $("#dClose").onclick=closeDrawer;
+  $("#aSusp").onclick=async()=>{ try{ await rpc("admin_set_suspended",{p_user:id,p_suspended:!u.suspended,p_reason:"owner console"}); toast(u.suspended?"Unsuspended":"Suspended"); openUser(id); loadMetrics(); }catch(e){toast(e.message);} };
+  $("#aVer").onclick=async()=>{ try{ await rpc("admin_set_verified",{p_user:id,p_verified:!u.verified}); toast(u.verified?"Unverified":"Verified ✓"); openUser(id); }catch(e){toast(e.message);} };
+  $("#aComp").onclick=async()=>{ try{ await rpc("grant_comp",{user_id:id,until:new Date(Date.now()+365*864e5).toISOString()}); toast("Comp granted 1y"); openUser(id); }catch(e){toast(e.message);} };
+  // photos
+  try{
+    const {photos}=await edge("admin-media",{action:"list",user_id:id});
+    $("#dPhotos").innerHTML = photos.length? photos.map(p=>`<div class="photo"><img src="${esc(p.url)}" loading="lazy"/><span class="del" data-name="${esc(p.name)}">Delete</span></div>`).join("") : "<p class='dim'>No photos.</p>";
+    $("#dPhotos").querySelectorAll(".del").forEach(b=>b.onclick=async()=>{ if(!confirm("Delete this photo permanently?"))return; try{ await edge("admin-media",{action:"delete",user_id:id,name:b.dataset.name}); toast("Photo deleted"); openUser(id);}catch(e){toast(e.message);} });
+  }catch(e){ $("#dPhotos").innerHTML="<p class='err'>"+esc(e.message)+"</p>"; }
+  // conversations
+  try{
+    const convos=await rpc("admin_user_conversations",{p_user:id});
+    $("#dConvos").innerHTML = convos.length? convos.map(cv=>`<div class="row clk" data-conv="${cv.match_id}" style="justify-content:space-between;padding:9px 4px;border-bottom:1px solid var(--line)">
+      <div><b>${esc(cv.other_name)||'—'}</b> <span class="dim">· ${cv.messages} msgs</span></div>
+      <div class="dim" style="font-size:12px">${cv.last_at?new Date(cv.last_at).toLocaleDateString():''} ›</div></div>`).join("") : "<p class='dim'>No conversations.</p>";
+    $("#dConvos").querySelectorAll("[data-conv]").forEach(t=>t.onclick=()=>openConvo(t.dataset.conv,id));
+  }catch(e){ $("#dConvos").innerHTML="<p class='err'>"+esc(e.message)+"</p>"; }
+}
+async function openConvo(matchId, backUserId){
+  drawer.innerHTML="<p class='muted'>Loading conversation…</p>";
+  let msgs; try{ msgs=await rpc("admin_conversation",{p_match:matchId}); }catch(e){ drawer.innerHTML="<p class='err'>"+esc(e.message)+"</p>"; return; }
+  drawer.innerHTML=`<div class="row" style="justify-content:space-between"><h1 style="font-size:18px">Conversation</h1>
+    <button class="btn ghost sm" id="cBack">‹ Back</button></div>
+    <div style="margin-top:12px">${msgs.length?msgs.map(m=>`<div class="msg" style="background:${m.sender_id===backUserId?'rgba(255,59,107,.14)':'var(--panel2)'};margin-left:${m.sender_id===backUserId?'auto':'0'}">
+      <div class="who">${esc(m.sender_name)||'—'} · ${new Date(m.created_at).toLocaleString()}</div>${esc(m.content)}
+      <span class="x" data-del="${m.id}">✕</span></div>`).join(""):"<p class='dim'>No messages.</p>"}</div>`;
+  $("#cBack").onclick=()=>openUser(backUserId);
+  drawer.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{ if(!confirm("Delete this message?"))return; try{ await rpc("admin_delete_message",{p_message:b.dataset.del}); toast("Message deleted"); openConvo(matchId,backUserId);}catch(e){toast(e.message);} });
+}
+
+// ---------- Config ----------
+function config(){ withLoad(async()=>{
+  const rows=await tget("app_config?select=key,value"); const cfg=Object.fromEntries(rows.map(r=>[r.key,r.value]));
+  const on=cfg.monetization_enabled==="true";
+  const numField=(k,label,val)=>`<div class="field"><label>${label}</label><input data-cfg="${k}" value="${esc(val??'')}"/></div>`;
+  view.innerHTML=`
+    <div class="panel" style="margin-bottom:16px">
+      <div class="row" style="justify-content:space-between">
+        <div><h3>Monetization master switch</h3><p class="cap" style="margin:2px 0 0">ON grandfathers all existing users as founding (free forever). Keep OFF until per-metro liquidity.</p></div>
+        <label class="switch"><input type="checkbox" id="monSw" ${on?'checked':''}/><span></span></label>
+      </div>
+    </div>
+    <div class="cols">
+      <div class="panel"><h3>Limits & growth</h3>
+        ${numField('free_daily_like_cap','Free daily like cap',cfg.free_daily_like_cap)}
+        ${numField('monetization_auto_threshold','Auto-enable threshold (blank = off)',cfg.monetization_auto_threshold)}
+        ${numField('referral_reward_days','Referral reward (days)',cfg.referral_reward_days)}
+        ${numField('referral_monthly_cap','Referral monthly cap',cfg.referral_monthly_cap)}
+        ${numField('completion_trial_days','Completion trial (days)',cfg.completion_trial_days)}
+        <div class="field"><label>Completion trial enabled</label>
+          <select data-cfg="completion_trial_enabled"><option value="true" ${cfg.completion_trial_enabled==='true'?'selected':''}>true</option><option value="false" ${cfg.completion_trial_enabled!=='true'?'selected':''}>false</option></select></div>
+        <button class="btn sm" id="saveCfg">Save all</button>
+      </div>
+      <div class="panel"><h3>Grant comp premium</h3><p class="cap">Give a specific user free premium.</p>
+        <div class="field"><label>User UUID</label><input id="compUser" placeholder="00000000-…"/></div>
+        <div class="field"><label>Days</label><input id="compDays" type="number" value="365"/></div>
+        <button class="btn sm" id="grantComp">Grant comp</button>
+      </div>
+    </div>`;
+  $("#monSw").onchange=async(e)=>{ try{ await rpc("admin_set_config",{p_key:"monetization_enabled",p_value:e.target.checked?"true":"false"}); toast("Monetization "+(e.target.checked?"ON":"OFF")); loadMetrics(); }catch(err){ toast(err.message); e.target.checked=!e.target.checked; } };
+  $("#saveCfg").onclick=async()=>{
+    try{ for(const inp of view.querySelectorAll("[data-cfg]")){ await rpc("admin_set_config",{p_key:inp.dataset.cfg,p_value:(inp.value||"").trim()}); } toast("Config saved"); }catch(e){ toast(e.message); }
+  };
+  $("#grantComp").onclick=async()=>{ try{ const days=parseInt($("#compDays").value||"365",10); await rpc("grant_comp",{user_id:$("#compUser").value.trim(),until:new Date(Date.now()+days*864e5).toISOString()}); toast("Comp granted "+days+"d"); }catch(e){ toast(e.message); } };
+}); }
+
+// ---------- Audit ----------
+function audit(){ withLoad(async()=>{
+  const data=await rpc("admin_recent_audit",{p_limit:150});
+  view.innerHTML=`<div class="panel">${data.length?`<table><thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead><tbody>
+    ${data.map(a=>`<tr><td class="dim">${new Date(a.created_at).toLocaleString()}</td><td>${esc(a.admin_email)||'—'}</td>
+      <td><span class="tag" style="background:var(--panel3);color:#c9c4d6">${esc(a.action)}</span></td>
+      <td class="dim">${esc(a.target_type)||''} ${a.target_id?esc((""+a.target_id).slice(0,8)):''}</td>
+      <td class="dim" style="font-size:12px">${esc(JSON.stringify(a.detail||{}))}</td></tr>`).join("")}
+  </tbody></table>`:"<p class='dim'>No admin actions logged yet.</p>"}</div>`;
+}); }
+
+// ---------- Admins ----------
+function admins(){ withLoad(async()=>{
+  const data=await tget("admins?select=user_id,created_at&order=created_at");
+  view.innerHTML=`<div class="panel">
+    <div class="row" style="margin-bottom:14px"><input id="newAdmin" placeholder="User UUID to grant admin" style="max-width:360px"/><button class="btn sm" id="addAdmin">Add admin</button></div>
+    <table><thead><tr><th>User ID</th><th>Since</th><th></th></tr></thead><tbody>
+    ${data.map(a=>`<tr><td class="dim num">${esc(a.user_id)}</td><td class="dim">${new Date(a.created_at).toLocaleDateString()}</td>
+      <td><button class="btn ghost sm" data-rm="${a.user_id}">Remove</button></td></tr>`).join("")}
+    </tbody></table>
+    <p class="cap" style="margin-top:12px">Tip: sign in with your owner email (behnoodafshari@gmail.com) and you're promoted automatically.</p></div>`;
+  $("#addAdmin").onclick=async()=>{ try{ const res=await call("/rest/v1/admins",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({user_id:$("#newAdmin").value.trim()})}); if(!res.ok)throw new Error("HTTP "+res.status); toast("Admin added"); admins(); }catch(e){ toast(e.message); } };
+  view.querySelectorAll("button[data-rm]").forEach(b=>b.onclick=async()=>{ try{ const res=await call("/rest/v1/admins?user_id=eq."+b.dataset.rm,{method:"DELETE"}); if(!res.ok)throw new Error("HTTP "+res.status); toast("Removed"); admins(); }catch(e){ toast(e.message); } });
+}); }
+
+// ---------- boot ----------
+(async()=>{ if(session?.access_token){ try{ if(await rpc("am_i_admin")===true){ $("#whoami").textContent=session.email||"admin"; $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); route("overview"); return; } }catch{} if(await refreshToken()){ try{ if(await rpc("am_i_admin")===true){ $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); route("overview"); } }catch{} } } })();
+</script>
+</body>
+</html>

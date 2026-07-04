@@ -127,16 +127,12 @@
     <div class="card login-card">
       <div class="brand"><div class="dot"></div> LoveJan</div>
       <p class="sub">Owner console</p>
-      <div class="seg"><button id="tabOtp" class="on">Email code</button><button id="tabPw">Password</button></div>
+      <div class="seg"><button id="tabOtp" class="on">Email link</button><button id="tabPw">Password</button></div>
 
       <div id="paneOtp">
         <label>Email</label>
         <input id="otpEmail" type="email" autocomplete="username" placeholder="you@gmail.com" />
-        <div id="otpStep2" class="hidden">
-          <label>6-digit code (check your email)</label>
-          <input id="otpCode" inputmode="numeric" placeholder="••••••" />
-        </div>
-        <button class="btn block" id="otpBtn">Send code</button>
+        <button class="btn block" id="otpBtn">Send sign-in link</button>
       </div>
 
       <div id="panePw" class="hidden">
@@ -193,6 +189,20 @@ const el = (h)=>{const t=document.createElement("template");t.innerHTML=h.trim()
 const esc = s=> (s??"").toString().replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const view = $("#view");
 let session = JSON.parse(localStorage.getItem("lj_admin_session")||"null");
+// Magic-link arrival: Supabase redirects back here with #access_token=…&refresh_token=… in the
+// URL hash. Adopt those as our session, strip them from the URL, and flag boot() to promote+enter
+// via gate() (a first-time owner isn't in `admins` yet, so a plain am_i_admin check would fail).
+let magicArrived = false;
+try{
+  const h = new URLSearchParams((location.hash||"").replace(/^#/,""));
+  const at = h.get("access_token"), rt = h.get("refresh_token");
+  if(at && rt){
+    session = {access_token:at, refresh_token:rt, email:session?.email||null};
+    localStorage.setItem("lj_admin_session", JSON.stringify(session));
+    magicArrived = true;
+    history.replaceState(null,"",location.pathname+location.search);
+  }
+}catch(e){}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2800);}
 
 // ---------- raw-fetch API (no SDK/CDN — maximum stability) ----------
@@ -220,23 +230,14 @@ async function edge(name, body){ const res=await call("/functions/v1/"+name,{met
 // ---------- auth ----------
 $("#tabOtp").onclick=()=>{$("#tabOtp").classList.add("on");$("#tabPw").classList.remove("on");$("#paneOtp").classList.remove("hidden");$("#panePw").classList.add("hidden");};
 $("#tabPw").onclick=()=>{$("#tabPw").classList.add("on");$("#tabOtp").classList.remove("on");$("#panePw").classList.remove("hidden");$("#paneOtp").classList.add("hidden");};
-let otpSent=false;
 $("#otpBtn").onclick=async()=>{
   $("#loginErr").textContent="";
   const email=$("#otpEmail").value.trim();
-  if(!otpSent){
-    try{
-      const r=await fetch(SUPABASE_URL+"/auth/v1/otp",{method:"POST",headers:{apikey:ANON,"Content-Type":"application/json"},body:JSON.stringify({email,create_user:true})});
-      if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.msg||e.error_description||("HTTP "+r.status));}
-      otpSent=true;$("#otpStep2").classList.remove("hidden");$("#otpBtn").textContent="Verify & sign in";
-      $("#loginErr").innerHTML="<span class='ok'>Code sent — check "+esc(email)+"</span>";
-    }catch(e){$("#loginErr").textContent=e.message;}
-    return;
-  }
   try{
-    const r=await fetch(SUPABASE_URL+"/auth/v1/verify",{method:"POST",headers:{apikey:ANON,"Content-Type":"application/json"},body:JSON.stringify({email,token:$("#otpCode").value.trim(),type:"email"})});
-    const d=await r.json(); if(!r.ok) throw new Error(d.msg||d.error_description||"Invalid code");
-    saveSession(d); await gate();
+    const r=await fetch(SUPABASE_URL+"/auth/v1/otp",{method:"POST",headers:{apikey:ANON,"Content-Type":"application/json"},body:JSON.stringify({email,create_user:true})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.msg||e.error_description||("HTTP "+r.status));}
+    $("#otpBtn").disabled=true;$("#otpBtn").textContent="Link sent ✓";
+    $("#loginErr").innerHTML="<span class='ok'>Sign-in link sent to "+esc(email)+" — open your email and click the link. It'll bring you right back here, signed in.</span>";
   }catch(e){$("#loginErr").textContent=e.message;}
 };
 $("#pwBtn").onclick=async()=>{
@@ -562,7 +563,12 @@ function admins(){ withLoad(async()=>{
 }); }
 
 // ---------- boot ----------
-(async()=>{ if(session?.access_token){ try{ if(await rpc("am_i_admin")===true){ $("#whoami").textContent=session.email||"admin"; $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); route("overview"); return; } }catch{} if(await refreshToken()){ try{ if(await rpc("am_i_admin")===true){ $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); route("overview"); } }catch{} } } })();
+(async()=>{
+  if(!session?.access_token) return;
+  if(magicArrived){ await gate(); return; }   // arrived via magic link → promote (bootstrap_owner) + enter
+  try{ if(await rpc("am_i_admin")===true){ $("#whoami").textContent=session.email||"admin"; $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); route("overview"); return; } }catch{}
+  if(await refreshToken()){ try{ if(await rpc("am_i_admin")===true){ $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); route("overview"); } }catch{} }
+})();
 </script>
 </body>
 </html>

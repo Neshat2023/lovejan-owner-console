@@ -155,6 +155,7 @@
       <div class="brand"><div class="dot"></div> LoveJan</div>
       <nav id="nav">
         <a data-view="overview" class="active"><span class="ic">📊</span> Overview</a>
+        <a data-view="waitlist"><span class="ic">📝</span> Waitlist</a>
         <a data-view="growth"><span class="ic">📈</span> Growth</a>
         <a data-view="engagement"><span class="ic">⚡</span> Engagement</a>
         <a data-view="moderation"><span class="ic">🛡️</span> Moderation <span id="modBadge"></span></a>
@@ -300,19 +301,74 @@ function donut(data){
 }
 
 // ---------- routing ----------
-const titles={overview:"Overview",growth:"Growth",engagement:"Engagement",moderation:"Moderation",users:"Users",config:"Config",audit:"Audit log",admins:"Admins"};
+const titles={overview:"Overview",waitlist:"Waitlist",growth:"Growth",engagement:"Engagement",moderation:"Moderation",users:"Users",config:"Config",audit:"Audit log",admins:"Admins"};
 $("#nav").addEventListener("click",e=>{const a=e.target.closest("a[data-view]");if(!a)return;route(a.dataset.view);});
 $("#refresh").onclick=()=>route(current);
 let current="overview";
 async function route(v){
   current=v; document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("active",a.dataset.view===v));
   $("#title").textContent=titles[v];
-  ({overview,growth,engagement,moderation,users,config,audit,admins}[v]||overview)();
+  ({overview,waitlist,growth,engagement,moderation,users,config,audit,admins}[v]||overview)();
 }
 async function withLoad(fn){ view.innerHTML="<p class='muted'>Loading…</p>"; try{await fn();}catch(e){view.innerHTML="<div class='panel'><p class='err'>"+esc(e.message)+"</p></div>";} }
 
 let METRICS=null;
 async function loadMetrics(){ METRICS=await rpc("admin_metrics"); $("#monPill").className="pill "+(METRICS.monetization_enabled?"on":"off"); $("#monPill").textContent="Monetization "+(METRICS.monetization_enabled?"ON":"OFF (free)"); $("#modBadge").innerHTML=METRICS.reports_pending?`<span class="badge">${METRICS.reports_pending}</span>`:""; return METRICS; }
+
+// ---------- Waitlist ----------
+let WL_ROWS=[];
+function waitlist(){ withLoad(async()=>{
+  const st=await rpc("admin_waitlist_stats");
+  const rows=await rpc("admin_waitlist",{p_limit:2000});
+  WL_ROWS=rows;
+  const kpi=(v,l,a)=>`<div class="kpi ${a?'accent':''}"><div class="v num">${fmt(v)}</div><div class="l">${l}</div></div>`;
+  const bySrc=Object.entries(st.by_source||{}).sort((a,b)=>b[1]-a[1]);
+  view.innerHTML=`
+    <div class="grid">
+      ${kpi(st.total,"Total signups",1)}
+      ${kpi(st.last24h,"Last 24h")}
+      ${kpi(st.last7d,"Last 7 days")}
+      ${kpi(st.founding,"Founding ★")}
+    </div>
+    <div class="cols" style="margin-top:16px">
+      <div class="panel">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h3 style="margin:0">Signups</h3>
+          <button class="btn ghost sm" id="wlCsv">⬇ Export CSV</button>
+        </div>
+        <p class="cap">Newest first · ${rows.length} shown</p>
+        <div style="overflow:auto;max-height:60vh">
+          <table style="width:100%">
+            <thead><tr><td>When</td><td>Email</td><td>Name</td><td>City</td><td>I am → seeking</td><td>Source</td></tr></thead>
+            <tbody>${rows.map(r=>`<tr>
+              <td class="dim" style="white-space:nowrap">${esc(new Date(r.created_at).toLocaleDateString(undefined,{month:'short',day:'numeric'}))}</td>
+              <td>${esc(r.email)}${r.founding?' <span class="badge">★</span>':''}</td>
+              <td>${esc(r.first_name||'—')}</td>
+              <td>${esc(r.city||'—')}</td>
+              <td class="dim">${esc([r.gender,r.seeking].filter(Boolean).join(' → ')||'—')}</td>
+              <td class="dim">${esc(r.source||'—')}</td>
+            </tr>`).join('')||'<tr><td colspan="6" class="dim">No signups yet.</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>By source</h3><p class="cap">Which form they used</p>
+        <table>${bySrc.map(([k,v])=>`<tr><td>${esc(k)}</td><td style="text-align:right"><b class="num">${fmt(v)}</b></td></tr>`).join('')||'<tr><td class="dim">—</td></tr>'}</table>
+        <h3 style="margin-top:18px">Top cities</h3><p class="cap">From the rich signup</p>
+        <table>${(st.top_cities||[]).map(c=>`<tr><td>${esc(c.city)}</td><td style="text-align:right"><b class="num">${c.c}</b></td></tr>`).join('')||'<tr><td class="dim">No cities yet</td></tr>'}</table>
+      </div>
+    </div>`;
+  $("#wlCsv").onclick=()=>{
+    const hdr=['created_at','email','first_name','city','gender','seeking','birth_year','intent','source','founding'];
+    const csv=[hdr.join(',')].concat(WL_ROWS.map(r=>hdr.map(k=>{
+      const val=r[k]==null?'':String(r[k]); return '"'+val.replace(/"/g,'""')+'"';
+    }).join(','))).join('\n');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download='lovejan-waitlist-'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+}); }
 
 // ---------- Overview ----------
 function overview(){ withLoad(async()=>{

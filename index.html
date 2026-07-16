@@ -110,7 +110,13 @@
   .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
   .photo{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:3/4;background:var(--panel2);border:1px solid var(--line)}
   .photo img{width:100%;height:100%;object-fit:cover;display:block}
-  .photo .del{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.6);border-radius:8px;padding:4px 7px;font-size:11px;color:#fff;font-weight:700}
+  .photo .del{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.6);border-radius:8px;padding:4px 7px;font-size:11px;color:#fff;font-weight:700;cursor:pointer}
+  /* Photo Review grid */
+  .preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:16px}
+  .pcell{display:flex;flex-direction:column;gap:6px}
+  .pcap{font-size:12px;line-height:1.3}
+  .pcap .pname{font-weight:700;cursor:pointer}
+  .pcap .pname:hover{color:var(--pink)}
   .msg{padding:9px 12px;border-radius:12px;margin:6px 0;max-width:80%;font-size:13px;position:relative}
   .msg .who{font-size:11px;color:var(--dim);margin-bottom:2px}
   .msg .x{position:absolute;top:4px;right:6px;color:var(--bad);font-size:11px;cursor:pointer;opacity:.6}
@@ -155,11 +161,11 @@
       <div class="brand"><div class="dot"></div> LoveJan</div>
       <nav id="nav">
         <a data-view="overview" class="active"><span class="ic">📊</span> Overview</a>
-        <a data-view="waitlist"><span class="ic">📝</span> Waitlist</a>
         <a data-view="growth"><span class="ic">📈</span> Growth</a>
         <a data-view="engagement"><span class="ic">⚡</span> Engagement</a>
         <a data-view="moderation"><span class="ic">🛡️</span> Moderation <span id="modBadge"></span></a>
         <a data-view="users"><span class="ic">👤</span> Users</a>
+        <a data-view="photos"><span class="ic">📷</span> Photo Review</a>
         <a data-view="config"><span class="ic">⚙️</span> Config</a>
         <a data-view="audit"><span class="ic">📜</span> Audit</a>
         <a data-view="admins"><span class="ic">🔑</span> Admins</a>
@@ -301,74 +307,19 @@ function donut(data){
 }
 
 // ---------- routing ----------
-const titles={overview:"Overview",waitlist:"Waitlist",growth:"Growth",engagement:"Engagement",moderation:"Moderation",users:"Users",config:"Config",audit:"Audit log",admins:"Admins"};
+const titles={overview:"Overview",growth:"Growth",engagement:"Engagement",moderation:"Moderation",users:"Users",photos:"Photo Review",config:"Config",audit:"Audit log",admins:"Admins"};
 $("#nav").addEventListener("click",e=>{const a=e.target.closest("a[data-view]");if(!a)return;route(a.dataset.view);});
 $("#refresh").onclick=()=>route(current);
 let current="overview";
 async function route(v){
   current=v; document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("active",a.dataset.view===v));
   $("#title").textContent=titles[v];
-  ({overview,waitlist,growth,engagement,moderation,users,config,audit,admins}[v]||overview)();
+  ({overview,growth,engagement,moderation,users,photos:photoReview,config,audit,admins}[v]||overview)();
 }
 async function withLoad(fn){ view.innerHTML="<p class='muted'>Loading…</p>"; try{await fn();}catch(e){view.innerHTML="<div class='panel'><p class='err'>"+esc(e.message)+"</p></div>";} }
 
 let METRICS=null;
 async function loadMetrics(){ METRICS=await rpc("admin_metrics"); $("#monPill").className="pill "+(METRICS.monetization_enabled?"on":"off"); $("#monPill").textContent="Monetization "+(METRICS.monetization_enabled?"ON":"OFF (free)"); $("#modBadge").innerHTML=METRICS.reports_pending?`<span class="badge">${METRICS.reports_pending}</span>`:""; return METRICS; }
-
-// ---------- Waitlist ----------
-let WL_ROWS=[];
-function waitlist(){ withLoad(async()=>{
-  const st=await rpc("admin_waitlist_stats");
-  const rows=await rpc("admin_waitlist",{p_limit:2000});
-  WL_ROWS=rows;
-  const kpi=(v,l,a)=>`<div class="kpi ${a?'accent':''}"><div class="v num">${fmt(v)}</div><div class="l">${l}</div></div>`;
-  const bySrc=Object.entries(st.by_source||{}).sort((a,b)=>b[1]-a[1]);
-  view.innerHTML=`
-    <div class="grid">
-      ${kpi(st.total,"Total signups",1)}
-      ${kpi(st.last24h,"Last 24h")}
-      ${kpi(st.last7d,"Last 7 days")}
-      ${kpi(st.founding,"Founding ★")}
-    </div>
-    <div class="cols" style="margin-top:16px">
-      <div class="panel">
-        <div class="row" style="justify-content:space-between;align-items:center">
-          <h3 style="margin:0">Signups</h3>
-          <button class="btn ghost sm" id="wlCsv">⬇ Export CSV</button>
-        </div>
-        <p class="cap">Newest first · ${rows.length} shown</p>
-        <div style="overflow:auto;max-height:60vh">
-          <table style="width:100%">
-            <thead><tr><td>When</td><td>Email</td><td>Name</td><td>City</td><td>I am → seeking</td><td>Source</td></tr></thead>
-            <tbody>${rows.map(r=>`<tr>
-              <td class="dim" style="white-space:nowrap">${esc(new Date(r.created_at).toLocaleDateString(undefined,{month:'short',day:'numeric'}))}</td>
-              <td>${esc(r.email)}${r.founding?' <span class="badge">★</span>':''}</td>
-              <td>${esc(r.first_name||'—')}</td>
-              <td>${esc(r.city||'—')}</td>
-              <td class="dim">${esc([r.gender,r.seeking].filter(Boolean).join(' → ')||'—')}</td>
-              <td class="dim">${esc(r.source||'—')}</td>
-            </tr>`).join('')||'<tr><td colspan="6" class="dim">No signups yet.</td></tr>'}</tbody>
-          </table>
-        </div>
-      </div>
-      <div class="panel">
-        <h3>By source</h3><p class="cap">Which form they used</p>
-        <table>${bySrc.map(([k,v])=>`<tr><td>${esc(k)}</td><td style="text-align:right"><b class="num">${fmt(v)}</b></td></tr>`).join('')||'<tr><td class="dim">—</td></tr>'}</table>
-        <h3 style="margin-top:18px">Top cities</h3><p class="cap">From the rich signup</p>
-        <table>${(st.top_cities||[]).map(c=>`<tr><td>${esc(c.city)}</td><td style="text-align:right"><b class="num">${c.c}</b></td></tr>`).join('')||'<tr><td class="dim">No cities yet</td></tr>'}</table>
-      </div>
-    </div>`;
-  $("#wlCsv").onclick=()=>{
-    const hdr=['created_at','email','first_name','city','gender','seeking','birth_year','intent','source','founding'];
-    const csv=[hdr.join(',')].concat(WL_ROWS.map(r=>hdr.map(k=>{
-      const val=r[k]==null?'':String(r[k]); return '"'+val.replace(/"/g,'""')+'"';
-    }).join(','))).join('\n');
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-    a.download='lovejan-waitlist-'+new Date().toISOString().slice(0,10)+'.csv';
-    document.body.appendChild(a); a.click(); a.remove();
-  };
-}); }
 
 // ---------- Overview ----------
 function overview(){ withLoad(async()=>{
@@ -493,6 +444,28 @@ function users(){
   $("#usearch").onclick=run; $("#uq").addEventListener("keydown",e=>{if(e.key==="Enter")run();});
   run();
 }
+
+// ---------- Photo Review (newest uploads across all users) ----------
+function photoReview(){ withLoad(async()=>{
+  const {photos}=await edge("admin-media",{action:"recent",limit:120});
+  if(!photos.length){ view.innerHTML="<div class='panel'><p class='dim'>No photos uploaded yet.</p></div>"; return; }
+  view.innerHTML=`<div class="panel">
+    <p class="cap">Newest uploads first · ${photos.length} shown · tap a name to open that person · Delete removes the photo permanently.</p>
+    <div class="preview-grid">${photos.map(p=>`
+      <div class="pcell" data-name="${esc(p.name)}" data-user="${esc(p.user_id)}">
+        <div class="photo">${p.url?`<img src="${esc(p.url)}" loading="lazy"/>`:`<div class="dim" style="display:grid;place-items:center;height:100%;font-size:11px">no preview</div>`}<span class="del">Delete</span></div>
+        <div class="pcap"><span class="pname" data-open="${esc(p.user_id)}">${esc(p.display_name)||'—'}</span>${p.suspended?' <span class="tag susp">susp</span>':''}
+          <div class="dim" style="font-size:11px">${p.created_at?new Date(p.created_at).toLocaleDateString():''}</div></div>
+      </div>`).join("")}</div>
+  </div>`;
+  view.querySelectorAll(".pname[data-open]").forEach(t=>t.onclick=()=>openUser(t.dataset.open));
+  view.querySelectorAll(".pcell .del").forEach(b=>b.onclick=async()=>{
+    const cell=b.closest(".pcell"); const name=cell.dataset.name, uid=cell.dataset.user;
+    if(!confirm("Delete this photo permanently?"))return;
+    try{ await edge("admin-media",{action:"delete",user_id:uid,name}); toast("Photo deleted"); cell.remove(); }
+    catch(e){ toast(e.message); }
+  });
+}); }
 
 // ---------- User detail drawer ----------
 const scrim=$("#scrim"),drawer=$("#drawer");

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>RugSnap</title>
+<style>
+  html,body{margin:0;height:100%;background:#05060a;color:#e8eaf0;
+    font-family:-apple-system,system-ui,sans-serif;display:grid;place-items:center;text-align:center}
+  a{color:#22d3ee;text-decoration:none}
+  .b{font-size:20px;font-weight:700;letter-spacing:.3px}
+</style>
+</head>
+<body>
+  <!-- Fallback shell. capacitor.config.json loads the live app at rugsnap.app/app;
+       this shows only if the network is unavailable at launch. -->
+  <div>
+    <p class="b">RugSnap</p>
+    <p>Loading…</p>
+    <p><a href="https://rugsnap.app/app">Open RugSnap</a></p>
+  </div>
+  <script>location.replace("https://rugsnap.app/app");</script>
+</body>
+</html>

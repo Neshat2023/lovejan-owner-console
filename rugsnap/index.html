@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="RugSnap — AI appraisal for Persian & Oriental rugs, art and antiques. One photo reveals origin, era, materials, and an honest value range." />
+<meta name="theme-color" content="#05060a" />
+<title>RugSnap — AI Rug, Art &amp; Antique Appraisal</title>
+<style>
+  /* ---------- fonts (FA only; EN rides the native SF/system stack) ---------- */
+  @font-face{font-family:"Vazirmatn";font-style:normal;font-weight:300 800;font-display:swap;
+    src:url(fonts/vazirmatn-arabic.woff2) format("woff2");unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
+  @font-face{font-family:"Vazirmatn";font-style:normal;font-weight:300 800;font-display:swap;
+    src:url(fonts/vazirmatn-latin.woff2) format("woff2");unicode-range:U+0000-00FF}
+
+  /* ---------- tokens ---------- */
+  :root{
+    --bg:#05060a; --bg-2:#0a0c14;
+    --glass:rgba(255,255,255,.055); --glass-2:rgba(255,255,255,.09);
+    --stroke:rgba(255,255,255,.13); --stroke-soft:rgba(255,255,255,.07);
+    --txt:#f4f6fb; --mut:#a7afc2; --dim:#69718a;
+    --cyan:#22d3ee; --violet:#8b5cf6; --pink:#f472b6;
+    --neon:linear-gradient(100deg,#22d3ee,#818cf8 45%,#e879f9);
+    --glow-cyan:0 0 32px rgba(34,211,238,.35);
+    --glow-violet:0 0 40px rgba(139,92,246,.32);
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI","Vazirmatn",Roboto,sans-serif;
+    --r:20px; --r-lg:28px;
+  }
+  body.rtl{direction:rtl}
+  body.rtl,body.rtl *{--font:"Vazirmatn",-apple-system,sans-serif}
+
+  /* ---------- base ---------- */
+  *{box-sizing:border-box} html,body{margin:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--txt);font:16px/1.65 var(--font);
+    -webkit-font-smoothing:antialiased;overflow-x:hidden}
+  ::selection{background:var(--cyan);color:#04252b}
+  a{color:var(--cyan)}
+  button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  :focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:6px}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+
+  /* ---------- aurora backdrop ---------- */
+  .aurora{position:fixed;inset:-20%;z-index:0;pointer-events:none;filter:blur(90px);opacity:.5}
+  .aurora i{position:absolute;border-radius:50%}
+  .aurora .a1{width:44vw;height:44vw;left:-6%;top:-4%;background:radial-gradient(circle,#0ea5e9,transparent 65%);animation:drift1 26s ease-in-out infinite alternate}
+  .aurora .a2{width:38vw;height:38vw;right:-8%;top:22%;background:radial-gradient(circle,#7c3aed,transparent 65%);animation:drift2 31s ease-in-out infinite alternate}
+  .aurora .a3{width:30vw;height:30vw;left:28%;bottom:-12%;background:radial-gradient(circle,#db2777,transparent 65%);animation:drift1 37s ease-in-out infinite alternate-reverse}
+  @keyframes drift1{to{transform:translate(9vw,7vh) scale(1.15)}}
+  @keyframes drift2{to{transform:translate(-8vw,9vh) scale(.9)}}
+
+  /* ---------- glass primitives ---------- */
+  .glass{background:var(--glass);border:1px solid var(--stroke);border-radius:var(--r);
+    backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4)}
+  .chip{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:999px;
+    background:var(--glass);border:1px solid var(--stroke);font-size:13px;font-weight:600;color:var(--mut)}
+  .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:var(--glow-cyan)}
+
+  /* ---------- nav ---------- */
+  .nav{position:sticky;top:14px;z-index:20;margin:14px auto 0;max-width:1120px;padding:0 24px}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:12px 22px;
+    border-radius:999px}
+  .brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--txt);font-weight:700;font-size:18px;letter-spacing:-.02em}
+  .brand .mark{width:32px;height:32px;border-radius:10px;background:var(--neon);display:grid;place-items:center;
+    box-shadow:var(--glow-violet)}
+  .brand .mark svg{display:block}
+  .langbtn{padding:8px 18px;border-radius:999px;background:var(--glass-2);border:1px solid var(--stroke);
+    font-size:13px;font-weight:600;color:var(--mut);transition:.2s}
+  .langbtn:hover{color:var(--txt);border-color:var(--cyan)}
+  .nav-links{display:flex;gap:28px}
+  .nav-links a{color:var(--mut);text-decoration:none;font-size:14px;font-weight:600;letter-spacing:-.01em;transition:color .2s}
+  .nav-links a:hover{color:var(--txt)}
+  section{scroll-margin-top:92px}
+
+  /* ---------- hero ---------- */
+  .hero{text-align:center;padding:96px 0 40px}
+  .hero h1{font-size:clamp(42px,7vw,84px);line-height:1.04;letter-spacing:-.035em;font-weight:750;
+    margin:26px 0 22px;text-wrap:balance}
+  .hero h1 .g{background:var(--neon);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero .sub{color:var(--mut);font-size:19px;max-width:600px;margin:0 auto 34px;text-wrap:balance}
+  .cta{display:inline-block;padding:17px 40px;border-radius:999px;background:var(--neon);color:#06060a;
+    font-weight:700;font-size:17px;text-decoration:none;letter-spacing:-.01em;
+    box-shadow:var(--glow-cyan),var(--glow-violet);transition:transform .2s,box-shadow .2s}
+  .cta:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 0 46px rgba(34,211,238,.5),0 0 60px rgba(139,92,246,.4)}
+  .cta.ghost{background:var(--glass-2);color:var(--txt);border:1px solid var(--stroke);box-shadow:none}
+  .cta-note{display:block;margin-top:16px;font-size:13.5px;color:var(--dim)}
+
+  /* ---------- 3D stage ---------- */
+  .stage{perspective:1400px;margin:70px auto 0;max-width:520px;padding:0 10px}
+  .device{position:relative;transform-style:preserve-3d;will-change:transform;border-radius:var(--r-lg);
+    background:linear-gradient(155deg,rgba(255,255,255,.12),rgba(255,255,255,.03));
+    border:1px solid var(--stroke);padding:18px;
+    box-shadow:0 60px 120px -40px rgba(0,0,0,.8),var(--glow-violet);
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  .device canvas{display:block;width:100%;height:auto;border-radius:16px}
+  .device video{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:16px}
+  .hidden{display:none!important}
+  .device .caption{display:flex;justify-content:space-between;align-items:center;padding:14px 6px 2px;gap:12px}
+  .device .caption .t{font-weight:600;font-size:15px;letter-spacing:-.01em}
+  .device .caption .v{font-weight:800;font-size:17px;letter-spacing:-.01em;
+    background:var(--neon);-webkit-background-clip:text;background-clip:text;color:transparent;
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .stage-note{text-align:center;font-size:12.5px;color:var(--dim);margin-top:14px}
+
+  /* scanning HUD over the hero device (Stitch-style) */
+  .hud{position:absolute;top:30px;inset-inline-start:30px;z-index:3;pointer-events:none}
+  .hud-chip{display:inline-flex;align-items:center;gap:7px;padding:7px 15px;border-radius:999px;
+    font-size:12.5px;font-weight:700;letter-spacing:.02em;color:var(--txt);
+    background:rgba(8,10,20,.58);border:1px solid var(--stroke);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .hud-dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);
+    box-shadow:0 0 10px var(--cyan);animation:hudPulse 1.1s ease-in-out infinite}
+  @keyframes hudPulse{50%{opacity:.25}}
+  .hud-chip.match{background:linear-gradient(100deg,rgba(34,211,238,.94),rgba(139,92,246,.94));
+    color:#06060a;border-color:transparent;box-shadow:var(--glow-cyan)}
+  .hud-chip.match svg{flex:none}
+  .hud-chip.pop{animation:hudPop .5s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes hudPop{0%{transform:scale(.55);opacity:0}100%{transform:scale(1);opacity:1}}
+
+  /* ---------- sections ---------- */
+  section{padding:96px 0 0}
+  .sec-eyebrow{display:block;text-align:center;font-size:13px;font-weight:700;letter-spacing:.18em;
+    text-transform:uppercase;background:var(--neon);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:14px}
+  body.rtl .sec-eyebrow{letter-spacing:.05em}
+  .sec-title{text-align:center;font-size:clamp(28px,4vw,44px);font-weight:730;letter-spacing:-.03em;
+    margin:0 0 14px;text-wrap:balance}
+  .sec-sub{text-align:center;color:var(--mut);max-width:560px;margin:0 auto 46px;text-wrap:balance}
+
+  .grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+  .fcard{padding:28px 26px;transition:transform .3s,border-color .3s}
+  .fcard:hover{transform:translateY(-6px);border-color:rgba(34,211,238,.4)}
+  .fcard .ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;margin-bottom:18px;
+    background:linear-gradient(140deg,rgba(34,211,238,.18),rgba(139,92,246,.18));
+    border:1px solid var(--stroke);color:var(--cyan)}
+  .fcard h3{margin:0 0 8px;font-size:17.5px;font-weight:700;letter-spacing:-.01em}
+  .fcard p{margin:0;color:var(--mut);font-size:14.5px}
+
+  .steps3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;counter-reset:step}
+  .scard{padding:30px 26px;position:relative;overflow:hidden}
+  .scard .n{font-size:52px;font-weight:800;letter-spacing:-.04em;line-height:1;
+    background:var(--neon);-webkit-background-clip:text;background-clip:text;color:transparent;opacity:.85;margin-bottom:14px}
+  .scard h3{margin:0 0 7px;font-size:17.5px;font-weight:700}
+  .scard p{margin:0;color:var(--mut);font-size:14.5px}
+
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .duo .fcard .tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.14em;padding:4px 12px;
+    border-radius:999px;margin-bottom:16px;text-transform:uppercase;
+    background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.4);color:var(--cyan)}
+  body.rtl .duo .fcard .tag{letter-spacing:.04em}
+
+  /* ---------- pricing ---------- */
+  .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;max-width:640px;margin:0 auto}
+  .plan{padding:34px 30px;text-align:center;position:relative}
+  .plan.hot{border-color:rgba(34,211,238,.5);box-shadow:var(--glow-cyan)}
+  .plan .badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);padding:4px 16px;border-radius:999px;
+    background:var(--neon);color:#06060a;font-size:11px;font-weight:800;letter-spacing:.08em;white-space:nowrap}
+  .plan .price{font-size:46px;font-weight:800;letter-spacing:-.04em;margin:10px 0 2px;font-variant-numeric:tabular-nums}
+  .plan .per{color:var(--dim);font-size:13.5px;margin-bottom:22px}
+  .plan ul{list-style:none;margin:0;padding:0;text-align:start}
+  .plan li{display:flex;gap:10px;align-items:center;padding:9px 0;color:var(--mut);font-size:14.5px;
+    border-top:1px solid var(--stroke-soft)}
+  .plan li svg{color:var(--cyan);flex:none}
+  .center{text-align:center;padding-top:44px}
+
+  footer{margin-top:110px;padding:36px 0 54px;border-top:1px solid var(--stroke-soft);
+    color:var(--dim);font-size:13.5px;text-align:center;position:relative;z-index:1}
+
+  /* ---------- scroll reveal ---------- */
+  [data-reveal]{opacity:0;transform:translateY(34px);transition:opacity .7s ease,transform .7s ease}
+  [data-reveal].in{opacity:1;transform:none}
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation:none!important;transition:none!important}
+    [data-reveal]{opacity:1;transform:none}
+    .device{transform:none!important}
+  }
+  @media (max-width:760px){
+    .hero{padding-top:64px}
+    .duo{grid-template-columns:1fr}
+    section{padding-top:72px}
+    .nav-links{display:none}
+    .hud{top:26px;inset-inline-start:26px}
+  }
+</style>
+</head>
+<body>
+<div class="aurora" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div>
+
+<nav class="nav">
+  <div class="nav-inner glass">
+    <a class="brand" href="#" aria-label="RugSnap home">
+      <span class="mark"><svg width="17" height="17" viewBox="0 0 30 30" aria-hidden="true"><path d="M15 5 25 15 15 25 5 15Z" fill="none" stroke="#06060a" stroke-width="2.6"/><circle cx="15" cy="15" r="3" fill="#06060a"/></svg></span>
+      <span data-i18n="brand">RugSnap</span>
+    </a>
+    <div class="nav-links">
+      <a href="#appraisal" data-i18n="navAppraise">Appraisal</a>
+      <a href="#bazaar" data-i18n="navBazaar">The Bazaar</a>
+      <a href="#pricing" data-i18n="navPricing">Pricing</a>
+    </div>
+    <button class="langbtn" id="langBtn">فارسی</button>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="hero">
+    <span class="chip"><span class="dot"></span><span data-i18n="eyebrow">AI appraisal · rugs, art &amp; antiques</span></span>
+    <h1 data-i18n="heroTitle">Know what it's<br><span class="g">really worth</span></h1>
+    <p class="sub" data-i18n="heroSub">One photo of a Persian rug, a painting, or an antique. RugSnap reads the knots and the brushwork, places the region, dates the piece — and gives you an honest value range in seconds.</p>
+    <a class="cta" href="app.html" data-i18n="ctaTry">Appraise free</a>
+    <span class="cta-note" data-i18n="ctaNote">No account needed · 2 free appraisals</span>
+
+    <figure class="stage" aria-label="A generative Persian rug, woven by code">
+      <div class="device" id="device">
+        <div class="hud" aria-hidden="true">
+          <span class="hud-chip" id="scanChip"><i class="hud-dot"></i><span data-i18n="scanning">Scanning…</span></span>
+          <span class="hud-chip match hidden" id="matchChip"><svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="match">98% Match</span></span>
+        </div>
+        <video id="heroVideo" class="hidden" autoplay muted loop playsinline aria-hidden="true"></video>
+        <canvas id="rugCanvas" width="720" height="900"></canvas>
+        <div class="caption">
+          <span class="t" data-i18n="loomTitle">Tabriz medallion · lachak-toranj</span>
+          <span class="v">$2,400–3,800</span>
+        </div>
+      </div>
+      <figcaption class="stage-note" data-i18n="loomNote">Woven live by the page — reload for a new rug. Tilt with your cursor.</figcaption>
+    </figure>
+  </header>
+
+  <section aria-labelledby="readsTitle" id="appraisal">
+    <span class="sec-eyebrow" data-i18n="readsEyebrow">The appraisal</span>
+    <h2 class="sec-title" id="readsTitle" data-i18n="readsTitle">Precision in every thread</h2>
+    <p class="sec-sub" data-i18n="readsSub">The same signals a dealer reads in the bazaar — structure, style, age, and honesty about condition.</p>
+    <div class="grid4">
+      <div class="fcard glass" data-reveal>
+        <div class="ic"><svg width="24" height="24" viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 8h4v14H4zM12 8h4v14h-4zM20 8h4v14h-4z"/><path d="M2 5h26M2 25h26" stroke-linecap="round"/></svg></div>
+        <h3 data-i18n="r1t">Weave &amp; knots</h3>
+        <p data-i18n="r1p">Hand-knotted or machine-made, Turkish or Persian knot, and an estimate of density per square inch.</p>
+      </div>
+      <div class="fcard glass" data-reveal>
+        <div class="ic"><svg width="24" height="24" viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="15" cy="15" r="12"/><path d="M15 3v4M15 23v4M3 15h4M23 15h4"/><path d="M15 10l3.5 5L15 20l-3.5-5z" fill="currentColor" stroke="none"/></svg></div>
+        <h3 data-i18n="r2t">Region &amp; school</h3>
+        <p data-i18n="r2p">Tabriz or Kashan, Qajar oil or nastaliq panel — the tradition your piece belongs to, and why.</p>
+      </div>
+      <div class="fcard glass" data-reveal>
+        <div class="ic"><svg width="24" height="24" viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="15" cy="15" r="12"/><path d="M15 8v7l5 3" stroke-linecap="round"/></svg></div>
+        <h3 data-i18n="r3t">Era &amp; materials</h3>
+        <p data-i18n="r3p">Approximate age, wool or silk, oil or ink, and whether dyes and pigments read natural or synthetic.</p>
+      </div>
+      <div class="fcard glass" data-reveal>
+        <div class="ic"><svg width="24" height="24" viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 4v22M15 6l-8 3v2a8 8 0 0 0 16 0V9z" stroke-linejoin="round"/><path d="M9 26h12" stroke-linecap="round"/></svg></div>
+        <h3 data-i18n="r4t">An honest value</h3>
+        <p data-i18n="r4p">A conservative USD range with a stated confidence level — never oversold, never underspoken.</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="howTitle">
+    <span class="sec-eyebrow" data-i18n="howEyebrow">How it works</span>
+    <h2 class="sec-title" id="howTitle" data-i18n="howTitle">Three taps to an appraisal</h2>
+    <p class="sec-sub" data-i18n="howSub">From pocket to appraisal card in about fifteen seconds.</p>
+    <div class="steps3">
+      <div class="scard glass" data-reveal><div class="n">1</div><h3 data-i18n="st1t">Photograph</h3><p data-i18n="st1p">Whole item in frame, good light, straight-on angle.</p></div>
+      <div class="scard glass" data-reveal><div class="n">2</div><h3 data-i18n="st2t">Analysis</h3><p data-i18n="st2p">AI examines structure, motifs, palette and wear like a master dealer.</p></div>
+      <div class="scard glass" data-reveal><div class="n">3</div><h3 data-i18n="st3t">Appraisal card</h3><p data-i18n="st3p">Origin, era, materials, condition, the story — and a value range you can act on.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="moreTitle" id="bazaar">
+    <span class="sec-eyebrow" data-i18n="moreEyebrow">Beyond the rug</span>
+    <h2 class="sec-title" id="moreTitle" data-i18n="moreTitle">Art, antiques — and the Bazaar</h2>
+    <p class="sec-sub" data-i18n="moreSub">Every appraisal can become a listing. We only earn when you sell.</p>
+    <div class="duo">
+      <div class="fcard glass" data-reveal>
+        <span class="tag" data-i18n="mNew">New</span>
+        <h3 data-i18n="m1t">Art &amp; painting</h3>
+        <p data-i18n="m1p">Qajar oils, Persian miniatures, nastaliq calligraphy, Western paintings and works on paper — medium, school, signature, and value.</p>
+      </div>
+      <div class="fcard glass" data-reveal>
+        <span class="tag" data-i18n="mSoon">The Bazaar</span>
+        <h3 data-i18n="m2t">Sell it in one tap</h3>
+        <p data-i18n="m2p">Your appraisal card becomes the listing. Buyers see the full analysis; RugSnap takes 10% only when it sells — 7% for Pro.</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="priceTitle" id="pricing">
+    <span class="sec-eyebrow" data-i18n="priceEyebrow">Pricing</span>
+    <h2 class="sec-title" id="priceTitle" data-i18n="priceTitle">Start free. Stay for the collection.</h2>
+    <p class="sec-sub" data-i18n="priceSub">Two free appraisals on every device — upgrade when you're hooked.</p>
+    <div class="plans">
+      <div class="plan glass hot" data-reveal>
+        <span class="badge" data-i18n="bestValue">BEST VALUE · SAVE 84%</span>
+        <div class="price">$39.99</div>
+        <div class="per" data-i18n="perYear">per year, after a 7-day free trial</div>
+        <ul>
+          <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pl1">Unlimited appraisals</span></li>
+          <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pl2">Value ranges &amp; condition notes</span></li>
+          <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pl3">7% Bazaar fee instead of 10%</span></li>
+        </ul>
+      </div>
+      <div class="plan glass" data-reveal>
+        <div class="price">$4.99</div>
+        <div class="per" data-i18n="perWeek">per week, billed weekly</div>
+        <ul>
+          <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pl1b">Unlimited appraisals</span></li>
+          <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pl2b">Value ranges &amp; condition notes</span></li>
+          <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pl3b">Cancel anytime</span></li>
+        </ul>
+      </div>
+    </div>
+    <p class="center"><a class="cta" href="app.html" data-i18n="ctaBottom">Scan your first piece free</a></p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap" data-i18n="footer">RugSnap · AI estimates are for guidance only — not certified appraisals.</div>
+</footer>
+
+<script>
+"use strict";
+/* ---------- i18n ---------- */
+const I18N = {
+  en: {
+    brand:"RugSnap", eyebrow:"AI appraisal · rugs, art & antiques",
+    navAppraise:"Appraisal", navBazaar:"The Bazaar", navPricing:"Pricing",
+    scanning:"Scanning…", match:"98% Match",
+    heroTitle:'Know what it\'s<br><span class="g">really worth</span>',
+    heroSub:"One photo of a Persian rug, a painting, or an antique. RugSnap reads the knots and the brushwork, places the region, dates the piece — and gives you an honest value range in seconds.",
+    ctaTry:"Appraise free", ctaNote:"No account needed · 2 free appraisals",
+    loomTitle:"Tabriz medallion · lachak-toranj",
+    loomNote:"Woven live by the page — reload for a new rug. Tilt with your cursor.",
+    readsEyebrow:"The appraisal", readsTitle:"Precision in every thread",
+    readsSub:"The same signals a dealer reads in the bazaar — structure, style, age, and honesty about condition.",
+    r1t:"Weave & knots", r1p:"Hand-knotted or machine-made, Turkish or Persian knot, and an estimate of density per square inch.",
+    r2t:"Region & school", r2p:"Tabriz or Kashan, Qajar oil or nastaliq panel — the tradition your piece belongs to, and why.",
+    r3t:"Era & materials", r3p:"Approximate age, wool or silk, oil or ink, and whether dyes and pigments read natural or synthetic.",
+    r4t:"An honest value", r4p:"A conservative USD range with a stated confidence level — never oversold, never underspoken.",
+    howEyebrow:"How it works", howTitle:"Three taps to an appraisal",
+    howSub:"From pocket to appraisal card in about fifteen seconds.",
+    st1t:"Photograph", st1p:"Whole item in frame, good light, straight-on angle.",
+    st2t:"Analysis", st2p:"AI examines structure, motifs, palette and wear like a master dealer.",
+    st3t:"Appraisal card", st3p:"Origin, era, materials, condition, the story — and a value range you can act on.",
+    moreEyebrow:"Beyond the rug", moreTitle:"Art, antiques — and the Bazaar",
+    moreSub:"Every appraisal can become a listing. We only earn when you sell.",
+    mNew:"New", mSoon:"The Bazaar",
+    m1t:"Art & painting",
+    m1p:"Qajar oils, Persian miniatures, nastaliq calligraphy, Western paintings and works on paper — medium, school, signature, and value.",
+    m2t:"Sell it in one tap",
+    m2p:"Your appraisal card becomes the listing. Buyers see the full analysis; RugSnap takes 10% only when it sells — 7% for Pro.",
+    priceEyebrow:"Pricing", priceTitle:"Start free. Stay for the collection.",
+    priceSub:"Two free appraisals on every device — upgrade when you're hooked.",
+    bestValue:"BEST VALUE · SAVE 84%",
+    perYear:"per year, after a 7-day free trial", perWeek:"per week, billed weekly",
+    pl1:"Unlimited appraisals", pl2:"Value ranges & condition notes", pl3:"7% Bazaar fee instead of 10%",
+    pl1b:"Unlimited appraisals", pl2b:"Value ranges & condition notes", pl3b:"Cancel anytime",
+    ctaBottom:"Scan your first piece free",
+    footer:"RugSnap · AI estimates are for guidance only — not certified appraisals.",
+  },
+  fa: {
+    brand:"راگ‌اسنپ", eyebrow:"کارشناسی هوشمند · فرش، هنر و عتیقه",
+    navAppraise:"کارشناسی", navBazaar:"بازار", navPricing:"قیمت‌ها",
+    scanning:"در حال اسکن…", match:"۹۸٪ تطبیق",
+    heroTitle:'بدان <span class="g">واقعاً چقدر می‌ارزد</span>',
+    heroSub:"یک عکس از فرش ایرانی، تابلو نقاشی یا عتیقه کافی است. راگ‌اسنپ گره‌ها و قلم‌مو را می‌خواند، منطقه را پیدا می‌کند، قدمت را تخمین می‌زند — و در چند ثانیه بازه ارزش منصفانه می‌دهد.",
+    ctaTry:"رایگان کارشناسی کن", ctaNote:"بدون ثبت‌نام · ۲ کارشناسی رایگان",
+    loomTitle:"ترنج تبریز · لچک‌ترنج",
+    loomNote:"این فرش را خودِ صفحه می‌بافد — رفرش کن تا فرش تازه‌ای ببافد. با نشانگر بچرخانش.",
+    readsEyebrow:"کارشناسی", readsTitle:"دقت در هر تار و پود",
+    readsSub:"همان نشانه‌هایی که یک دلال خبره در بازار می‌خواند — ساختار، سبک، قدمت، و صداقت درباره وضعیت.",
+    r1t:"بافت و گره", r1p:"دستباف یا ماشینی، گره ترکی یا فارسی، و تخمین تراکم گره در هر اینچ مربع.",
+    r2t:"منطقه و مکتب", r2p:"تبریز یا کاشان، رنگ‌روغن قاجاری یا قطعه نستعلیق — اثر شما به کدام مکتب تعلق دارد و چرا.",
+    r3t:"قدمت و جنس", r3p:"سن تقریبی، پشم یا ابریشم، رنگ‌روغن یا مرکب، و طبیعی یا شیمیایی بودن رنگ‌ها.",
+    r4t:"ارزش منصفانه", r4p:"بازه محافظه‌کارانه قیمت به دلار با سطح اطمینان مشخص — نه اغراق، نه دست‌کم‌گیری.",
+    howEyebrow:"چطور کار می‌کند", howTitle:"سه لمس تا کارشناسی",
+    howSub:"از جیب تا شناسنامه اثر در حدود پانزده ثانیه.",
+    st1t:"عکس بگیر", st1p:"کل اثر در کادر، نور کافی، زاویه مستقیم.",
+    st2t:"تحلیل", st2p:"هوش مصنوعی مثل یک دلال خبره ساختار، نقوش، رنگ و ساییدگی را بررسی می‌کند.",
+    st3t:"شناسنامه اثر", st3p:"منطقه، قدمت، جنس، وضعیت، داستان — و بازه‌ای از ارزش که به آن تکیه کنی.",
+    moreEyebrow:"فراتر از فرش", moreTitle:"هنر، عتیقه — و بازار",
+    moreSub:"هر کارشناسی می‌تواند یک آگهی شود. ما فقط وقتی می‌فروشی درآمد داریم.",
+    mNew:"جدید", mSoon:"بازار",
+    m1t:"هنر و نقاشی",
+    m1p:"رنگ‌روغن قاجاری، مینیاتور ایرانی، خوشنویسی نستعلیق، نقاشی غربی و آثار روی کاغذ — تکنیک، مکتب، امضا و ارزش.",
+    m2t:"با یک لمس بفروش",
+    m2p:"کارت کارشناسی‌ات همان آگهی می‌شود. خریدار تحلیل کامل را می‌بیند؛ راگ‌اسنپ فقط هنگام فروش ۱۰٪ برمی‌دارد — اعضای Pro فقط ۷٪.",
+    priceEyebrow:"قیمت‌گذاری", priceTitle:"رایگان شروع کن. برای مجموعه‌ات بمان.",
+    priceSub:"دو کارشناسی رایگان روی هر دستگاه — هر وقت خواستی ارتقا بده.",
+    bestValue:"بهترین انتخاب · ۸۴٪ صرفه‌جویی",
+    perYear:"در سال، بعد از ۷ روز تست رایگان", perWeek:"در هفته، پرداخت هفتگی",
+    pl1:"کارشناسی نامحدود", pl2:"بازه ارزش و یادداشت وضعیت", pl3:"کارمزد بازار ۷٪ به‌جای ۱۰٪",
+    pl1b:"کارشناسی نامحدود", pl2b:"بازه ارزش و یادداشت وضعیت", pl3b:"لغو در هر زمان",
+    ctaBottom:"اولین اثرت را رایگان اسکن کن",
+    footer:"راگ‌اسنپ · تخمین‌های هوش مصنوعی صرفاً راهنما هستند — کارشناسی رسمی نیستند.",
+  },
+};
+const store = {
+  get lang(){ return localStorage.getItem("rs_lang") || "en"; },
+  set lang(v){ localStorage.setItem("rs_lang", v); },
+};
+function applyLang(){
+  const t = I18N[store.lang];
+  document.documentElement.lang = store.lang;
+  document.body.classList.toggle("rtl", store.lang === "fa");
+  document.getElementById("langBtn").textContent = store.lang === "fa" ? "English" : "فارسی";
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const v = t[el.dataset.i18n];
+    if (typeof v === "string") el.innerHTML = v;
+  });
+}
+document.getElementById("langBtn").onclick = () => { store.lang = store.lang === "fa" ? "en" : "fa"; applyLang(); };
+applyLang();
+
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- scroll reveal ---------- */
+if (!reduce) {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+  }, { threshold: 0.15 });
+  document.querySelectorAll("[data-reveal]").forEach((el) => io.observe(el));
+} else {
+  document.querySelectorAll("[data-reveal]").forEach((el) => el.classList.add("in"));
+}
+
+/* ---------- 3D device: scroll + pointer tilt ---------- */
+const device = document.getElementById("device");
+let mx = 0, my = 0;
+function tilt() {
+  const r = device.getBoundingClientRect();
+  const mid = r.top + r.height / 2;
+  const fromCenter = (mid - innerHeight / 2) / innerHeight;      // -0.5 .. 0.5-ish
+  const rx = fromCenter * 26 + my * -7;
+  const ry = mx * 10;
+  device.style.transform = `rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
+}
+if (!reduce) {
+  addEventListener("scroll", tilt, { passive: true });
+  addEventListener("pointermove", (e) => {
+    mx = (e.clientX / innerWidth - 0.5) * 2;
+    my = (e.clientY / innerHeight - 0.5) * 2;
+    tilt();
+  }, { passive: true });
+  tilt();
+}
+
+/* ---------- scanning HUD: "Scanning…" flips to "98% Match" when done ---------- */
+function hudMatch() {
+  const scan = document.getElementById("scanChip");
+  const match = document.getElementById("matchChip");
+  if (!scan || !match || !match.classList.contains("hidden")) return;
+  scan.classList.add("hidden");
+  match.classList.remove("hidden");
+  match.classList.add("pop");
+}
+
+/* ---------- the loom: a generative Tabriz rug, woven row by row ---------- */
+(() => {
+  const canvas = document.getElementById("rugCanvas");
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext("2d");
+
+  const seed = Math.random();
+  const shift = (hex, amt) => {
+    const n = parseInt(hex.slice(1), 16);
+    const c = (v) => Math.max(0, Math.min(255, v + Math.round(amt)));
+    return `rgb(${c(n >> 16)},${c((n >> 8) & 255)},${c(n & 255)})`;
+  };
+  const drift = (seed - 0.5) * 30;
+  const P = {
+    field: shift("#8d2f20", drift),
+    navy: shift("#26355c", -drift * 0.6),
+    ivory: "#e9dcbb",
+    gold: shift("#c9963e", drift * 0.4),
+    teal: shift("#3f6f63", -drift * 0.3),
+  };
+
+  const off = document.createElement("canvas");
+  off.width = W; off.height = H;
+  const o = off.getContext("2d");
+
+  const lobed = (c, cx, cy, r, k, squish, fill) => {
+    c.fillStyle = fill; c.beginPath();
+    for (let a = 0; a <= Math.PI * 2 + 0.01; a += 0.02) {
+      const rr = r * (1 + 0.09 * Math.cos(k * a));
+      const x = cx + Math.cos(a) * rr * squish, y = cy + Math.sin(a) * rr;
+      a === 0 ? c.moveTo(x, y) : c.lineTo(x, y);
+    }
+    c.closePath(); c.fill();
+  };
+  const boteh = (c, x, y, s, fill) => {
+    c.save(); c.translate(x, y); c.rotate(0.5); c.fillStyle = fill;
+    c.beginPath(); c.moveTo(0, -s);
+    c.quadraticCurveTo(s, -s * 0.6, s * 0.55, s * 0.35);
+    c.quadraticCurveTo(s * 0.25, s, 0, s * 0.75);
+    c.quadraticCurveTo(-s * 0.7, s * 0.4, 0, -s);
+    c.closePath(); c.fill(); c.restore();
+  };
+
+  o.fillStyle = P.navy; o.fillRect(0, 0, W, H);
+  o.strokeStyle = P.gold; o.lineWidth = 2; o.strokeRect(12, 12, W - 24, H - 24);
+  for (let i = 34; i < W - 34; i += 46) { boteh(o, i, 34, 9, P.ivory); boteh(o, i, H - 34, 9, P.ivory); }
+  for (let j = 76; j < H - 60; j += 46) { boteh(o, 34, j, 9, P.ivory); boteh(o, W - 34, j, 9, P.ivory); }
+  o.fillStyle = P.ivory; o.fillRect(58, 58, W - 116, H - 116);
+  o.fillStyle = P.field; o.fillRect(68, 68, W - 136, H - 136);
+  for (let i = 108; i < W - 100; i += 78)
+    for (let j = 118; j < H - 106; j += 92)
+      boteh(o, i + (((i * 13 + j * 7) % 3) - 1) * 6, j, 7, "rgba(233,220,187,.42)");
+  const cx = W / 2, cy = H / 2;
+  [[300, P.navy], [268, P.ivory], [232, P.teal], [190, P.ivory], [148, P.navy], [106, P.field]]
+    .forEach(([r, f]) => lobed(o, cx, cy, r, 10, 0.74, f));
+  lobed(o, cx, cy, 52, 8, 1, P.gold);
+  o.fillStyle = P.navy; o.beginPath(); o.arc(cx, cy, 20, 0, 7); o.fill();
+  o.fillStyle = P.gold; o.beginPath(); o.arc(cx, cy, 8, 0, 7); o.fill();
+  o.fillStyle = P.ivory;
+  [[68, 68, 1, 1], [W - 68, 68, -1, 1], [68, H - 68, 1, -1], [W - 68, H - 68, -1, -1]]
+    .forEach(([px, py, sx, sy]) => {
+      o.beginPath(); o.moveTo(px, py);
+      o.lineTo(px + sx * 170, py); o.quadraticCurveTo(px + sx * 60, py + sy * 60, px, py + sy * 170);
+      o.closePath(); o.fill();
+    });
+  o.fillStyle = "rgba(0,0,0,.07)";
+  for (let j = 0; j < H; j += 4) o.fillRect(0, j, W, 1);
+
+  if (reduce) { ctx.drawImage(off, 0, 0); hudMatch(); return; }
+
+  // after the weave: a slow drone-style flyover across the finished rug
+  const cruise = (ts0) => (ts) => {
+    const t = ts - ts0;
+    const scale = 1.10 + 0.05 * Math.sin(t / 6500);
+    const sw = W / scale, sh = H / scale;
+    const sx = (W - sw) / 2 + Math.sin(t / 9000) * (W - sw) * 0.4;
+    const sy = (H - sh) / 2 + Math.cos(t / 7400) * (H - sh) * 0.4;
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(off, sx, sy, sw, sh, 0, 0, W, H);
+    requestAnimationFrame(cruise(ts0));
+  };
+
+  const DURATION = 2800;
+  let start = null;
+  const tick = (ts) => {
+    if (!start) start = ts;
+    const p = Math.min(1, (ts - start) / DURATION);
+    const eased = 1 - Math.pow(1 - p, 2.2);
+    const rows = Math.floor(eased * H);
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(off, 0, 0, W, rows, 0, 0, W, rows);
+    if (p < 1) {
+      ctx.fillStyle = "rgba(34,211,238,.9)";
+      ctx.fillRect(0, rows, W, 2);
+      requestAnimationFrame(tick);
+    } else {
+      hudMatch();
+      requestAnimationFrame((t0) => requestAnimationFrame(cruise(t0)));
+    }
+  };
+  requestAnimationFrame(tick);
+})();
+
+/* ---------- cinematic hero video (drops in when video/hero.* exists) ---------- */
+(() => {
+  const v = document.getElementById("heroVideo");
+  if (!v) return;
+  v.addEventListener("canplay", () => {
+    v.classList.remove("hidden");
+    document.getElementById("rugCanvas").classList.add("hidden");
+    setTimeout(hudMatch, 2600);
+  }, { once: true });
+  v.addEventListener("error", () => v.remove(), { once: true });
+  const h264 = v.canPlayType('video/mp4; codecs="avc1.4D401F"');
+  v.src = h264 ? "video/hero.mp4" : "video/hero.webm";
+})();
+</script>
+</body>
+</html>

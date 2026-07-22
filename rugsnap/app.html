@@ -34,14 +34,20 @@
   body{background:var(--ground);color:var(--ivory);font:15.5px/1.65 var(--font-body);-webkit-font-smoothing:antialiased}
   ::selection{background:var(--gold);color:var(--ground)}
   button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  input,textarea{font:inherit;color:var(--ivory);background:var(--surface-2);border:1px solid var(--line);
+    border-radius:var(--r-sm);padding:11px 13px;width:100%}
+  input:focus,textarea:focus{outline:none;border-color:var(--gold)}
   :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:2px}
-  .wrap{max-width:520px;margin:0 auto;padding:18px 18px 90px;min-height:100vh}
+  .wrap{max-width:520px;margin:0 auto;padding:18px 18px 110px;min-height:100vh}
   .hidden{display:none!important}
   h1{font-family:var(--font-display);font-weight:400;font-size:26px;letter-spacing:.01em;
      margin:0 0 6px;text-wrap:balance}
   h2{font-family:var(--font-body);font-size:11.5px;color:var(--umber);margin:26px 0 10px;font-weight:600;
      letter-spacing:.18em;text-transform:uppercase}
   body.rtl h2{letter-spacing:.05em}
+  label{display:block;font-size:12px;color:var(--sand);font-weight:600;margin:14px 0 6px;
+     letter-spacing:.1em;text-transform:uppercase}
+  body.rtl label{letter-spacing:.03em}
   .mut{color:var(--sand)} .dim{color:var(--umber)} .small{font-size:13.5px}
 
   .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
@@ -58,9 +64,22 @@
   .btn:hover{background:#c44e35}
   .btn.ghost{background:var(--surface-2);border:1px solid var(--line);color:var(--ivory)}
   .btn.ghost:hover{background:var(--surface)}
+  .btn.gold{background:transparent;border:1px solid var(--gold);color:var(--gold)}
+  .btn.gold:hover{background:var(--gold-soft)}
   .btn:disabled{opacity:.5;cursor:default}
   .row{display:flex;gap:10px;margin-top:14px}
   .row .btn{margin:0}
+
+  /* ---------- bottom nav ---------- */
+  .nav{position:fixed;bottom:0;left:0;right:0;z-index:40;background:rgba(19,13,7,.94);
+    backdrop-filter:blur(8px);border-top:1px solid var(--line-soft)}
+  .nav-inner{max-width:520px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr}
+  .nav button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 0 13px;
+    color:var(--umber);font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    transition:color .15s}
+  body.rtl .nav button{letter-spacing:.02em}
+  .nav button.on{color:var(--gold)}
+  .nav svg{display:block}
 
   /* ---------- home ---------- */
   .dropzone{border:1px dashed var(--gold);border-radius:var(--r-sm);padding:36px 20px;text-align:center;
@@ -70,6 +89,8 @@
   .dz-title{font-family:var(--font-display);font-size:18px;letter-spacing:.01em}
   .counter{font-size:13px;color:var(--sand);text-align:center;margin-top:14px}
   .counter b{color:var(--gold);font-weight:600}
+  .cats{display:flex;justify-content:center;gap:8px;margin-top:16px;flex-wrap:wrap}
+  .cats .chip{cursor:default}
 
   .history{display:flex;flex-direction:column;gap:8px}
   .hitem{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line-soft);
@@ -123,13 +144,44 @@
   .chips{display:flex;flex-wrap:wrap;gap:7px}
   .chip{font-size:12.5px;padding:4px 12px;border-radius:999px;background:var(--surface-2);
     border:1px solid var(--line-soft);color:var(--sand)}
+  .chip.on{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
   .prose{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-sm);
     padding:15px 17px;font-size:14.5px}
   .tips{margin:0;padding-inline-start:18px}
   .tips li{margin-bottom:6px;font-size:14px;color:var(--sand)}
   .disclaimer{font-size:11.5px;color:var(--umber);margin-top:18px;line-height:1.55}
 
-  /* ---------- paywall ---------- */
+  /* ---------- market ---------- */
+  .filter-row{display:flex;gap:8px;margin:16px 0 18px;flex-wrap:wrap}
+  .filter-row .chip{cursor:pointer;transition:border-color .15s,color .15s}
+  .market-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .mcard{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-sm);
+    overflow:hidden;cursor:pointer;transition:border-color .15s;text-align:start;padding:0;display:block;width:100%}
+  .mcard:hover{border-color:var(--gold)}
+  .mcard .ph{position:relative;aspect-ratio:4/5;background:var(--surface-2)}
+  .mcard .ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .mcard .mine-badge{position:absolute;top:8px;inset-inline-start:8px;background:var(--teal);color:#fff;
+    font-size:9.5px;font-weight:700;letter-spacing:.08em;padding:2px 8px;border-radius:999px}
+  .mcard .mbody{padding:10px 12px 12px}
+  .mcard .mt{font-family:var(--font-display);font-size:14.5px;line-height:1.35}
+  .mcard .mm{font-size:11.5px;color:var(--umber);margin-top:2px}
+  .mcard .mp{font-family:var(--font-display);font-size:16px;color:var(--gold);margin-top:6px;
+    font-variant-numeric:tabular-nums}
+  .market-note{font-size:11.5px;color:var(--umber);text-align:center;margin-top:18px;line-height:1.55}
+
+  .listing-hero{border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--line)}
+  .listing-hero img{width:100%;max-height:380px;object-fit:cover;display:block}
+  .price-line{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:14px}
+  .price-line .p{font-family:var(--font-display);font-size:30px;color:var(--gold);font-variant-numeric:tabular-nums}
+  .price-line .c{font-size:12.5px;color:var(--umber)}
+
+  .fee-box{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-sm);
+    padding:13px 15px;margin-top:16px;font-size:13.5px;color:var(--sand)}
+  .fee-box .fee-line{display:flex;justify-content:space-between;padding:3px 0}
+  .fee-box .fee-line.total{border-top:1px solid var(--line-soft);margin-top:6px;padding-top:9px;color:var(--ivory)}
+  .fee-box .n{font-variant-numeric:tabular-nums}
+
+  /* ---------- sheets (paywall / offer) ---------- */
   .pw{position:fixed;inset:0;background:rgba(10,7,4,.82);backdrop-filter:blur(6px);
     display:grid;place-items:end center;z-index:50}
   .pw-card{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--line);
@@ -152,6 +204,12 @@
   body.rtl .plan .save{transform:translateX(50%);letter-spacing:.02em}
   .pw-note{font-size:11.5px;color:var(--umber);text-align:center;margin-top:12px}
   .linkbtn{display:block;margin:12px auto 0;color:var(--umber);font-size:13px;text-decoration:underline}
+
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(8px);z-index:60;
+    background:var(--surface-2);border:1px solid var(--gold);color:var(--ivory);border-radius:var(--r-md);
+    padding:12px 20px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;
+    max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{animation:none!important;transition:none!important}
@@ -176,12 +234,17 @@
 
   <!-- HOME -->
   <section id="home">
-    <h1 data-i18n="homeTitle">Identify any rug or antique</h1>
-    <p class="mut small" data-i18n="homeSub">Snap a photo of a Persian or Oriental rug, carpet, or antique — get its origin, era, materials, and estimated value in seconds.</p>
+    <h1 data-i18n="homeTitle">Identify any rug, artwork, or antique</h1>
+    <p class="mut small" data-i18n="homeSub">Snap a photo of a Persian or Oriental rug, a painting or calligraphy, or an antique — get its origin, era, materials, and estimated value in seconds.</p>
     <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Take or upload a photo">
       <div class="ic"><svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="9" width="28" height="20" rx="3"/><path d="M12 9l2.4-4h5.2L22 9"/><circle cx="17" cy="19" r="6"/></svg></div>
       <div class="dz-title" data-i18n="dzTitle">Take or upload a photo</div>
       <div class="dim small" data-i18n="dzSub">Full item in frame, good light, straight-on angle</div>
+    </div>
+    <div class="cats">
+      <span class="chip" data-i18n="catRugs">Rugs &amp; carpets</span>
+      <span class="chip" data-i18n="catArt">Art &amp; painting</span>
+      <span class="chip" data-i18n="catAntiques">Antiques</span>
     </div>
     <input type="file" id="fileInput" accept="image/*" capture="environment" class="hidden" />
     <div class="counter" id="counter"></div>
@@ -207,8 +270,8 @@
       <div class="spinner" aria-hidden="true"></div>
       <div class="loading-title" data-i18n="analyzing">Analyzing your piece…</div>
       <ul class="steps" id="steps">
-        <li><span class="tick">✓</span><span data-i18n="step1">Reading weave structure &amp; knots</span></li>
-        <li><span class="tick">✓</span><span data-i18n="step2">Matching regional design motifs</span></li>
+        <li><span class="tick">✓</span><span data-i18n="step1">Reading structure, medium &amp; technique</span></li>
+        <li><span class="tick">✓</span><span data-i18n="step2">Matching regional styles &amp; motifs</span></li>
         <li><span class="tick">✓</span><span data-i18n="step3">Estimating era &amp; materials</span></li>
         <li><span class="tick">✓</span><span data-i18n="step4">Calculating market value</span></li>
       </ul>
@@ -231,8 +294,8 @@
     <div class="facts">
       <div class="fact"><div class="k" data-i18n="fOrigin">Origin</div><div class="v" id="fOrigin"></div></div>
       <div class="fact"><div class="k" data-i18n="fEra">Era</div><div class="v" id="fEra"></div></div>
-      <div class="fact"><div class="k" data-i18n="fWeave">Weave</div><div class="v" id="fWeave"></div></div>
-      <div class="fact"><div class="k" data-i18n="fKnots">Knot density</div><div class="v" id="fKnots"></div></div>
+      <div class="fact"><div class="k" id="fTechLabel">Technique</div><div class="v" id="fTech"></div></div>
+      <div class="fact"><div class="k" id="fMarksLabel">Marks</div><div class="v" id="fMarks"></div></div>
     </div>
     <h2 data-i18n="hMaterials">Materials</h2>
     <div class="chips" id="materials"></div>
@@ -245,21 +308,84 @@
     <h2 data-i18n="hCare">Care tips</h2>
     <div class="prose"><ul class="tips" id="care"></ul></div>
     <p class="disclaimer" data-i18n="disclaimer">Estimates are generated by AI from a single photo and are for guidance only — not a certified appraisal. For insurance or sale, consult a professional appraiser.</p>
+    <button class="btn gold" id="sellBtn" style="margin-top:16px" data-i18n="listBtn">List it in the Bazaar</button>
     <div class="row">
       <button class="btn ghost" id="shareBtn" data-i18n="share">Share</button>
       <button class="btn" id="newScanBtn" data-i18n="scanAnother">Scan another</button>
     </div>
   </section>
+
+  <!-- MARKET -->
+  <section id="marketScreen" class="hidden">
+    <h1 data-i18n="marketTitle">The Bazaar</h1>
+    <p class="mut small" data-i18n="marketSub">Pieces listed straight from their appraisal cards.</p>
+    <div class="filter-row" id="filterRow" role="tablist">
+      <button class="chip on" data-cat="all" role="tab" aria-selected="true" data-i18n="catAll">All</button>
+      <button class="chip" data-cat="rug" role="tab" aria-selected="false" data-i18n="catRugs">Rugs &amp; carpets</button>
+      <button class="chip" data-cat="art" role="tab" aria-selected="false" data-i18n="catArt">Art &amp; painting</button>
+      <button class="chip" data-cat="antique" role="tab" aria-selected="false" data-i18n="catAntiques">Antiques</button>
+    </div>
+    <div class="market-grid" id="marketGrid"></div>
+    <p class="market-note" data-i18n="marketNote">Offers are messages for now — secure checkout, escrow, and shipping arrive with the public launch. RugSnap fee: 10% when it sells (7% for Pro).</p>
+  </section>
+
+  <!-- LISTING DETAIL -->
+  <section id="listingScreen" class="hidden">
+    <div class="listing-hero"><img id="lstImg" alt="" /></div>
+    <h1 id="lstTitle" style="margin-top:16px"></h1>
+    <p class="result-type" id="lstMeta"></p>
+    <div class="price-line">
+      <span class="p" id="lstPrice"></span>
+      <span class="c" id="lstCity"></span>
+    </div>
+    <div class="chips" id="lstFacts" style="margin-top:12px"></div>
+    <h2 data-i18n="hSellerNote">Seller's note</h2>
+    <div class="prose" id="lstNote"></div>
+    <button class="btn" id="offerBtn" style="margin-top:18px" data-i18n="offerBtn">Make an offer</button>
+    <button class="btn ghost" id="backToMarket" style="margin-top:10px" data-i18n="backMarket">Back to the Bazaar</button>
+  </section>
+
+  <!-- SELL FORM -->
+  <section id="sellScreen" class="hidden">
+    <h1 data-i18n="sellTitle">List it in the Bazaar</h1>
+    <p class="mut small" data-i18n="sellSub">Your appraisal card becomes the listing — buyers see the full analysis.</p>
+    <div class="frame" style="margin-top:14px"><img class="preview" id="sellImg" alt="" style="max-height:180px" /></div>
+    <label for="sellTitleInput" data-i18n="lTitle">Title</label>
+    <input id="sellTitleInput" />
+    <label for="sellPriceInput" data-i18n="lPrice">Asking price (USD)</label>
+    <input id="sellPriceInput" type="number" min="1" inputmode="numeric" />
+    <label for="sellCityInput" data-i18n="lCity">Ships from (city)</label>
+    <input id="sellCityInput" placeholder="Los Angeles, CA" />
+    <label for="sellNoteInput" data-i18n="lNote">Note to buyers (optional)</label>
+    <textarea id="sellNoteInput" rows="3"></textarea>
+    <div class="fee-box" id="feeBox"></div>
+    <button class="btn" id="publishBtn" style="margin-top:16px" data-i18n="publishBtn">Publish listing</button>
+    <button class="btn ghost" id="cancelSell" style="margin-top:10px" data-i18n="cancel">Cancel</button>
+  </section>
 </div>
+
+<!-- bottom nav -->
+<nav class="nav" aria-label="Main">
+  <div class="nav-inner">
+    <button id="navAppraise" class="on">
+      <svg width="21" height="21" viewBox="0 0 21 21" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M13.5 13.5 19 19" stroke-linecap="round"/></svg>
+      <span data-i18n="navAppraise">Appraise</span>
+    </button>
+    <button id="navMarket">
+      <svg width="21" height="21" viewBox="0 0 21 21" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 8.5 4.5 3h12L18 8.5M3 8.5h15M3 8.5V18h15V8.5M8 18v-5h5v5" stroke-linejoin="round"/></svg>
+      <span data-i18n="navMarket">Bazaar</span>
+    </button>
+  </div>
+</nav>
 
 <!-- PAYWALL -->
 <div class="pw hidden" id="paywall" role="dialog" aria-modal="true" aria-labelledby="pwTitle">
   <div class="pw-card">
     <h1 id="pwTitle" data-i18n="pwTitle">Unlock unlimited appraisals</h1>
     <ul class="perks">
-      <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b data-i18n="pk1b">Unlimited scans</b> — <span data-i18n="pk1">rugs, carpets &amp; antiques</span></span></li>
+      <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b data-i18n="pk1b">Unlimited scans</b> — <span data-i18n="pk1">rugs, art &amp; antiques</span></span></li>
       <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b data-i18n="pk2b">Value estimates</b> — <span data-i18n="pk2">honest USD market ranges</span></span></li>
-      <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b data-i18n="pk3b">Expert detail</b> — <span data-i18n="pk3">knots, dyes, motifs &amp; history</span></span></li>
+      <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b data-i18n="pk3b">Lower Bazaar fee</b> — <span data-i18n="pk3">7% instead of 10% when you sell</span></span></li>
       <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b data-i18n="pk4b">Collection history</b> — <span data-i18n="pk4">every scan saved on device</span></span></li>
     </ul>
     <div class="plans">
@@ -279,30 +405,64 @@
   </div>
 </div>
 
+<!-- OFFER SHEET -->
+<div class="pw hidden" id="offerSheet" role="dialog" aria-modal="true" aria-labelledby="offerTitle">
+  <div class="pw-card">
+    <h1 id="offerTitle" data-i18n="offerTitle">Make an offer</h1>
+    <p class="mut small" style="text-align:center" id="offerItemName"></p>
+    <label for="offerAmount" data-i18n="lOffer">Your offer (USD)</label>
+    <input id="offerAmount" type="number" min="1" inputmode="numeric" />
+    <button class="btn" id="offerSend" style="margin-top:16px" data-i18n="offerSend">Send offer</button>
+    <p class="pw-note" data-i18n="offerNote">The seller gets your offer as a message. Secure checkout &amp; escrow arrive with the public launch.</p>
+    <button class="linkbtn" id="offerClose" data-i18n="notNow">Not now</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
 <script>
 "use strict";
-/* RugSnap MVP.
-   Payments are stubbed: the trial button unlocks locally. Wire RevenueCat/Stripe before launch. */
+/* RugSnap MVP + Bazaar (marketplace phase 0).
+   Payments are stubbed: trial unlocks locally; offers are stored locally.
+   Wire RevenueCat/Stripe (subs) + Stripe Connect (market) before launch. */
 const API_URL = "/api/analyze";
 const FREE_SCANS = 2;
+const FEE_STANDARD = 0.10, FEE_PRO = 0.07;
 
 const I18N = {
   en: {
-    brand:"RugSnap", homeTitle:"Identify any rug or antique",
-    homeSub:"Snap a photo of a Persian or Oriental rug, carpet, or antique — get its origin, era, materials, and estimated value in seconds.",
+    brand:"RugSnap", homeTitle:"Identify any rug, artwork, or antique",
+    homeSub:"Snap a photo of a Persian or Oriental rug, a painting or calligraphy, or an antique — get its origin, era, materials, and estimated value in seconds.",
     dzTitle:"Take or upload a photo", dzSub:"Full item in frame, good light, straight-on angle",
     historyTitle:"Recent scans", previewTitle:"Ready to identify", retake:"Retake", identify:"Identify",
     analyzing:"Analyzing your piece…",
-    step1:"Reading weave structure & knots", step2:"Matching regional design motifs",
+    step1:"Reading structure, medium & technique", step2:"Matching regional styles & motifs",
     step3:"Estimating era & materials", step4:"Calculating market value",
-    estValue:"Estimated market value", fOrigin:"Origin", fEra:"Era", fWeave:"Weave", fKnots:"Knot density",
+    estValue:"Estimated market value", fOrigin:"Origin", fEra:"Era",
+    factLabels:{ rug:{tech:"Weave",marks:"Knot density"}, art:{tech:"Medium",marks:"Signature & marks"}, antique:{tech:"Craft",marks:"Maker's marks"} },
     hMaterials:"Materials", hMotifs:"Design motifs", hStory:"The story", hCondition:"Condition", hCare:"Care tips",
     disclaimer:"Estimates are generated by AI from a single photo and are for guidance only — not a certified appraisal. For insurance or sale, consult a professional appraiser.",
     share:"Share", scanAnother:"Scan another",
+    navAppraise:"Appraise", navMarket:"Bazaar",
+    marketTitle:"The Bazaar", marketSub:"Pieces listed straight from their appraisal cards.",
+    catAll:"All", catRugs:"Rugs & carpets", catArt:"Art & painting", catAntiques:"Antiques",
+    marketNote:"Offers are messages for now — secure checkout, escrow, and shipping arrive with the public launch. RugSnap fee: 10% when it sells (7% for Pro).",
+    hSellerNote:"Seller's note", offerBtn:"Make an offer", backMarket:"Back to the Bazaar",
+    yours:"YOURS", noNote:"—",
+    listBtn:"List it in the Bazaar",
+    sellTitle:"List it in the Bazaar",
+    sellSub:"Your appraisal card becomes the listing — buyers see the full analysis.",
+    lTitle:"Title", lPrice:"Asking price (USD)", lCity:"Ships from (city)", lNote:"Note to buyers (optional)",
+    publishBtn:"Publish listing", cancel:"Cancel",
+    feeAsk:"Asking price", feeFee:(p)=>`RugSnap fee (${p}%)`, feeGet:"You receive",
+    listedOk:"Listed! Your piece is live in the Bazaar.",
+    offerTitle:"Make an offer", lOffer:"Your offer (USD)", offerSend:"Send offer",
+    offerNote:"The seller gets your offer as a message. Secure checkout & escrow arrive with the public launch.",
+    offerOk:"Offer sent — the seller will get back to you.",
     pwTitle:"Unlock unlimited appraisals",
-    pk1b:"Unlimited scans", pk1:"rugs, carpets & antiques",
+    pk1b:"Unlimited scans", pk1:"rugs, art & antiques",
     pk2b:"Value estimates", pk2:"honest USD market ranges",
-    pk3b:"Expert detail", pk3:"knots, dyes, motifs & history",
+    pk3b:"Lower Bazaar fee", pk3:"7% instead of 10% when you sell",
     pk4b:"Collection history", pk4:"every scan saved on device",
     save:"SAVE 84%", yr:"yr", wk:"wk", yearlyNote:"7-day free trial", weeklyNote:"Billed weekly",
     startTrial:"Start 7-day free trial", pwNote:"Cancel anytime. Trial converts to the selected plan unless cancelled.",
@@ -310,26 +470,43 @@ const I18N = {
     scansLeft:(n)=>`<b>${n}</b> free scan${n===1?"":"s"} left`,
     proBadge:"PRO — unlimited scans",
     errAnalyze:"Couldn't analyze the photo. Check your connection and try again.",
-    errNotItem:"This doesn't look like a rug or antique — try another photo.",
+    errNotItem:"This doesn't look like a rug, artwork, or antique — try another photo.",
     confidence:{high:"HIGH CONFIDENCE",medium:"MEDIUM CONFIDENCE",low:"LOW CONFIDENCE"},
     shareText:(r)=>`I identified my ${r.name} with RugSnap — estimated $${fmt(r.estimated_value_low_usd)}–$${fmt(r.estimated_value_high_usd)}!`,
   },
   fa: {
-    brand:"راگ‌اسنپ", homeTitle:"هر فرش یا عتیقه‌ای را شناسایی کن",
-    homeSub:"از فرش، قالی یا عتیقه‌ات عکس بگیر — در چند ثانیه منطقه بافت، قدمت، جنس و ارزش تقریبی‌اش را بگیر.",
+    brand:"راگ‌اسنپ", homeTitle:"هر فرش، اثر هنری یا عتیقه‌ای را شناسایی کن",
+    homeSub:"از فرش ایرانی و شرقی، تابلو نقاشی و خوشنویسی، یا عتیقه‌ات عکس بگیر — در چند ثانیه منطقه، قدمت، جنس و ارزش تقریبی‌اش را بگیر.",
     dzTitle:"عکس بگیر یا آپلود کن", dzSub:"کل اثر در کادر، نور کافی، زاویه مستقیم",
     historyTitle:"اسکن‌های اخیر", previewTitle:"آماده شناسایی", retake:"عکس دوباره", identify:"شناسایی کن",
     analyzing:"در حال تحلیل اثر شما…",
-    step1:"بررسی ساختار بافت و گره‌ها", step2:"تطبیق نقوش منطقه‌ای",
+    step1:"بررسی ساختار، متریال و تکنیک", step2:"تطبیق سبک و نقوش منطقه‌ای",
     step3:"تخمین قدمت و جنس", step4:"محاسبه ارزش بازار",
-    estValue:"ارزش تقریبی بازار", fOrigin:"منطقه", fEra:"قدمت", fWeave:"بافت", fKnots:"تراکم گره",
+    estValue:"ارزش تقریبی بازار", fOrigin:"منطقه", fEra:"قدمت",
+    factLabels:{ rug:{tech:"بافت",marks:"تراکم گره"}, art:{tech:"تکنیک",marks:"امضا و نشان"}, antique:{tech:"ساخت",marks:"مُهر سازنده"} },
     hMaterials:"جنس و مواد", hMotifs:"نقوش", hStory:"داستان اثر", hCondition:"وضعیت", hCare:"نکات نگهداری",
     disclaimer:"تخمین‌ها توسط هوش مصنوعی و فقط از روی یک عکس تولید می‌شوند و صرفاً جنبه راهنمایی دارند — کارشناسی رسمی نیستند. برای بیمه یا فروش با کارشناس خبره مشورت کنید.",
     share:"اشتراک‌گذاری", scanAnother:"اسکن بعدی",
+    navAppraise:"کارشناسی", navMarket:"بازار",
+    marketTitle:"بازار", marketSub:"آثاری که مستقیم از روی کارت کارشناسی آگهی شده‌اند.",
+    catAll:"همه", catRugs:"فرش و قالی", catArt:"هنر و نقاشی", catAntiques:"عتیقه",
+    marketNote:"فعلاً پیشنهادها به صورت پیام به فروشنده می‌رسند — پرداخت امن، اسکرو و ارسال با لانچ عمومی فعال می‌شود. کارمزد راگ‌اسنپ: ۱۰٪ فقط وقتی فروخته شود (اعضای Pro: ۷٪).",
+    hSellerNote:"یادداشت فروشنده", offerBtn:"پیشنهاد قیمت بده", backMarket:"بازگشت به بازار",
+    yours:"مال شما", noNote:"—",
+    listBtn:"در بازار آگهی کن",
+    sellTitle:"در بازار آگهی کن",
+    sellSub:"کارت کارشناسی‌ات همان آگهی می‌شود — خریدار تحلیل کامل را می‌بیند.",
+    lTitle:"عنوان", lPrice:"قیمت پیشنهادی (دلار)", lCity:"ارسال از (شهر)", lNote:"یادداشت برای خریداران (اختیاری)",
+    publishBtn:"انتشار آگهی", cancel:"انصراف",
+    feeAsk:"قیمت پیشنهادی", feeFee:(p)=>`کارمزد راگ‌اسنپ (${p}٪)`, feeGet:"دریافتی شما",
+    listedOk:"آگهی شد! اثر شما در بازار قرار گرفت.",
+    offerTitle:"پیشنهاد قیمت", lOffer:"پیشنهاد شما (دلار)", offerSend:"ارسال پیشنهاد",
+    offerNote:"پیشنهاد شما به صورت پیام به فروشنده می‌رسد. پرداخت امن و اسکرو با لانچ عمومی فعال می‌شود.",
+    offerOk:"پیشنهاد ارسال شد — فروشنده با شما تماس می‌گیرد.",
     pwTitle:"کارشناسی نامحدود را فعال کن",
-    pk1b:"اسکن نامحدود", pk1:"فرش، قالی و عتیقه",
+    pk1b:"اسکن نامحدود", pk1:"فرش، هنر و عتیقه",
     pk2b:"تخمین ارزش", pk2:"بازه واقعی قیمت به دلار",
-    pk3b:"جزئیات تخصصی", pk3:"گره، رنگ، نقوش و تاریخچه",
+    pk3b:"کارمزد کمتر بازار", pk3:"۷٪ به‌جای ۱۰٪ هنگام فروش",
     pk4b:"آرشیو مجموعه", pk4:"همه اسکن‌ها روی دستگاه شما",
     save:"۸۴٪ تخفیف", yr:"سال", wk:"هفته", yearlyNote:"۷ روز تست رایگان", weeklyNote:"پرداخت هفتگی",
     startTrial:"شروع ۷ روز رایگان", pwNote:"هر زمان می‌توانید لغو کنید. بعد از دوره تست، پلن انتخابی فعال می‌شود.",
@@ -337,11 +514,51 @@ const I18N = {
     scansLeft:(n)=>`<b>${n}</b> اسکن رایگان باقی مانده`,
     proBadge:"PRO — اسکن نامحدود",
     errAnalyze:"تحلیل عکس ممکن نشد. اینترنت را چک کنید و دوباره امتحان کنید.",
-    errNotItem:"این عکس شبیه فرش یا عتیقه نیست — عکس دیگری امتحان کنید.",
+    errNotItem:"این عکس شبیه فرش، اثر هنری یا عتیقه نیست — عکس دیگری امتحان کنید.",
     confidence:{high:"اطمینان بالا",medium:"اطمینان متوسط",low:"اطمینان پایین"},
     shareText:(r)=>`با راگ‌اسنپ «${r.name}» را شناسایی کردم — ارزش تقریبی $${fmt(r.estimated_value_low_usd)} تا $${fmt(r.estimated_value_high_usd)}!`,
   },
 };
+
+/* Bazaar seed listings (demo inventory until the backend ships). */
+const SEEDS = [
+  {
+    id:"seed-heriz", category:"rug", img:"img/seed-heriz.jpg", price:3200,
+    en:{ title:"Heriz carpet, geometric medallion", meta:"NW Persia · c. 1940s", city:"Pasadena, CA",
+      facts:["Hand-knotted","Wool on cotton","9×12 ft"],
+      note:"From my grandmother's estate. Even pile, one professionally repaired corner. Appraisal card attached." },
+    fa:{ title:"قالی هریس، ترنج هندسی", meta:"شمال‌غرب ایران · دهه ۱۹۴۰", city:"پاسادینا، کالیفرنیا",
+      facts:["دستبافت","پشم روی پنبه","۹×۱۲ فوت"],
+      note:"از میراث مادربزرگم. پرز یکنواخت، یک گوشه رفوی تخصصی شده. کارت کارشناسی پیوست است." },
+  },
+  {
+    id:"seed-qashqai", category:"rug", img:"img/seed-qashqai.jpg", price:1450,
+    en:{ title:"Qashqai tribal rug", meta:"Fars province · c. 1960s", city:"Irvine, CA",
+      facts:["Hand-knotted","Natural dyes","5×8 ft"],
+      note:"Bought in Shiraz in the 70s. Rich color, honest wear, no repairs." },
+    fa:{ title:"فرش عشایری قشقایی", meta:"استان فارس · دهه ۱۹۶۰", city:"ایروین، کالیفرنیا",
+      facts:["دستبافت","رنگ طبیعی","۵×۸ فوت"],
+      note:"دهه ۷۰ میلادی در شیراز خریده شده. رنگ‌های اصیل، ساییدگی طبیعی، بدون رفو." },
+  },
+  {
+    id:"seed-qajar", category:"art", img:"img/seed-qajar.jpg", price:2800,
+    en:{ title:"Qajar-style oil, garden scene", meta:"Oil on canvas · early 20th c.", city:"Los Angeles, CA",
+      facts:["Oil on canvas","Unsigned","24×32 in"],
+      note:"Qajar-revival garden scene in the original giltwood frame. Craquelure consistent with age." },
+    fa:{ title:"رنگ‌روغن مکتب قاجار، صحنه باغ", meta:"رنگ‌روغن روی بوم · اوایل قرن ۲۰", city:"لس‌آنجلس، کالیفرنیا",
+      facts:["رنگ‌روغن روی بوم","بدون امضا","۲۴×۳۲ اینچ"],
+      note:"صحنه باغ به سبک قاجار در قاب طلایی اصل. ترک‌های سطح رنگ متناسب با قدمت." },
+  },
+  {
+    id:"seed-calligraphy", category:"art", img:"img/seed-calligraphy.jpg", price:900,
+    en:{ title:"Nastaliq calligraphy panel", meta:"Ink & gold on paper · mid-20th c.", city:"San Jose, CA",
+      facts:["Ink on paper","Signed","Framed"],
+      note:"A Hafez couplet in fine nastaliq with gold illumination. Signed lower left." },
+    fa:{ title:"قطعه خوشنویسی نستعلیق", meta:"مرکب و طلا روی کاغذ · میانه قرن ۲۰", city:"سن‌خوزه، کالیفرنیا",
+      facts:["مرکب روی کاغذ","امضادار","قاب‌شده"],
+      note:"تک‌بیتی از حافظ به خط نستعلیق با تذهیب طلا. امضا پایین سمت چپ." },
+  },
+];
 
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => Number(n).toLocaleString("en-US", { maximumFractionDigits: 0 });
@@ -354,11 +571,20 @@ const store = {
   set pro(v){ localStorage.setItem("rs_pro", v ? "1" : "0"); },
   get history(){ try { return JSON.parse(localStorage.getItem("rs_history") || "[]"); } catch { return []; } },
   set history(v){ try { localStorage.setItem("rs_history", JSON.stringify(v.slice(0, 10))); } catch { /* quota */ } },
+  get listings(){ try { return JSON.parse(localStorage.getItem("rs_listings") || "[]"); } catch { return []; } },
+  set listings(v){ try { localStorage.setItem("rs_listings", JSON.stringify(v.slice(0, 20))); } catch { /* quota */ } },
+  get offers(){ try { return JSON.parse(localStorage.getItem("rs_offers") || "[]"); } catch { return []; } },
+  set offers(v){ try { localStorage.setItem("rs_offers", JSON.stringify(v.slice(0, 50))); } catch { /* quota */ } },
 };
 
 let t = I18N[store.lang];
 let currentImage = null;
 let currentResult = null;
+let currentListing = null;
+let marketFilter = "all";
+
+const SCREENS = ["home","previewScreen","loadingScreen","resultScreen","marketScreen","listingScreen","sellScreen"];
+const MARKET_SCREENS = new Set(["marketScreen","listingScreen"]);
 
 function applyLang() {
   t = I18N[store.lang];
@@ -369,13 +595,22 @@ function applyLang() {
     const v = t[el.dataset.i18n];
     if (typeof v === "string") el.innerHTML = v;
   });
-  renderCounter(); renderHistory();
+  renderCounter(); renderHistory(); renderMarket();
 }
 
 function show(screen) {
-  ["home", "previewScreen", "loadingScreen", "resultScreen"].forEach((s) =>
-    $(s).classList.toggle("hidden", s !== screen));
+  SCREENS.forEach((s) => $(s).classList.toggle("hidden", s !== screen));
+  $("navAppraise").classList.toggle("on", !MARKET_SCREENS.has(screen));
+  $("navMarket").classList.toggle("on", MARKET_SCREENS.has(screen));
   window.scrollTo(0, 0);
+}
+
+function toast(msg) {
+  const el = $("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(el._h);
+  el._h = setTimeout(() => el.classList.remove("show"), 2800);
 }
 
 function renderCounter() {
@@ -476,19 +711,27 @@ function animateSteps() {
   items.forEach((li, i) => setTimeout(() => li.classList.add("on"), 900 + i * 1600));
 }
 
+/* category-tolerant accessors (older saved scans used different field names) */
+const catOf = (r) => r.category || "rug";
+const techOf = (r) => r.technique ?? r.weave_or_making ?? "";
+const marksOf = (r) => r.maker_marks ?? r.knot_density_estimate ?? "";
+
 function showResult(r, img) {
   currentResult = r;
   $("resultImg").src = img;
   $("resultName").textContent = r.name;
-  $("resultType").textContent = r.item_type;
+  $("resultType").textContent = r.maker && r.maker !== "Unknown" ? `${r.item_type} · ${r.maker}` : r.item_type;
   $("resultValue").textContent = `$${fmt(r.estimated_value_low_usd)} – $${fmt(r.estimated_value_high_usd)}`;
   const conf = $("confBadge");
   conf.textContent = t.confidence[r.confidence] || r.confidence;
   conf.className = "conf " + r.confidence;
+  const labels = t.factLabels[catOf(r)] || t.factLabels.rug;
+  $("fTechLabel").textContent = labels.tech;
+  $("fMarksLabel").textContent = labels.marks;
   $("fOrigin").textContent = r.origin_region;
   $("fEra").textContent = r.estimated_era;
-  $("fWeave").textContent = r.weave_or_making;
-  $("fKnots").textContent = r.knot_density_estimate;
+  $("fTech").textContent = techOf(r);
+  $("fMarks").textContent = marksOf(r);
   chips("materials", r.materials);
   chips("motifs", r.design_motifs);
   $("story").textContent = r.story;
@@ -519,6 +762,140 @@ $("shareBtn").onclick = () => {
   const text = t.shareText(r);
   if (navigator.share) navigator.share({ text }).catch(() => {});
   else navigator.clipboard?.writeText(text);
+};
+
+/* --- bazaar --- */
+function marketItems() {
+  const mine = store.listings.map((l) => ({ ...l, mine: true }));
+  return [...mine, ...SEEDS];
+}
+
+function listingText(item) {
+  // seeds carry per-language text; user listings carry their own single text
+  if (item.en) return item[store.lang] || item.en;
+  return item.text;
+}
+
+function renderMarket() {
+  const grid = $("marketGrid");
+  grid.innerHTML = "";
+  marketItems()
+    .filter((m) => marketFilter === "all" || m.category === marketFilter)
+    .forEach((item) => {
+      const x = listingText(item);
+      const card = document.createElement("button");
+      card.className = "mcard";
+      card.innerHTML = `<span class="ph"><img loading="lazy" alt="">${item.mine ? `<span class="mine-badge">${t.yours}</span>` : ""}</span>
+        <span class="mbody" style="display:block"><span class="mt" style="display:block"></span>
+        <span class="mm" style="display:block"></span>
+        <span class="mp" style="display:block">$${fmt(item.price)}</span></span>`;
+      card.querySelector("img").src = item.img || item.thumb;
+      card.querySelector(".mt").textContent = x.title;
+      card.querySelector(".mm").textContent = x.meta;
+      card.onclick = () => openListing(item);
+      grid.appendChild(card);
+    });
+}
+
+function openListing(item) {
+  currentListing = item;
+  const x = listingText(item);
+  $("lstImg").src = item.img || item.thumb;
+  $("lstTitle").textContent = x.title;
+  $("lstMeta").textContent = x.meta;
+  $("lstPrice").textContent = `$${fmt(item.price)}`;
+  $("lstCity").textContent = x.city || "";
+  $("lstNote").textContent = x.note || t.noNote;
+  const fc = $("lstFacts");
+  fc.innerHTML = "";
+  (x.facts || []).forEach((f) => {
+    const s = document.createElement("span");
+    s.className = "chip";
+    s.textContent = f;
+    fc.appendChild(s);
+  });
+  show("listingScreen");
+}
+
+$("backToMarket").onclick = () => show("marketScreen");
+$("navMarket").onclick = () => { renderMarket(); show("marketScreen"); };
+$("navAppraise").onclick = () => { renderCounter(); renderHistory(); show("home"); };
+
+document.querySelectorAll("#filterRow .chip").forEach((c) => {
+  c.onclick = () => {
+    marketFilter = c.dataset.cat;
+    document.querySelectorAll("#filterRow .chip").forEach((x) => {
+      x.classList.toggle("on", x === c);
+      x.setAttribute("aria-selected", x === c ? "true" : "false");
+    });
+    renderMarket();
+  };
+});
+
+/* --- offers --- */
+$("offerBtn").onclick = () => {
+  if (!currentListing) return;
+  $("offerItemName").textContent = listingText(currentListing).title;
+  $("offerAmount").value = currentListing.price;
+  $("offerSheet").classList.remove("hidden");
+  $("offerAmount").focus();
+};
+$("offerClose").onclick = () => $("offerSheet").classList.add("hidden");
+$("offerSend").onclick = () => {
+  const amount = +$("offerAmount").value;
+  if (!amount || amount < 1) return;
+  store.offers = [{ listingId: currentListing.id, amount, at: Date.now() }, ...store.offers];
+  $("offerSheet").classList.add("hidden");
+  toast(t.offerOk);
+};
+
+/* --- sell flow --- */
+$("sellBtn").onclick = () => {
+  if (!currentResult) return;
+  const r = currentResult;
+  $("sellImg").src = currentImage;
+  $("sellTitleInput").value = r.name;
+  $("sellPriceInput").value = Math.round((r.estimated_value_low_usd + r.estimated_value_high_usd) / 2);
+  $("sellCityInput").value = "";
+  $("sellNoteInput").value = "";
+  renderFees();
+  show("sellScreen");
+};
+$("cancelSell").onclick = () => show("resultScreen");
+$("sellPriceInput").oninput = renderFees;
+
+function renderFees() {
+  const price = +$("sellPriceInput").value || 0;
+  const rate = store.pro ? FEE_PRO : FEE_STANDARD;
+  const fee = Math.round(price * rate);
+  $("feeBox").innerHTML = `
+    <div class="fee-line"><span>${t.feeAsk}</span><span class="n">$${fmt(price)}</span></div>
+    <div class="fee-line"><span>${t.feeFee(Math.round(rate * 100))}</span><span class="n">−$${fmt(fee)}</span></div>
+    <div class="fee-line total"><span>${t.feeGet}</span><span class="n">$${fmt(price - fee)}</span></div>`;
+}
+
+$("publishBtn").onclick = () => {
+  const r = currentResult;
+  const price = +$("sellPriceInput").value;
+  if (!r || !price || price < 1) return;
+  const labels = t.factLabels[catOf(r)] || t.factLabels.rug;
+  store.listings = [{
+    id: "l-" + Date.now(),
+    category: catOf(r),
+    thumb: currentImage,
+    price,
+    appraisal: r,
+    text: {
+      title: $("sellTitleInput").value || r.name,
+      meta: `${r.origin_region} · ${r.estimated_era}`,
+      city: $("sellCityInput").value,
+      note: $("sellNoteInput").value,
+      facts: [techOf(r), marksOf(r), labels.tech].slice(0, 2).concat(r.materials?.[0] ? [r.materials[0]] : []),
+    },
+  }, ...store.listings];
+  renderMarket();
+  show("marketScreen");
+  toast(t.listedOk);
 };
 
 /* --- paywall --- */

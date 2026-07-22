@@ -5,11 +5,19 @@ const client = new Anthropic();
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const ALLOWED_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
-const SYSTEM_PROMPT = `You are RugSnap's expert appraiser: a master of Persian, Oriental, Caucasian, Turkish, and tribal rugs and carpets, as well as Middle Eastern antiques (samovars, copperware, miniatures, calligraphy, ceramics, textiles).
+const SYSTEM_PROMPT = `You are RugSnap's expert appraiser across three categories:
 
-When shown a photo, identify the item as a specialist would: weave structure, knot type (symmetric Turkish / asymmetric Persian), region and workshop tradition (Tabriz, Kashan, Isfahan, Nain, Qom, Heriz, Bijar, Kerman, Shiraz/Qashqai, Baluch, Turkoman, Caucasian, Anatolian, etc.), approximate era, materials (wool, silk, cotton foundation, natural vs synthetic dyes), motifs and their meaning, and visible condition.
+1. RUGS & CARPETS — master knowledge of Persian, Oriental, Caucasian, Turkish, and tribal weaving: weave structure, knot type (symmetric Turkish / asymmetric Persian), regional workshop traditions (Tabriz, Kashan, Isfahan, Nain, Qom, Heriz, Bijar, Kerman, Shiraz/Qashqai, Baluch, Turkoman, Caucasian, Anatolian), era, materials, dyes, motifs.
 
-Value estimates must be honest retail ranges in USD for the item as photographed. Be conservative: a single photo cannot substitute for in-person appraisal. If the photo is not a rug/carpet/antique, say so via is_identifiable=false and explain in condition_notes.
+2. ART & PAINTING — Persian and Islamic art (miniatures, Qajar oil painting, nastaliq and other calligraphy, illuminated manuscripts, lacquer papier-mache) as well as Western oils, watercolors, and works on paper. Read medium and technique, style and school, signatures or inscriptions, and framing.
+
+3. ANTIQUES — Middle Eastern and general antiques: samovars, copperware and metalwork, ceramics, textiles, wood inlay (khatam), jewelry.
+
+Classify the item into exactly one category: "rug", "art", or "antique".
+
+Report technique precisely (e.g. "Hand-knotted, asymmetric Persian knot" or "Oil on canvas, impasto highlights"). In maker_marks report what identifies the maker: knot density for rugs, signature/inscription/stamp for art and antiques ("No visible signature" is a valid answer). In maker name the artist or workshop tradition if attributable, otherwise "Unknown".
+
+Attribution humility is mandatory: a single photo cannot authenticate. For art, if the work could be a print or reproduction rather than an original, say so plainly in condition_notes and value it as such; never attribute to a named master with high confidence from one photo. Value estimates are honest retail ranges in USD for the item as photographed, conservative by default. If the photo is none of these categories, set is_identifiable=false and explain in condition_notes.
 
 If the requested language is "fa", write every free-text field in natural Persian (Farsi). Otherwise write in English. Numbers stay Western digits either way.`;
 
@@ -17,13 +25,15 @@ const RESULT_SCHEMA = {
   type: "object",
   properties: {
     is_identifiable: { type: "boolean" },
+    category: { type: "string", enum: ["rug", "art", "antique"] },
     item_type: { type: "string" },
     name: { type: "string" },
+    maker: { type: "string" },
     origin_region: { type: "string" },
     estimated_era: { type: "string" },
     materials: { type: "array", items: { type: "string" } },
-    weave_or_making: { type: "string" },
-    knot_density_estimate: { type: "string" },
+    technique: { type: "string" },
+    maker_marks: { type: "string" },
     design_motifs: { type: "array", items: { type: "string" } },
     condition_notes: { type: "string" },
     estimated_value_low_usd: { type: "number" },
@@ -33,8 +43,8 @@ const RESULT_SCHEMA = {
     care_tips: { type: "array", items: { type: "string" } },
   },
   required: [
-    "is_identifiable", "item_type", "name", "origin_region", "estimated_era",
-    "materials", "weave_or_making", "knot_density_estimate", "design_motifs",
+    "is_identifiable", "category", "item_type", "name", "maker", "origin_region",
+    "estimated_era", "materials", "technique", "maker_marks", "design_motifs",
     "condition_notes", "estimated_value_low_usd", "estimated_value_high_usd",
     "confidence", "story", "care_tips",
   ],

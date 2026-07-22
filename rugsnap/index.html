@@ -153,9 +153,9 @@
 <main class="wrap">
   <section class="hero">
     <div>
-      <span class="eyebrow" data-i18n="eyebrow">AI appraisal for woven art</span>
+      <span class="eyebrow" data-i18n="eyebrow">AI appraisal for rugs, art &amp; antiques</span>
       <h1 data-i18n="heroTitle">Know what your rug is <em>really</em> worth</h1>
-      <p class="sub" data-i18n="heroSub">One photo of a Persian or Oriental rug, carpet, or antique. RugSnap reads the knots, places the region, dates the weave — and gives you an honest value range.</p>
+      <p class="sub" data-i18n="heroSub">One photo of a Persian or Oriental rug, a painting or calligraphy, or an antique. RugSnap reads the knots and the brushwork, places the region, dates the piece — and gives you an honest value range.</p>
       <a class="cta" href="app.html" data-i18n="ctaTry">Appraise your first piece — free</a>
       <span class="cta-note" data-i18n="ctaNote">No account needed · 2 free appraisals</span>
     </div>
@@ -211,6 +211,22 @@
     </div>
   </section>
 
+  <section aria-labelledby="moreTitle" style="margin-bottom:var(--s6)">
+    <div class="sec-head"><h2 id="moreTitle" data-i18n="moreTitle">Beyond the rug</h2><div class="rule"></div></div>
+    <div class="steps" style="grid-template-columns:1fr 1fr;margin-bottom:0">
+      <div class="step">
+        <div class="n" data-i18n="mNew">NEW</div>
+        <h3 data-i18n="m1t">Art &amp; painting</h3>
+        <p data-i18n="m1p">Qajar oils, Persian miniatures, nastaliq calligraphy, Western paintings and works on paper — medium, school, signature, and value.</p>
+      </div>
+      <div class="step">
+        <div class="n" data-i18n="mSoon">THE BAZAAR</div>
+        <h3 data-i18n="m2t">Sell it in one tap</h3>
+        <p data-i18n="m2p">Your appraisal card becomes the listing. Buyers see the full analysis; RugSnap takes 10% only when it sells — 7% for Pro members.</p>
+      </div>
+    </div>
+  </section>
+
   <section aria-labelledby="priceTitle">
     <div class="sec-head"><h2 id="priceTitle" data-i18n="priceTitle">Pricing</h2><div class="rule"></div></div>
     <div class="plans">
@@ -247,9 +263,14 @@
 /* ---------- i18n ---------- */
 const I18N = {
   en: {
-    brand:"RugSnap", eyebrow:"AI appraisal for woven art",
+    brand:"RugSnap", eyebrow:"AI appraisal for rugs, art & antiques",
     heroTitle:'Know what your rug is <em>really</em> worth',
-    heroSub:"One photo of a Persian or Oriental rug, carpet, or antique. RugSnap reads the knots, places the region, dates the weave — and gives you an honest value range.",
+    heroSub:"One photo of a Persian or Oriental rug, a painting or calligraphy, or an antique. RugSnap reads the knots and the brushwork, places the region, dates the piece — and gives you an honest value range.",
+    moreTitle:"Beyond the rug", mNew:"NEW", mSoon:"THE BAZAAR",
+    m1t:"Art & painting",
+    m1p:"Qajar oils, Persian miniatures, nastaliq calligraphy, Western paintings and works on paper — medium, school, signature, and value.",
+    m2t:"Sell it in one tap",
+    m2p:"Your appraisal card becomes the listing. Buyers see the full analysis; RugSnap takes 10% only when it sells — 7% for Pro members.",
     ctaTry:"Appraise your first piece — free", ctaNote:"No account needed · 2 free appraisals",
     loomTitle:"Tabriz medallion, lachak-toranj",
     loomNote:"This rug is woven by the page itself — reload for a new one.",
@@ -271,9 +292,14 @@ const I18N = {
     footer:"RugSnap · AI estimates are for guidance only — not certified appraisals.",
   },
   fa: {
-    brand:"راگ‌اسنپ", eyebrow:"کارشناسی هوشمند هنرِ بافته",
+    brand:"راگ‌اسنپ", eyebrow:"کارشناسی هوشمند فرش، هنر و عتیقه",
     heroTitle:'بدان فرشت <em>واقعاً</em> چقدر می‌ارزد',
-    heroSub:"یک عکس از فرش، قالی یا عتیقه ایرانی و شرقی کافی است. راگ‌اسنپ گره‌ها را می‌خواند، منطقه بافت را پیدا می‌کند، قدمت را تخمین می‌زند — و یک بازه ارزش منصفانه می‌دهد.",
+    heroSub:"یک عکس از فرش ایرانی و شرقی، تابلو نقاشی و خوشنویسی، یا عتیقه کافی است. راگ‌اسنپ گره‌ها و قلم‌مو را می‌خواند، منطقه را پیدا می‌کند، قدمت را تخمین می‌زند — و یک بازه ارزش منصفانه می‌دهد.",
+    moreTitle:"فراتر از فرش", mNew:"جدید", mSoon:"بازار",
+    m1t:"هنر و نقاشی",
+    m1p:"رنگ‌روغن قاجاری، مینیاتور ایرانی، خوشنویسی نستعلیق، نقاشی غربی و آثار روی کاغذ — تکنیک، مکتب، امضا و ارزش.",
+    m2t:"با یک لمس بفروش",
+    m2p:"کارت کارشناسی‌ات همان آگهی می‌شود. خریدار تحلیل کامل را می‌بیند؛ راگ‌اسنپ فقط وقتی فروخته شود ۱۰٪ برمی‌دارد — اعضای Pro فقط ۷٪.",
     ctaTry:"اولین اثرت را رایگان کارشناسی کن", ctaNote:"بدون ثبت‌نام · ۲ کارشناسی رایگان",
     loomTitle:"ترنج تبریز، طرح لچک‌ترنج",
     loomNote:"این فرش را خودِ صفحه می‌بافد — صفحه را رفرش کن تا فرش تازه‌ای ببافد.",

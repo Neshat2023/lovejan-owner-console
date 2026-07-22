@@ -4,6 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#130d07" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="mobile-web-app-capable" content="yes" />
 <title>RugSnap — Rug &amp; Antique Identifier</title>
 <style>
   /* ---------- fonts ---------- */
@@ -158,8 +161,8 @@
   .mcard{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-sm);
     overflow:hidden;cursor:pointer;transition:border-color .15s;text-align:start;padding:0;display:block;width:100%}
   .mcard:hover{border-color:var(--gold)}
-  .mcard .ph{position:relative;aspect-ratio:4/5;background:var(--surface-2)}
-  .mcard .ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .mcard .ph{display:block;position:relative;aspect-ratio:4/5;background:var(--surface-2);overflow:hidden}
+  .mcard .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
   .mcard .mine-badge{position:absolute;top:8px;inset-inline-start:8px;background:var(--teal);color:#fff;
     font-size:9.5px;font-weight:700;letter-spacing:.08em;padding:2px 8px;border-radius:999px}
   .mcard .mbody{padding:10px 12px 12px}
@@ -171,6 +174,8 @@
 
   .listing-hero{border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--line)}
   .listing-hero img{width:100%;max-height:380px;object-fit:cover;display:block}
+  .lst-title{margin-top:16px}
+  @media (min-width:760px){ .lst-title{margin-top:0} .listing-hero img{max-height:520px} }
   .price-line{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:14px}
   .price-line .p{font-family:var(--font-display);font-size:30px;color:var(--gold);font-variant-numeric:tabular-nums}
   .price-line .c{font-size:12.5px;color:var(--umber)}
@@ -210,6 +215,29 @@
     padding:12px 20px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;
     max-width:90vw;text-align:center}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* screen transitions */
+  @keyframes screenIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .wrap > section{animation:screenIn .22s ease}
+
+  /* ---------- tablet / iPad ---------- */
+  @media (min-width:760px){
+    .wrap{max-width:1000px;padding:30px 40px 120px}
+    #home,#previewScreen,#loadingScreen,#sellScreen{max-width:620px;margin-inline:auto}
+    #resultScreen,#listingScreen{display:grid;grid-template-columns:400px 1fr;gap:32px;align-items:start}
+    .result-col-a,.listing-col-a{position:sticky;top:28px}
+    #resultScreen h1,#listingScreen h1{font-size:29px}
+    .result-col-b h2:first-of-type{margin-top:0}
+    #marketScreen{max-width:1000px}
+    .market-grid{grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:16px}
+    .nav-inner{max-width:1000px}
+    .nav button{flex-direction:row;gap:9px;padding:14px 0}
+    /* sheets become centered modals instead of bottom sheets */
+    .pw{place-items:center;padding:24px}
+    .pw-card{max-width:460px;border-radius:18px;border-bottom:1px solid var(--line)}
+    .toast{bottom:auto;top:28px;transform:translateX(-50%) translateY(-8px)}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+  }
 
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{animation:none!important;transition:none!important}
@@ -281,6 +309,7 @@
 
   <!-- RESULT -->
   <section id="resultScreen" class="hidden">
+    <div class="result-col-a">
     <div class="result-hero">
       <img id="resultImg" alt="" />
       <span class="conf" id="confBadge"></span>
@@ -291,6 +320,8 @@
       <div class="v" id="resultValue"></div>
       <div class="l" data-i18n="estValue">Estimated market value</div>
     </div>
+    </div>
+    <div class="result-col-b">
     <div class="facts">
       <div class="fact"><div class="k" data-i18n="fOrigin">Origin</div><div class="v" id="fOrigin"></div></div>
       <div class="fact"><div class="k" data-i18n="fEra">Era</div><div class="v" id="fEra"></div></div>
@@ -313,6 +344,7 @@
       <button class="btn ghost" id="shareBtn" data-i18n="share">Share</button>
       <button class="btn" id="newScanBtn" data-i18n="scanAnother">Scan another</button>
     </div>
+    </div>
   </section>
 
   <!-- MARKET -->
@@ -331,8 +363,11 @@
 
   <!-- LISTING DETAIL -->
   <section id="listingScreen" class="hidden">
+    <div class="listing-col-a">
     <div class="listing-hero"><img id="lstImg" alt="" /></div>
-    <h1 id="lstTitle" style="margin-top:16px"></h1>
+    </div>
+    <div class="listing-col-b">
+    <h1 id="lstTitle" class="lst-title"></h1>
     <p class="result-type" id="lstMeta"></p>
     <div class="price-line">
       <span class="p" id="lstPrice"></span>
@@ -343,6 +378,7 @@
     <div class="prose" id="lstNote"></div>
     <button class="btn" id="offerBtn" style="margin-top:18px" data-i18n="offerBtn">Make an offer</button>
     <button class="btn ghost" id="backToMarket" style="margin-top:10px" data-i18n="backMarket">Back to the Bazaar</button>
+    </div>
   </section>
 
   <!-- SELL FORM -->
@@ -579,6 +615,7 @@ const store = {
 
 let t = I18N[store.lang];
 let currentImage = null;
+let currentThumb = null;   // downscaled copy stored in history/listings (localStorage quota)
 let currentResult = null;
 let currentListing = null;
 let marketFilter = "all";
@@ -630,7 +667,7 @@ function renderHistory() {
       <div class="val">$${fmt(item.result.estimated_value_low_usd)}+</div>`;
     div.querySelector(".t").textContent = item.result.name;
     div.querySelector(".s").textContent = `${item.result.origin_region} · ${item.result.estimated_era}`;
-    const open = () => { currentImage = item.thumb; showResult(item.result, item.thumb); };
+    const open = () => { currentImage = item.thumb; currentThumb = item.thumb; showResult(item.result, item.thumb); };
     div.onclick = open;
     div.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } };
     $("history").appendChild(div);
@@ -643,8 +680,9 @@ $("dropzone").onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.p
 $("fileInput").onchange = (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  compress(file).then((dataUrl) => {
+  compress(file).then(async (dataUrl) => {
     currentImage = dataUrl;
+    currentThumb = await makeThumb(dataUrl);
     $("previewImg").src = dataUrl;
     show("previewScreen");
   });
@@ -681,7 +719,7 @@ $("analyzeBtn").onclick = async () => {
     const result = await analyze(currentImage);
     if (!result.is_identifiable) throw new Error("not_item");
     store.used = store.used + 1;
-    store.history = [{ thumb: thumbOf(currentImage), result, at: Date.now() }, ...store.history];
+    store.history = [{ thumb: currentThumb || currentImage, result, at: Date.now() }, ...store.history];
     showResult(result, currentImage);
   } catch (err) {
     $("loadError").textContent = err.message === "not_item" ? t.errNotItem : t.errAnalyze;
@@ -700,9 +738,22 @@ async function analyze(image) {
   return body.result;
 }
 
-function thumbOf(dataUrl) {
-  // reuse the compressed image; history keeps at most 10, localStorage tolerates it
-  return dataUrl;
+function makeThumb(dataUrl, max = 640) {
+  // smaller copy for history/listings so localStorage stays well under quota
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      if (scale === 1) return resolve(dataUrl);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.75));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
 }
 
 function animateSteps() {
@@ -882,7 +933,7 @@ $("publishBtn").onclick = () => {
   store.listings = [{
     id: "l-" + Date.now(),
     category: catOf(r),
-    thumb: currentImage,
+    thumb: currentThumb || currentImage,
     price,
     appraisal: r,
     text: {
@@ -890,7 +941,7 @@ $("publishBtn").onclick = () => {
       meta: `${r.origin_region} · ${r.estimated_era}`,
       city: $("sellCityInput").value,
       note: $("sellNoteInput").value,
-      facts: [techOf(r), marksOf(r), labels.tech].slice(0, 2).concat(r.materials?.[0] ? [r.materials[0]] : []),
+      facts: [techOf(r), marksOf(r)].concat(r.materials?.[0] ? [r.materials[0]] : []),
     },
   }, ...store.listings];
   renderMarket();
@@ -921,7 +972,13 @@ $("trialBtn").onclick = () => {
 };
 
 /* --- language --- */
-$("langBtn").onclick = () => { store.lang = store.lang === "fa" ? "en" : "fa"; applyLang(); };
+$("langBtn").onclick = () => { store.lang = store.lang === "fa" ? "en" : "fa"; applyLang(); renderFees(); };
+
+/* --- global keys --- */
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  ["paywall", "offerSheet"].forEach((id) => $(id).classList.add("hidden"));
+});
 
 applyLang();
 show("home");

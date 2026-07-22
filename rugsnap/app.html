@@ -236,6 +236,13 @@
     max-width:90vw;text-align:center;backdrop-filter:blur(14px);box-shadow:var(--glow-cyan)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+  /* ---------- cinematic home banner (shows when video/hero.mp4 exists) ---------- */
+  .cine{position:relative;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--stroke);
+    margin-top:20px;box-shadow:0 24px 60px -28px rgba(0,0,0,.8)}
+  .cine video{display:block;width:100%;height:170px;object-fit:cover}
+  .cine::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,transparent 55%,rgba(5,6,10,.65));pointer-events:none}
+
   /* screen transitions */
   @keyframes screenIn{from{opacity:0;transform:translateY(8px) scale(.995)}to{opacity:1;transform:none}}
   .wrap > section{animation:screenIn .28s cubic-bezier(.2,.7,.3,1)}
@@ -277,6 +284,9 @@
   <section id="home">
     <h1 data-i18n="homeTitle">Identify any rug, artwork, or antique</h1>
     <p class="mut small" data-i18n="homeSub">Snap a photo of a Persian or Oriental rug, a painting or calligraphy, or an antique — get its origin, era, materials, and estimated value in seconds.</p>
+    <div class="cine hidden" id="cineWrap" aria-hidden="true">
+      <video id="cineVideo" autoplay muted loop playsinline></video>
+    </div>
     <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Take or upload a photo">
       <div class="ic"><svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="9" width="28" height="20" rx="3"/><path d="M12 9l2.4-4h5.2L22 9"/><circle cx="17" cy="19" r="6"/></svg></div>
       <div class="dz-title" data-i18n="dzTitle">Take or upload a photo</div>
@@ -986,6 +996,15 @@ $("trialBtn").onclick = () => {
 
 /* --- language --- */
 $("langBtn").onclick = () => { store.lang = store.lang === "fa" ? "en" : "fa"; applyLang(); renderFees(); };
+
+/* --- cinematic home banner: appears only when video/hero.mp4 exists --- */
+(() => {
+  const v = $("cineVideo");
+  if (!v) return;
+  v.addEventListener("canplay", () => $("cineWrap").classList.remove("hidden"), { once: true });
+  v.addEventListener("error", () => $("cineWrap").remove(), { once: true });
+  v.src = "video/hero.mp4";
+})();
 
 /* --- global keys --- */
 document.addEventListener("keydown", (e) => {

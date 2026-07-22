@@ -89,6 +89,8 @@
     box-shadow:0 60px 120px -40px rgba(0,0,0,.8),var(--glow-violet);
     backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
   .device canvas{display:block;width:100%;height:auto;border-radius:16px}
+  .device video{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:16px}
+  .hidden{display:none!important}
   .device .caption{display:flex;justify-content:space-between;align-items:center;padding:14px 6px 2px;gap:12px}
   .device .caption .t{font-weight:600;font-size:15px;letter-spacing:-.01em}
   .device .caption .v{font-weight:800;font-size:17px;letter-spacing:-.01em;
@@ -184,6 +186,7 @@
 
     <figure class="stage" aria-label="A generative Persian rug, woven by code">
       <div class="device" id="device">
+        <video id="heroVideo" class="hidden" autoplay muted loop playsinline aria-hidden="true"></video>
         <canvas id="rugCanvas" width="720" height="900"></canvas>
         <div class="caption">
           <span class="t" data-i18n="loomTitle">Tabriz medallion · lachak-toranj</span>
@@ -476,6 +479,19 @@ if (!reduce) {
   for (let j = 0; j < H; j += 4) o.fillRect(0, j, W, 1);
 
   if (reduce) { ctx.drawImage(off, 0, 0); return; }
+
+  // after the weave: a slow drone-style flyover across the finished rug
+  const cruise = (ts0) => (ts) => {
+    const t = ts - ts0;
+    const scale = 1.10 + 0.05 * Math.sin(t / 6500);
+    const sw = W / scale, sh = H / scale;
+    const sx = (W - sw) / 2 + Math.sin(t / 9000) * (W - sw) * 0.4;
+    const sy = (H - sh) / 2 + Math.cos(t / 7400) * (H - sh) * 0.4;
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(off, sx, sy, sw, sh, 0, 0, W, H);
+    requestAnimationFrame(cruise(ts0));
+  };
+
   const DURATION = 2800;
   let start = null;
   const tick = (ts) => {
@@ -489,9 +505,23 @@ if (!reduce) {
       ctx.fillStyle = "rgba(34,211,238,.9)";
       ctx.fillRect(0, rows, W, 2);
       requestAnimationFrame(tick);
+    } else {
+      requestAnimationFrame((t0) => requestAnimationFrame(cruise(t0)));
     }
   };
   requestAnimationFrame(tick);
+})();
+
+/* ---------- cinematic hero video (drops in when video/hero.mp4 exists) ---------- */
+(() => {
+  const v = document.getElementById("heroVideo");
+  if (!v) return;
+  v.addEventListener("canplay", () => {
+    v.classList.remove("hidden");
+    document.getElementById("rugCanvas").classList.add("hidden");
+  }, { once: true });
+  v.addEventListener("error", () => v.remove(), { once: true });
+  v.src = "video/hero.mp4";
 })();
 </script>
 </body>

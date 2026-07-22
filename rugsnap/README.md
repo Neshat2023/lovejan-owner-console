@@ -43,6 +43,15 @@ in listings.
 | `api/analyze.js` | Vercel serverless function — calls the Claude API (vision + structured output) |
 | `package.json` / `vercel.json` | Deploy config |
 
+## Cinematic hero video
+
+Both the landing hero and the app home screen have a wired-in video slot:
+drop a clip at **`rugsnap/video/hero.mp4`** (16:9 or 4:5, ~8s loop, muted)
+and it plays automatically — no code changes. Until the file exists, the
+landing falls back to the generative rug with a drone-style flyover and the
+app hides the banner. Generate the clip in Higgsfield/ChatGPT with the
+drone-style prompt from the launch notes.
+
 ## Deploy (5 minutes)
 
 1. Install the [Vercel CLI](https://vercel.com/docs/cli) and log in.

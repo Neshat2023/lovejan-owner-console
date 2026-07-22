@@ -415,6 +415,8 @@
     <input id="sellPriceInput" type="number" min="1" inputmode="numeric" />
     <label for="sellCityInput" data-i18n="lCity">Ships from (city)</label>
     <input id="sellCityInput" placeholder="Los Angeles, CA" />
+    <label for="sellEmailInput" data-i18n="lEmail">Your email (offers arrive there)</label>
+    <input id="sellEmailInput" type="email" autocomplete="email" placeholder="you@example.com" />
     <label for="sellNoteInput" data-i18n="lNote">Note to buyers (optional)</label>
     <textarea id="sellNoteInput" rows="3"></textarea>
     <div class="fee-box" id="feeBox"></div>
@@ -471,6 +473,8 @@
     <p class="mut small" style="text-align:center" id="offerItemName"></p>
     <label for="offerAmount" data-i18n="lOffer">Your offer (USD)</label>
     <input id="offerAmount" type="number" min="1" inputmode="numeric" />
+    <label for="offerEmail" data-i18n="lOfferEmail">Your email (so the seller can reply)</label>
+    <input id="offerEmail" type="email" autocomplete="email" placeholder="you@example.com" />
     <button class="btn" id="offerSend" style="margin-top:16px" data-i18n="offerSend">Send offer</button>
     <p class="pw-note" data-i18n="offerNote">The seller gets your offer as a message. Secure checkout &amp; escrow arrive with the public launch.</p>
     <button class="linkbtn" id="offerClose" data-i18n="notNow">Not now</button>
@@ -487,6 +491,17 @@
 const API_URL = "/api/analyze";
 const FREE_SCANS = 2;
 const FEE_STANDARD = 0.10, FEE_PRO = 0.07;
+
+/* Bazaar backend (Supabase). The publishable key is safe to ship client-side;
+   row-level security governs what it can do. */
+const SUPA_URL = "https://rwloxdnjfwsgetzkuras.supabase.co";
+const SUPA_KEY = "sb_publishable_UCqnYDHV8x-wFoKbl1a5cg_a3XtDhXC";
+const SUPA_HEADERS = {
+  apikey: SUPA_KEY,
+  Authorization: `Bearer ${SUPA_KEY}`,
+  "Content-Type": "application/json",
+};
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 const I18N = {
   en: {
@@ -512,6 +527,9 @@ const I18N = {
     sellTitle:"List it in the Bazaar",
     sellSub:"Your appraisal card becomes the listing — buyers see the full analysis.",
     lTitle:"Title", lPrice:"Asking price (USD)", lCity:"Ships from (city)", lNote:"Note to buyers (optional)",
+    lEmail:"Your email (offers arrive there)", lOfferEmail:"Your email (so the seller can reply)",
+    errEmail:"Please enter a valid email address.",
+    errNet:"Couldn't reach the Bazaar — saved on this device instead.",
     publishBtn:"Publish listing", cancel:"Cancel",
     feeAsk:"Asking price", feeFee:(p)=>`RugSnap fee (${p}%)`, feeGet:"You receive",
     listedOk:"Listed! Your piece is live in the Bazaar.",
@@ -556,6 +574,9 @@ const I18N = {
     sellTitle:"در بازار آگهی کن",
     sellSub:"کارت کارشناسی‌ات همان آگهی می‌شود — خریدار تحلیل کامل را می‌بیند.",
     lTitle:"عنوان", lPrice:"قیمت پیشنهادی (دلار)", lCity:"ارسال از (شهر)", lNote:"یادداشت برای خریداران (اختیاری)",
+    lEmail:"ایمیل شما (پیشنهادها به آن می‌رسد)", lOfferEmail:"ایمیل شما (برای پاسخ فروشنده)",
+    errEmail:"لطفاً یک ایمیل معتبر وارد کنید.",
+    errNet:"اتصال به بازار برقرار نشد — روی همین دستگاه ذخیره شد.",
     publishBtn:"انتشار آگهی", cancel:"انصراف",
     feeAsk:"قیمت پیشنهادی", feeFee:(p)=>`کارمزد راگ‌اسنپ (${p}٪)`, feeGet:"دریافتی شما",
     listedOk:"آگهی شد! اثر شما در بازار قرار گرفت.",
@@ -634,6 +655,13 @@ const store = {
   set listings(v){ try { localStorage.setItem("rs_listings", JSON.stringify(v.slice(0, 20))); } catch { /* quota */ } },
   get offers(){ try { return JSON.parse(localStorage.getItem("rs_offers") || "[]"); } catch { return []; } },
   set offers(v){ try { localStorage.setItem("rs_offers", JSON.stringify(v.slice(0, 50))); } catch { /* quota */ } },
+  get deviceId(){
+    let id = localStorage.getItem("rs_device");
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem("rs_device", id); }
+    return id;
+  },
+  get email(){ return localStorage.getItem("rs_email") || ""; },
+  set email(v){ localStorage.setItem("rs_email", v); },
 };
 
 let t = I18N[store.lang];
@@ -839,9 +867,33 @@ $("shareBtn").onclick = () => {
 };
 
 /* --- bazaar --- */
+let remoteListings = [];
+
+async function loadMarket() {
+  try {
+    const res = await fetch(
+      `${SUPA_URL}/rest/v1/listings?select=id,device_id,category,title,price_usd,city,note,meta,facts,photo_url` +
+      `&status=eq.active&order=created_at.desc&limit=48`,
+      { headers: SUPA_HEADERS },
+    );
+    if (!res.ok) return;
+    const rows = await res.json();
+    remoteListings = rows.map((r) => ({
+      id: r.id,
+      remote: true,
+      category: r.category,
+      img: r.photo_url,
+      price: r.price_usd,
+      mine: r.device_id === store.deviceId,
+      text: { title: r.title, meta: r.meta, city: r.city, note: r.note, facts: r.facts || [] },
+    }));
+    renderMarket();
+  } catch { /* offline or blocked — the local view below still works */ }
+}
+
 function marketItems() {
   const mine = store.listings.map((l) => ({ ...l, mine: true }));
-  return [...mine, ...SEEDS];
+  return [...remoteListings, ...mine, ...SEEDS];
 }
 
 function listingText(item) {
@@ -892,7 +944,7 @@ function openListing(item) {
 }
 
 $("backToMarket").onclick = () => show("marketScreen");
-$("navMarket").onclick = () => { renderMarket(); show("marketScreen"); };
+$("navMarket").onclick = () => { renderMarket(); show("marketScreen"); loadMarket(); };
 $("navAppraise").onclick = () => { renderCounter(); renderHistory(); show("home"); };
 
 document.querySelectorAll("#filterRow .chip").forEach((c) => {
@@ -911,16 +963,38 @@ $("offerBtn").onclick = () => {
   if (!currentListing) return;
   $("offerItemName").textContent = listingText(currentListing).title;
   $("offerAmount").value = currentListing.price;
+  $("offerEmail").value = store.email;
   $("offerSheet").classList.remove("hidden");
   $("offerAmount").focus();
 };
 $("offerClose").onclick = () => $("offerSheet").classList.add("hidden");
-$("offerSend").onclick = () => {
+$("offerSend").onclick = async () => {
   const amount = +$("offerAmount").value;
+  const email = $("offerEmail").value.trim();
   if (!amount || amount < 1) return;
-  store.offers = [{ listingId: currentListing.id, amount, at: Date.now() }, ...store.offers];
-  $("offerSheet").classList.add("hidden");
-  toast(t.offerOk);
+  if (!EMAIL_RE.test(email)) { toast(t.errEmail); return; }
+  store.email = email;
+  $("offerSend").disabled = true;
+  try {
+    if (currentListing.remote) {
+      const res = await fetch(`${SUPA_URL}/rest/v1/offers`, {
+        method: "POST",
+        headers: SUPA_HEADERS,
+        body: JSON.stringify({ listing_id: currentListing.id, amount_usd: amount, buyer_email: email }),
+      });
+      if (!res.ok) throw new Error("offer_" + res.status);
+    } else {
+      store.offers = [{ listingId: currentListing.id, amount, email, at: Date.now() }, ...store.offers];
+    }
+    $("offerSheet").classList.add("hidden");
+    toast(t.offerOk);
+  } catch {
+    store.offers = [{ listingId: currentListing.id, amount, email, at: Date.now() }, ...store.offers];
+    $("offerSheet").classList.add("hidden");
+    toast(t.errNet);
+  } finally {
+    $("offerSend").disabled = false;
+  }
 };
 
 /* --- sell flow --- */
@@ -931,6 +1005,7 @@ $("sellBtn").onclick = () => {
   $("sellTitleInput").value = r.name;
   $("sellPriceInput").value = Math.round((r.estimated_value_low_usd + r.estimated_value_high_usd) / 2);
   $("sellCityInput").value = "";
+  $("sellEmailInput").value = store.email;
   $("sellNoteInput").value = "";
   renderFees();
   show("sellScreen");
@@ -948,28 +1023,62 @@ function renderFees() {
     <div class="fee-line total"><span>${t.feeGet}</span><span class="n">$${fmt(price - fee)}</span></div>`;
 }
 
-$("publishBtn").onclick = () => {
+$("publishBtn").onclick = async () => {
   const r = currentResult;
   const price = +$("sellPriceInput").value;
+  const email = $("sellEmailInput").value.trim();
   if (!r || !price || price < 1) return;
-  const labels = t.factLabels[catOf(r)] || t.factLabels.rug;
-  store.listings = [{
-    id: "l-" + Date.now(),
+  if (!EMAIL_RE.test(email)) { toast(t.errEmail); return; }
+  store.email = email;
+  const listing = {
     category: catOf(r),
-    thumb: currentThumb || currentImage,
-    price,
-    appraisal: r,
-    text: {
-      title: $("sellTitleInput").value || r.name,
-      meta: `${r.origin_region} · ${r.estimated_era}`,
-      city: $("sellCityInput").value,
-      note: $("sellNoteInput").value,
-      facts: [techOf(r), marksOf(r)].concat(r.materials?.[0] ? [r.materials[0]] : []),
-    },
-  }, ...store.listings];
-  renderMarket();
-  show("marketScreen");
-  toast(t.listedOk);
+    title: $("sellTitleInput").value || r.name,
+    meta: `${r.origin_region} · ${r.estimated_era}`,
+    city: $("sellCityInput").value,
+    note: $("sellNoteInput").value,
+    facts: [techOf(r), marksOf(r)].concat(r.materials?.[0] ? [r.materials[0]] : []),
+  };
+  $("publishBtn").disabled = true;
+  try {
+    // photo first, then the row that references it
+    const photoName = `${store.deviceId}/${Date.now()}.jpg`;
+    const blob = await (await fetch(currentThumb || currentImage)).blob();
+    const up = await fetch(`${SUPA_URL}/storage/v1/object/listing-photos/${photoName}`, {
+      method: "POST",
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "image/jpeg" },
+      body: blob,
+    });
+    if (!up.ok) throw new Error("photo_" + up.status);
+    const res = await fetch(`${SUPA_URL}/rest/v1/listings`, {
+      method: "POST",
+      headers: SUPA_HEADERS,
+      body: JSON.stringify({
+        device_id: store.deviceId,
+        category: listing.category,
+        title: listing.title,
+        price_usd: price,
+        city: listing.city,
+        note: listing.note,
+        seller_email: email,
+        meta: listing.meta,
+        facts: listing.facts,
+        appraisal: r,
+        photo_url: `${SUPA_URL}/storage/v1/object/public/listing-photos/${photoName}`,
+      }),
+    });
+    if (!res.ok) throw new Error("listing_" + res.status);
+    await loadMarket();
+    show("marketScreen");
+    toast(t.listedOk);
+  } catch {
+    // offline or blocked: keep the listing on this device
+    store.listings = [{ id: "l-" + Date.now(), thumb: currentThumb || currentImage, price, appraisal: r, ...{ category: listing.category, text: listing } }, ...store.listings];
+    renderMarket();
+    show("marketScreen");
+    toast(t.errNet);
+  } finally {
+    $("publishBtn").disabled = false;
+  }
 };
 
 /* --- paywall --- */

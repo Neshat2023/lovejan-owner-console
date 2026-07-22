@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="RugSnap — AI Persian & Oriental rug and antique identifier. Snap a photo, get origin, era, materials and estimated value in seconds." />
+<title>RugSnap — AI Rug &amp; Antique Identifier</title>
+<style>
+  :root{
+    --bg:#171009; --panel:#241a10; --panel2:#2f2315; --line:#3d2e1d;
+    --txt:#f6efe4; --mut:#bfae95; --dim:#8a7a63;
+    --gold:#d9a441; --red:#b8452f; --teal:#3f8f7b; --r:18px;
+    --grad:linear-gradient(135deg,var(--gold),var(--red));
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:
+      radial-gradient(1100px 560px at 100% -12%,rgba(217,164,65,.12),transparent),
+      radial-gradient(900px 480px at -10% 112%,rgba(184,69,47,.10),transparent),var(--bg);
+    color:var(--txt);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Vazirmatn,Tahoma,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  body.rtl{direction:rtl}
+  a{color:var(--gold)}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px}
+  header{display:flex;align-items:center;justify-content:space-between;padding:22px 0}
+  .brand{display:flex;align-items:center;gap:11px;font-size:21px;font-weight:800}
+  .dot{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-size:18px;
+       box-shadow:0 6px 20px rgba(217,164,65,.35)}
+  .langbtn{background:var(--panel2);border:1px solid var(--line);color:var(--mut);border-radius:999px;
+       padding:7px 16px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+  .hero{text-align:center;padding:52px 0 40px}
+  h1{font-size:clamp(30px,6vw,52px);line-height:1.15;margin:0 0 16px;letter-spacing:-.02em}
+  h1 .g{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--mut);font-size:18px;max-width:600px;margin:0 auto 30px}
+  .cta{display:inline-block;padding:16px 36px;border-radius:14px;background:var(--grad);color:#fff;font-weight:800;
+       font-size:17px;text-decoration:none;box-shadow:0 10px 30px rgba(184,69,47,.35)}
+  .cta.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--txt);box-shadow:none;margin-inline-start:10px}
+  .demo{margin:44px auto 0;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:24px;
+       padding:22px;text-align:start}
+  .demo .ph{height:180px;border-radius:14px;background:
+       repeating-linear-gradient(45deg,#3d2313 0 14px,#57301a 14px 28px,#7a4020 28px 42px,#57301a 42px 56px);
+       border:1px solid var(--line);display:grid;place-items:center;font-size:44px}
+  .demo .row{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .demo .name{font-weight:800;font-size:17px}
+  .demo .meta{color:var(--dim);font-size:13px}
+  .demo .val{color:var(--gold);font-weight:800;font-size:19px;white-space:nowrap}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:56px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:24px}
+  .card .ic{font-size:30px;margin-bottom:10px}
+  .card h3{margin:0 0 6px;font-size:17px}
+  .card p{margin:0;color:var(--mut);font-size:14.5px}
+  h2{font-size:28px;text-align:center;margin:70px 0 8px;letter-spacing:-.02em}
+  .h2sub{text-align:center;color:var(--mut);margin:0 0 30px}
+  .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;max-width:560px;margin:0 auto}
+  .plan{background:var(--panel);border:2px solid var(--line);border-radius:var(--r);padding:26px;text-align:center;position:relative}
+  .plan.hot{border-color:var(--gold)}
+  .plan .badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--teal);color:#fff;
+       font-size:11px;font-weight:800;padding:3px 12px;border-radius:999px;white-space:nowrap}
+  .plan .price{font-size:34px;font-weight:800;margin:6px 0 2px}
+  .plan .per{color:var(--dim);font-size:13px}
+  .plan ul{list-style:none;margin:16px 0 0;padding:0;color:var(--mut);font-size:14px;text-align:start}
+  .plan li{padding:4px 0}
+  footer{margin-top:80px;padding:30px 0 46px;border-top:1px solid var(--line);color:var(--dim);font-size:13.5px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="dot">🧿</div><span data-i18n="brand">RugSnap</span></div>
+    <button class="langbtn" id="langBtn">فارسی</button>
+  </header>
+
+  <section class="hero">
+    <h1 data-i18n="heroTitle">Know what your rug<br>is <span class="g">really worth</span></h1>
+    <p class="sub" data-i18n="heroSub">Snap a photo of any Persian or Oriental rug, carpet, or antique. AI identifies its origin, era, weave, and materials — and estimates its market value in seconds.</p>
+    <a class="cta" href="app.html" data-i18n="ctaTry">Try it free →</a>
+    <div class="demo">
+      <div class="ph">🧿</div>
+      <div class="row">
+        <div>
+          <div class="name" data-i18n="demoName">Tabriz Medallion Rug</div>
+          <div class="meta" data-i18n="demoMeta">NW Persia · c. 1950s · Wool on cotton</div>
+        </div>
+        <div class="val">$2,400–$3,800</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card"><div class="ic">📸</div><h3 data-i18n="f1t">Snap &amp; identify</h3><p data-i18n="f1p">One photo. AI reads the weave, knots, dyes, and motifs like a master appraiser.</p></div>
+    <div class="card"><div class="ic">🗺️</div><h3 data-i18n="f2t">Origin &amp; era</h3><p data-i18n="f2p">Tabriz or Kashan? Qashqai or Baluch? Get the region, tradition, and approximate age.</p></div>
+    <div class="card"><div class="ic">💰</div><h3 data-i18n="f3t">Honest value range</h3><p data-i18n="f3p">A realistic USD market estimate — so you never undersell a family treasure.</p></div>
+    <div class="card"><div class="ic">📜</div><h3 data-i18n="f4t">The story behind it</h3><p data-i18n="f4p">Every piece has a history. Learn the meaning of its motifs and how to care for it.</p></div>
+  </section>
+
+  <h2 data-i18n="pricingTitle">Simple pricing</h2>
+  <p class="h2sub" data-i18n="pricingSub">Start free. Upgrade when you're hooked.</p>
+  <section class="plans">
+    <div class="plan hot">
+      <span class="badge" data-i18n="bestValue">BEST VALUE · SAVE 84%</span>
+      <div class="price">$39.99</div>
+      <div class="per" data-i18n="perYear">per year · 7-day free trial</div>
+      <ul>
+        <li data-i18n="pl1">✅ Unlimited identifications</li>
+        <li data-i18n="pl2">✅ Value estimates &amp; condition notes</li>
+        <li data-i18n="pl3">✅ Collection history</li>
+      </ul>
+    </div>
+    <div class="plan">
+      <div class="price">$4.99</div>
+      <div class="per" data-i18n="perWeek">per week</div>
+      <ul>
+        <li data-i18n="pl1b">✅ Unlimited identifications</li>
+        <li data-i18n="pl2b">✅ Value estimates &amp; condition notes</li>
+        <li data-i18n="pl3b">✅ Cancel anytime</li>
+      </ul>
+    </div>
+  </section>
+
+  <div style="text-align:center;margin-top:40px">
+    <a class="cta" href="app.html" data-i18n="ctaBottom">Scan your first rug free →</a>
+  </div>
+
+  <footer>
+    <span data-i18n="footer">RugSnap · AI estimates are for guidance only, not certified appraisals.</span>
+  </footer>
+</div>
+
+<script>
+"use strict";
+const I18N = {
+  en: {
+    brand:"RugSnap",
+    heroTitle:'Know what your rug<br>is <span class="g">really worth</span>',
+    heroSub:"Snap a photo of any Persian or Oriental rug, carpet, or antique. AI identifies its origin, era, weave, and materials — and estimates its market value in seconds.",
+    ctaTry:"Try it free →", demoName:"Tabriz Medallion Rug", demoMeta:"NW Persia · c. 1950s · Wool on cotton",
+    f1t:"Snap & identify", f1p:"One photo. AI reads the weave, knots, dyes, and motifs like a master appraiser.",
+    f2t:"Origin & era", f2p:"Tabriz or Kashan? Qashqai or Baluch? Get the region, tradition, and approximate age.",
+    f3t:"Honest value range", f3p:"A realistic USD market estimate — so you never undersell a family treasure.",
+    f4t:"The story behind it", f4p:"Every piece has a history. Learn the meaning of its motifs and how to care for it.",
+    pricingTitle:"Simple pricing", pricingSub:"Start free. Upgrade when you're hooked.",
+    bestValue:"BEST VALUE · SAVE 84%", perYear:"per year · 7-day free trial", perWeek:"per week",
+    pl1:"✅ Unlimited identifications", pl2:"✅ Value estimates & condition notes", pl3:"✅ Collection history",
+    pl1b:"✅ Unlimited identifications", pl2b:"✅ Value estimates & condition notes", pl3b:"✅ Cancel anytime",
+    ctaBottom:"Scan your first rug free →",
+    footer:"RugSnap · AI estimates are for guidance only, not certified appraisals.",
+  },
+  fa: {
+    brand:"راگ‌اسنپ",
+    heroTitle:'بفهم فرشت <span class="g">واقعاً چقدر می‌ارزد</span>',
+    heroSub:"از هر فرش، قالی یا عتیقه ایرانی و شرقی عکس بگیر. هوش مصنوعی منطقه بافت، قدمت، نوع بافت و جنس آن را شناسایی می‌کند — و در چند ثانیه ارزش بازارش را تخمین می‌زند.",
+    ctaTry:"← رایگان امتحان کن", demoName:"فرش ترنج‌دار تبریز", demoMeta:"شمال‌غرب ایران · دهه ۱۹۵۰ · پشم روی پنبه",
+    f1t:"عکس بگیر و شناسایی کن", f1p:"یک عکس کافی است. هوش مصنوعی مثل یک کارشناس خبره بافت، گره، رنگ و نقوش را می‌خواند.",
+    f2t:"منطقه و قدمت", f2p:"تبریز یا کاشان؟ قشقایی یا بلوچ؟ منطقه، سبک و سن تقریبی را بگیر.",
+    f3t:"بازه ارزش واقعی", f3p:"تخمین واقع‌بینانه قیمت به دلار — تا میراث خانوادگی‌ات را ارزان نفروشی.",
+    f4t:"داستان پشت اثر", f4p:"هر فرش تاریخی دارد. معنی نقوش و روش نگهداری‌اش را یاد بگیر.",
+    pricingTitle:"قیمت‌گذاری ساده", pricingSub:"رایگان شروع کن. هر وقت خواستی ارتقا بده.",
+    bestValue:"بهترین انتخاب · ۸۴٪ تخفیف", perYear:"در سال · ۷ روز تست رایگان", perWeek:"در هفته",
+    pl1:"✅ شناسایی نامحدود", pl2:"✅ تخمین ارزش و وضعیت", pl3:"✅ آرشیو مجموعه",
+    pl1b:"✅ شناسایی نامحدود", pl2b:"✅ تخمین ارزش و وضعیت", pl3b:"✅ لغو در هر زمان",
+    ctaBottom:"← اولین فرشت را رایگان اسکن کن",
+    footer:"راگ‌اسنپ · تخمین‌های هوش مصنوعی صرفاً جنبه راهنمایی دارند و کارشناسی رسمی نیستند.",
+  },
+};
+const store = {
+  get lang(){ return localStorage.getItem("rs_lang") || "en"; },
+  set lang(v){ localStorage.setItem("rs_lang", v); },
+};
+function applyLang(){
+  const t = I18N[store.lang];
+  document.documentElement.lang = store.lang;
+  document.body.classList.toggle("rtl", store.lang === "fa");
+  document.getElementById("langBtn").textContent = store.lang === "fa" ? "English" : "فارسی";
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const v = t[el.dataset.i18n];
+    if (typeof v === "string") el.innerHTML = v;
+  });
+}
+document.getElementById("langBtn").onclick = () => { store.lang = store.lang === "fa" ? "en" : "fa"; applyLang(); };
+applyLang();
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "rugsnap",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "RugSnap — AI Persian & Oriental rug and antique identifier",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.116.0"
+  }
+}

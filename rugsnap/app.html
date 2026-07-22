@@ -181,6 +181,11 @@
   .mcard .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
   .mcard .mine-badge{position:absolute;top:8px;inset-inline-start:8px;background:var(--neon);color:#06060a;
     font-size:9.5px;font-weight:800;letter-spacing:.08em;padding:3px 9px;border-radius:999px}
+  .mcard .appr-badge{position:absolute;top:8px;inset-inline-end:8px;display:inline-flex;align-items:center;gap:4px;
+    background:rgba(8,10,20,.62);border:1px solid var(--stroke);color:var(--cyan);
+    font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:999px;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  body.rtl .mcard .appr-badge,body.rtl .mcard .mine-badge{letter-spacing:.01em}
   .mcard .mbody{padding:11px 13px 13px}
   .mcard .mt{font-weight:600;font-size:14px;line-height:1.35;letter-spacing:-.01em}
   .mcard .mm{font-size:11.5px;color:var(--dim);margin-top:2px}
@@ -522,7 +527,7 @@ const I18N = {
     catAll:"All", catRugs:"Rugs & carpets", catArt:"Art & painting", catAntiques:"Antiques",
     marketNote:"Offers are messages for now — secure checkout, escrow, and shipping arrive with the public launch. RugSnap fee: 10% when it sells (7% for Pro).",
     hSellerNote:"Seller's note", offerBtn:"Make an offer", backMarket:"Back to the Bazaar",
-    yours:"YOURS", noNote:"—",
+    yours:"YOURS", appraised:"APPRAISED", noNote:"—",
     listBtn:"List it in the Bazaar",
     sellTitle:"List it in the Bazaar",
     sellSub:"Your appraisal card becomes the listing — buyers see the full analysis.",
@@ -569,7 +574,7 @@ const I18N = {
     catAll:"همه", catRugs:"فرش و قالی", catArt:"هنر و نقاشی", catAntiques:"عتیقه",
     marketNote:"فعلاً پیشنهادها به صورت پیام به فروشنده می‌رسند — پرداخت امن، اسکرو و ارسال با لانچ عمومی فعال می‌شود. کارمزد راگ‌اسنپ: ۱۰٪ فقط وقتی فروخته شود (اعضای Pro: ۷٪).",
     hSellerNote:"یادداشت فروشنده", offerBtn:"پیشنهاد قیمت بده", backMarket:"بازگشت به بازار",
-    yours:"مال شما", noNote:"—",
+    yours:"مال شما", appraised:"کارشناسی‌شده", noNote:"—",
     listBtn:"در بازار آگهی کن",
     sellTitle:"در بازار آگهی کن",
     sellSub:"کارت کارشناسی‌ات همان آگهی می‌شود — خریدار تحلیل کامل را می‌بیند.",
@@ -909,9 +914,10 @@ function renderMarket() {
     .filter((m) => marketFilter === "all" || m.category === marketFilter)
     .forEach((item) => {
       const x = listingText(item);
+      const appraised = !!((x.facts && x.facts.length) || item.appraisal);
       const card = document.createElement("button");
       card.className = "mcard";
-      card.innerHTML = `<span class="ph"><img loading="lazy" alt="">${item.mine ? `<span class="mine-badge">${t.yours}</span>` : ""}</span>
+      card.innerHTML = `<span class="ph"><img loading="lazy" alt="">${item.mine ? `<span class="mine-badge">${t.yours}</span>` : ""}${appraised ? `<span class="appr-badge">✓ ${t.appraised}</span>` : ""}</span>
         <span class="mbody" style="display:block"><span class="mt" style="display:block"></span>
         <span class="mm" style="display:block"></span>
         <span class="mp" style="display:block">$${fmt(item.price)}</span></span>`;

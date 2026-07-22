@@ -3,115 +3,174 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#1b130c" />
+<meta name="theme-color" content="#130d07" />
 <title>RugSnap — Rug &amp; Antique Identifier</title>
 <style>
-  :root{
-    --bg:#171009; --panel:#241a10; --panel2:#2f2315; --line:#3d2e1d;
-    --txt:#f6efe4; --mut:#bfae95; --dim:#8a7a63;
-    --gold:#d9a441; --red:#b8452f; --teal:#3f8f7b;
-    --good:#5dbb87; --warn:#e0b13f; --bad:#e07856; --r:16px;
-    --grad:linear-gradient(135deg,var(--gold),var(--red));
-  }
-  *{box-sizing:border-box} html,body{margin:0;min-height:100%}
-  body{background:
-      radial-gradient(900px 500px at 100% -10%,rgba(217,164,65,.10),transparent),
-      radial-gradient(800px 460px at -10% 110%,rgba(184,69,47,.10),transparent),var(--bg);
-    color:var(--txt);
-    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Vazirmatn,Tahoma,sans-serif;
-    -webkit-font-smoothing:antialiased}
-  body.rtl{direction:rtl}
-  .wrap{max-width:520px;margin:0 auto;padding:18px 16px 80px;min-height:100vh}
-  .hidden{display:none!important}
-  button{font:inherit;cursor:pointer;border:0}
-  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-  .brand{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:800;letter-spacing:-.01em}
-  .dot{width:30px;height:30px;border-radius:9px;background:var(--grad);box-shadow:0 5px 18px rgba(217,164,65,.35);
-       display:grid;place-items:center;font-size:16px}
-  .langbtn{background:var(--panel2);border:1px solid var(--line);color:var(--mut);border-radius:999px;
-       padding:6px 14px;font-weight:700;font-size:13px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px}
-  .btn{padding:14px 18px;border-radius:13px;color:#fff;font-weight:800;background:var(--grad);width:100%;
-       box-shadow:0 8px 24px rgba(184,69,47,.28)}
-  .btn.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--txt);box-shadow:none;font-weight:600}
-  .btn:disabled{opacity:.5;cursor:default}
-  h1{font-size:23px;margin:0 0 6px;letter-spacing:-.02em}
-  h2{font-size:12px;color:var(--dim);margin:26px 0 10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
-  .mut{color:var(--mut)} .dim{color:var(--dim)} .small{font-size:13px}
-  .counter{font-size:13px;color:var(--mut);text-align:center;margin-top:12px}
-  .counter b{color:var(--gold)}
+  /* ---------- fonts ---------- */
+  @font-face{font-family:"Marcellus";font-style:normal;font-weight:400;font-display:swap;
+    src:url(fonts/marcellus-latin.woff2) format("woff2")}
+  @font-face{font-family:"Lora";font-style:normal;font-weight:400 700;font-display:swap;
+    src:url(fonts/lora-latin.woff2) format("woff2")}
+  @font-face{font-family:"Vazirmatn";font-style:normal;font-weight:300 800;font-display:swap;
+    src:url(fonts/vazirmatn-arabic.woff2) format("woff2");unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF}
+  @font-face{font-family:"Vazirmatn";font-style:normal;font-weight:300 800;font-display:swap;
+    src:url(fonts/vazirmatn-latin.woff2) format("woff2");unicode-range:U+0000-00FF}
 
-  .dropzone{border:2px dashed var(--line);border-radius:var(--r);padding:34px 18px;text-align:center;cursor:pointer;
-       transition:.15s;background:rgba(255,255,255,.015)}
-  .dropzone:hover{border-color:var(--gold)}
-  .dropzone .big{font-size:44px;margin-bottom:8px}
-  .preview{width:100%;border-radius:var(--r);border:1px solid var(--line);display:block;max-height:340px;object-fit:cover}
-  .row{display:flex;gap:10px;margin-top:12px}
+  /* ---------- tokens ---------- */
+  :root{
+    --ground:#130d07; --surface:#1c140c; --surface-2:#261b10; --line:#3a2b1a; --line-soft:#2c2113;
+    --ivory:#f3e9d4; --sand:#bca989; --umber:#84735b;
+    --gold:#d0a04b; --gold-soft:rgba(208,160,75,.14);
+    --madder:#b5432c; --teal:#4a8271;
+    --good:#79bd92; --warn:#dcae51; --bad:#dd7b58;
+    --font-display:"Marcellus","Vazirmatn",serif;
+    --font-body:"Lora","Vazirmatn",Georgia,serif;
+    --r-sm:6px; --r-md:10px; --r-lg:14px;
+  }
+  body.rtl{--font-display:"Vazirmatn",serif;--font-body:"Vazirmatn",Tahoma,serif;direction:rtl}
+
+  /* ---------- base ---------- */
+  *{box-sizing:border-box} html,body{margin:0;min-height:100%}
+  body{background:var(--ground);color:var(--ivory);font:15.5px/1.65 var(--font-body);-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--gold);color:var(--ground)}
+  button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:2px}
+  .wrap{max-width:520px;margin:0 auto;padding:18px 18px 90px;min-height:100vh}
+  .hidden{display:none!important}
+  h1{font-family:var(--font-display);font-weight:400;font-size:26px;letter-spacing:.01em;
+     margin:0 0 6px;text-wrap:balance}
+  h2{font-family:var(--font-body);font-size:11.5px;color:var(--umber);margin:26px 0 10px;font-weight:600;
+     letter-spacing:.18em;text-transform:uppercase}
+  body.rtl h2{letter-spacing:.05em}
+  .mut{color:var(--sand)} .dim{color:var(--umber)} .small{font-size:13.5px}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{display:block}
+  .wordmark{font-family:var(--font-display);font-size:19px;letter-spacing:.04em}
+  .langbtn{border:1px solid var(--line);border-radius:999px;padding:5px 15px;font-size:12.5px;
+    color:var(--sand);transition:color .15s,border-color .15s}
+  .langbtn:hover{color:var(--ivory);border-color:var(--gold)}
+
+  .btn{display:block;width:100%;padding:14px 18px;border-radius:var(--r-md);text-align:center;
+    background:var(--madder);color:#fff;font-weight:600;border:1px solid rgba(255,255,255,.12);
+    transition:background .15s}
+  .btn:hover{background:#c44e35}
+  .btn.ghost{background:var(--surface-2);border:1px solid var(--line);color:var(--ivory)}
+  .btn.ghost:hover{background:var(--surface)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .row{display:flex;gap:10px;margin-top:14px}
   .row .btn{margin:0}
 
-  .steps{margin:18px 0 0;padding:0;list-style:none}
-  .steps li{display:flex;align-items:center;gap:10px;padding:7px 0;color:var(--dim);font-size:14px;transition:.3s}
-  .steps li.on{color:var(--txt)}
-  .steps li .tick{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;
-       place-items:center;font-size:11px;color:var(--good)}
-  .steps li.on .tick{border-color:var(--good)}
-  .spinner{width:46px;height:46px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--gold);
-       margin:6px auto 14px;animation:spin 1s linear infinite}
+  /* ---------- home ---------- */
+  .dropzone{border:1px dashed var(--gold);border-radius:var(--r-sm);padding:36px 20px;text-align:center;
+    cursor:pointer;background:var(--gold-soft);transition:background .15s;margin-top:20px}
+  .dropzone:hover{background:rgba(208,160,75,.2)}
+  .dropzone .ic{color:var(--gold);margin-bottom:10px}
+  .dz-title{font-family:var(--font-display);font-size:18px;letter-spacing:.01em}
+  .counter{font-size:13px;color:var(--sand);text-align:center;margin-top:14px}
+  .counter b{color:var(--gold);font-weight:600}
+
+  .history{display:flex;flex-direction:column;gap:8px}
+  .hitem{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line-soft);
+    border-radius:var(--r-sm);padding:9px;cursor:pointer;transition:border-color .15s}
+  .hitem:hover{border-color:var(--gold)}
+  .hitem img{width:52px;height:52px;border-radius:4px;object-fit:cover;flex:none}
+  .hitem .t{font-family:var(--font-display);font-size:14.5px}
+  .hitem .s{font-size:12px;color:var(--umber)}
+  .hitem .val{margin-inline-start:auto;font-family:var(--font-display);color:var(--gold);font-size:14px;
+    white-space:nowrap;font-variant-numeric:tabular-nums}
+
+  /* ---------- preview / loading ---------- */
+  .preview{width:100%;border-radius:var(--r-sm);border:1px solid var(--line);display:block;
+    max-height:340px;object-fit:cover}
+  .frame{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px}
+  .loading-card{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-sm);
+    padding:30px 24px;text-align:center;margin-top:32px}
+  .loading-title{font-family:var(--font-display);font-size:19px;letter-spacing:.01em}
+  .spinner{width:44px;height:44px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--gold);
+    margin:4px auto 16px;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
+  .steps{margin:20px 0 0;padding:0;list-style:none;text-align:start}
+  .steps li{display:flex;align-items:center;gap:11px;padding:7px 0;color:var(--umber);font-size:14px;
+    transition:color .3s}
+  .steps li.on{color:var(--ivory)}
+  .steps li .tick{width:19px;height:19px;border-radius:50%;border:1.5px solid var(--line);flex:none;
+    display:grid;place-items:center;font-size:10px;color:var(--good);transition:border-color .3s}
+  .steps li.on .tick{border-color:var(--good)}
+  .err{color:var(--bad);font-size:13.5px;margin-top:12px;text-align:center;min-height:18px}
 
-  .result-hero{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line)}
+  /* ---------- result ---------- */
+  .result-hero{position:relative;border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--line)}
   .result-hero img{width:100%;max-height:270px;object-fit:cover;display:block}
-  .result-hero .conf{position:absolute;top:12px;inset-inline-end:12px;font-size:11px;font-weight:800;padding:4px 10px;
-       border-radius:999px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px)}
+  .result-hero .conf{position:absolute;top:12px;inset-inline-end:12px;font-size:10.5px;font-weight:600;
+    letter-spacing:.1em;padding:5px 11px;border-radius:999px;background:rgba(13,9,5,.72);
+    border:1px solid var(--line);backdrop-filter:blur(4px)}
   .conf.high{color:var(--good)} .conf.medium{color:var(--warn)} .conf.low{color:var(--bad)}
-  .value-band{background:linear-gradient(135deg,rgba(217,164,65,.14),rgba(184,69,47,.12));
-       border:1px solid rgba(217,164,65,.35);border-radius:var(--r);padding:16px 18px;margin-top:14px;text-align:center}
-  .value-band .v{font-size:27px;font-weight:800;letter-spacing:-.02em;color:var(--gold)}
-  .value-band .l{font-size:12px;color:var(--mut);margin-top:2px}
-  .facts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-  .fact{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
-  .fact .k{font-size:11px;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
-  .fact .v{font-size:14px;font-weight:600;margin-top:3px}
+  .result-type{color:var(--umber);font-size:13.5px;margin:2px 0 0}
+  .value-band{background:linear-gradient(180deg,var(--gold-soft),transparent);border:1px solid var(--gold);
+    border-radius:var(--r-sm);padding:18px;margin-top:16px;text-align:center}
+  .value-band .v{font-family:var(--font-display);font-size:30px;letter-spacing:.01em;color:var(--gold);
+    font-variant-numeric:tabular-nums}
+  .value-band .l{font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--sand);margin-top:4px}
+  body.rtl .value-band .l{letter-spacing:.04em}
+  .facts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+  .fact{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-sm);padding:11px 13px}
+  .fact .k{font-size:10.5px;color:var(--umber);font-weight:600;text-transform:uppercase;letter-spacing:.12em}
+  body.rtl .fact .k{letter-spacing:.03em}
+  .fact .v{font-size:14px;margin-top:3px}
   .chips{display:flex;flex-wrap:wrap;gap:7px}
-  .chip{font-size:12px;padding:4px 11px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--mut)}
-  .prose{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:15px 17px;font-size:14px;color:var(--txt)}
-  .tips li{margin-bottom:6px;font-size:14px;color:var(--mut)}
-  .disclaimer{font-size:11.5px;color:var(--dim);margin-top:16px;line-height:1.5}
+  .chip{font-size:12.5px;padding:4px 12px;border-radius:999px;background:var(--surface-2);
+    border:1px solid var(--line-soft);color:var(--sand)}
+  .prose{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--r-sm);
+    padding:15px 17px;font-size:14.5px}
+  .tips{margin:0;padding-inline-start:18px}
+  .tips li{margin-bottom:6px;font-size:14px;color:var(--sand)}
+  .disclaimer{font-size:11.5px;color:var(--umber);margin-top:18px;line-height:1.55}
 
-  .history{display:flex;flex-direction:column;gap:9px}
-  .hitem{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);
-       border-radius:13px;padding:9px;cursor:pointer}
-  .hitem:hover{background:var(--panel2)}
-  .hitem img{width:52px;height:52px;border-radius:9px;object-fit:cover;flex:none}
-  .hitem .t{font-weight:700;font-size:14px}
-  .hitem .s{font-size:12px;color:var(--dim)}
-  .hitem .val{margin-inline-start:auto;font-weight:800;color:var(--gold);font-size:13px;white-space:nowrap}
+  /* ---------- paywall ---------- */
+  .pw{position:fixed;inset:0;background:rgba(10,7,4,.82);backdrop-filter:blur(6px);
+    display:grid;place-items:end center;z-index:50}
+  .pw-card{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--line);
+    border-bottom:0;border-radius:18px 18px 0 0;padding:28px 24px 32px}
+  .pw-card h1{text-align:center;font-size:24px}
+  .perks{margin:18px 0 4px;padding:0;list-style:none;border-top:1px solid var(--line-soft)}
+  .perks li{display:flex;gap:11px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-soft);
+    font-size:14.5px;color:var(--sand)}
+  .perks li b{color:var(--ivory);font-weight:600}
+  .perks svg{color:var(--teal);flex:none}
+  .plans{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0 16px}
+  .plan{border:1px solid var(--line);border-radius:var(--r-sm);padding:14px 12px;text-align:center;
+    cursor:pointer;position:relative;transition:border-color .15s,background .15s}
+  .plan.on{border-color:var(--gold);background:var(--gold-soft)}
+  .plan .p1{font-family:var(--font-display);font-size:19px;font-variant-numeric:tabular-nums}
+  .plan .p2{font-size:12px;color:var(--umber);margin-top:3px}
+  .plan .save{position:absolute;top:-10px;inset-inline-start:50%;transform:translateX(-50%);
+    background:var(--ground);border:1px solid var(--teal);color:var(--teal);font-size:9.5px;font-weight:600;
+    letter-spacing:.1em;padding:2px 9px;border-radius:999px;white-space:nowrap}
+  body.rtl .plan .save{transform:translateX(50%);letter-spacing:.02em}
+  .pw-note{font-size:11.5px;color:var(--umber);text-align:center;margin-top:12px}
+  .linkbtn{display:block;margin:12px auto 0;color:var(--umber);font-size:13px;text-decoration:underline}
 
-  /* Paywall */
-  .pw{position:fixed;inset:0;background:rgba(10,7,4,.82);backdrop-filter:blur(6px);display:grid;place-items:end center;z-index:50}
-  .pw-card{width:100%;max-width:520px;background:var(--panel);border:1px solid var(--line);
-       border-radius:24px 24px 0 0;padding:26px 22px 30px}
-  .pw-card h1{text-align:center}
-  .perks{margin:16px 0;padding:0;list-style:none}
-  .perks li{display:flex;gap:10px;padding:6px 0;font-size:14.5px;color:var(--mut)}
-  .perks li b{color:var(--txt)}
-  .plans{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
-  .plan{border:2px solid var(--line);border-radius:14px;padding:13px;text-align:center;cursor:pointer;position:relative}
-  .plan.on{border-color:var(--gold);background:rgba(217,164,65,.07)}
-  .plan .p1{font-weight:800;font-size:15px}
-  .plan .p2{font-size:12px;color:var(--dim);margin-top:2px}
-  .plan .save{position:absolute;top:-9px;inset-inline-start:50%;transform:translateX(-50%);background:var(--teal);
-       color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:999px;white-space:nowrap}
-  body.rtl .plan .save{transform:translateX(50%)}
-  .pw-note{font-size:11.5px;color:var(--dim);text-align:center;margin-top:10px}
-  .linkbtn{background:none;color:var(--dim);font-size:13px;display:block;margin:12px auto 0;text-decoration:underline}
-  .err{color:var(--bad);font-size:13.5px;margin-top:10px;text-align:center;min-height:18px}
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+    .spinner{border-top-color:var(--line);border-color:var(--gold)}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="topbar">
-    <div class="brand"><div class="dot">🧿</div><span data-i18n="brand">RugSnap</span></div>
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true">
+        <rect x="1" y="1" width="28" height="28" rx="3" fill="#b5432c"/>
+        <rect x="4" y="4" width="22" height="22" rx="1.5" fill="none" stroke="#d0a04b" stroke-width="1.4"/>
+        <path d="M15 7.5 21 15 15 22.5 9 15Z" fill="none" stroke="#f3e9d4" stroke-width="1.5"/>
+        <circle cx="15" cy="15" r="2.2" fill="#d0a04b"/>
+      </svg>
+      <span class="wordmark" data-i18n="brand">RugSnap</span>
+    </div>
     <button class="langbtn" id="langBtn">فارسی</button>
   </div>
 
@@ -119,9 +178,9 @@
   <section id="home">
     <h1 data-i18n="homeTitle">Identify any rug or antique</h1>
     <p class="mut small" data-i18n="homeSub">Snap a photo of a Persian or Oriental rug, carpet, or antique — get its origin, era, materials, and estimated value in seconds.</p>
-    <div class="dropzone" id="dropzone">
-      <div class="big">📸</div>
-      <div style="font-weight:700" data-i18n="dzTitle">Take or upload a photo</div>
+    <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Take or upload a photo">
+      <div class="ic"><svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="9" width="28" height="20" rx="3"/><path d="M12 9l2.4-4h5.2L22 9"/><circle cx="17" cy="19" r="6"/></svg></div>
+      <div class="dz-title" data-i18n="dzTitle">Take or upload a photo</div>
       <div class="dim small" data-i18n="dzSub">Full item in frame, good light, straight-on angle</div>
     </div>
     <input type="file" id="fileInput" accept="image/*" capture="environment" class="hidden" />
@@ -135,18 +194,18 @@
   <!-- PREVIEW -->
   <section id="previewScreen" class="hidden">
     <h1 data-i18n="previewTitle">Ready to identify</h1>
-    <img class="preview" id="previewImg" alt="" />
+    <div class="frame"><img class="preview" id="previewImg" alt="" /></div>
     <div class="row">
       <button class="btn ghost" id="retakeBtn" data-i18n="retake">Retake</button>
-      <button class="btn" id="analyzeBtn" data-i18n="identify">Identify ✨</button>
+      <button class="btn" id="analyzeBtn" data-i18n="identify">Identify</button>
     </div>
   </section>
 
   <!-- ANALYZING -->
   <section id="loadingScreen" class="hidden">
-    <div class="card" style="text-align:center;margin-top:30px">
-      <div class="spinner"></div>
-      <div style="font-weight:800;font-size:17px" data-i18n="analyzing">Analyzing your piece…</div>
+    <div class="loading-card">
+      <div class="spinner" aria-hidden="true"></div>
+      <div class="loading-title" data-i18n="analyzing">Analyzing your piece…</div>
       <ul class="steps" id="steps">
         <li><span class="tick">✓</span><span data-i18n="step1">Reading weave structure &amp; knots</span></li>
         <li><span class="tick">✓</span><span data-i18n="step2">Matching regional design motifs</span></li>
@@ -154,7 +213,7 @@
         <li><span class="tick">✓</span><span data-i18n="step4">Calculating market value</span></li>
       </ul>
     </div>
-    <div class="err" id="loadError"></div>
+    <div class="err" id="loadError" role="alert"></div>
   </section>
 
   <!-- RESULT -->
@@ -163,8 +222,8 @@
       <img id="resultImg" alt="" />
       <span class="conf" id="confBadge"></span>
     </div>
-    <h1 id="resultName" style="margin-top:14px"></h1>
-    <p class="mut small" id="resultType"></p>
+    <h1 id="resultName" style="margin-top:16px"></h1>
+    <p class="result-type" id="resultType"></p>
     <div class="value-band">
       <div class="v" id="resultValue"></div>
       <div class="l" data-i18n="estValue">Estimated market value</div>
@@ -184,7 +243,7 @@
     <h2 data-i18n="hCondition">Condition</h2>
     <div class="prose" id="condition"></div>
     <h2 data-i18n="hCare">Care tips</h2>
-    <div class="prose"><ul class="tips" id="care" style="margin:0;padding-inline-start:18px"></ul></div>
+    <div class="prose"><ul class="tips" id="care"></ul></div>
     <p class="disclaimer" data-i18n="disclaimer">Estimates are generated by AI from a single photo and are for guidance only — not a certified appraisal. For insurance or sale, consult a professional appraiser.</p>
     <div class="row">
       <button class="btn ghost" id="shareBtn" data-i18n="share">Share</button>
@@ -194,23 +253,23 @@
 </div>
 
 <!-- PAYWALL -->
-<div class="pw hidden" id="paywall">
+<div class="pw hidden" id="paywall" role="dialog" aria-modal="true" aria-labelledby="pwTitle">
   <div class="pw-card">
-    <h1 data-i18n="pwTitle">Unlock unlimited appraisals</h1>
+    <h1 id="pwTitle" data-i18n="pwTitle">Unlock unlimited appraisals</h1>
     <ul class="perks">
-      <li>✅ <span><b data-i18n="pk1b">Unlimited scans</b> — <span data-i18n="pk1">rugs, carpets &amp; antiques</span></span></li>
-      <li>✅ <span><b data-i18n="pk2b">Value estimates</b> — <span data-i18n="pk2">honest USD market ranges</span></span></li>
-      <li>✅ <span><b data-i18n="pk3b">Expert detail</b> — <span data-i18n="pk3">knots, dyes, motifs &amp; history</span></span></li>
-      <li>✅ <span><b data-i18n="pk4b">Collection history</b> — <span data-i18n="pk4">every scan saved on device</span></span></li>
+      <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b data-i18n="pk1b">Unlimited scans</b> — <span data-i18n="pk1">rugs, carpets &amp; antiques</span></span></li>
+      <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b data-i18n="pk2b">Value estimates</b> — <span data-i18n="pk2">honest USD market ranges</span></span></li>
+      <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b data-i18n="pk3b">Expert detail</b> — <span data-i18n="pk3">knots, dyes, motifs &amp; history</span></span></li>
+      <li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b data-i18n="pk4b">Collection history</b> — <span data-i18n="pk4">every scan saved on device</span></span></li>
     </ul>
     <div class="plans">
-      <div class="plan on" data-plan="yearly">
+      <div class="plan on" data-plan="yearly" role="radio" aria-checked="true" tabindex="0">
         <span class="save" data-i18n="save">SAVE 84%</span>
-        <div class="p1">$39.99<span class="dim">/<span data-i18n="yr">yr</span></span></div>
+        <div class="p1">$39.99<span class="dim" style="font-size:13px">/<span data-i18n="yr">yr</span></span></div>
         <div class="p2" data-i18n="yearlyNote">7-day free trial</div>
       </div>
-      <div class="plan" data-plan="weekly">
-        <div class="p1">$4.99<span class="dim">/<span data-i18n="wk">wk</span></span></div>
+      <div class="plan" data-plan="weekly" role="radio" aria-checked="false" tabindex="0">
+        <div class="p1">$4.99<span class="dim" style="font-size:13px">/<span data-i18n="wk">wk</span></span></div>
         <div class="p2" data-i18n="weeklyNote">Billed weekly</div>
       </div>
     </div>
@@ -232,7 +291,7 @@ const I18N = {
     brand:"RugSnap", homeTitle:"Identify any rug or antique",
     homeSub:"Snap a photo of a Persian or Oriental rug, carpet, or antique — get its origin, era, materials, and estimated value in seconds.",
     dzTitle:"Take or upload a photo", dzSub:"Full item in frame, good light, straight-on angle",
-    historyTitle:"Recent scans", previewTitle:"Ready to identify", retake:"Retake", identify:"Identify ✨",
+    historyTitle:"Recent scans", previewTitle:"Ready to identify", retake:"Retake", identify:"Identify",
     analyzing:"Analyzing your piece…",
     step1:"Reading weave structure & knots", step2:"Matching regional design motifs",
     step3:"Estimating era & materials", step4:"Calculating market value",
@@ -259,7 +318,7 @@ const I18N = {
     brand:"راگ‌اسنپ", homeTitle:"هر فرش یا عتیقه‌ای را شناسایی کن",
     homeSub:"از فرش، قالی یا عتیقه‌ات عکس بگیر — در چند ثانیه منطقه بافت، قدمت، جنس و ارزش تقریبی‌اش را بگیر.",
     dzTitle:"عکس بگیر یا آپلود کن", dzSub:"کل اثر در کادر، نور کافی، زاویه مستقیم",
-    historyTitle:"اسکن‌های اخیر", previewTitle:"آماده شناسایی", retake:"عکس دوباره", identify:"✨ شناسایی کن",
+    historyTitle:"اسکن‌های اخیر", previewTitle:"آماده شناسایی", retake:"عکس دوباره", identify:"شناسایی کن",
     analyzing:"در حال تحلیل اثر شما…",
     step1:"بررسی ساختار بافت و گره‌ها", step2:"تطبیق نقوش منطقه‌ای",
     step3:"تخمین قدمت و جنس", step4:"محاسبه ارزش بازار",
@@ -327,20 +386,25 @@ function renderHistory() {
   const h = store.history;
   $("historyWrap").classList.toggle("hidden", h.length === 0);
   $("history").innerHTML = "";
-  h.forEach((item, i) => {
+  h.forEach((item) => {
     const div = document.createElement("div");
     div.className = "hitem";
+    div.setAttribute("role", "button");
+    div.tabIndex = 0;
     div.innerHTML = `<img src="${item.thumb}" alt=""><div><div class="t"></div><div class="s"></div></div>
       <div class="val">$${fmt(item.result.estimated_value_low_usd)}+</div>`;
     div.querySelector(".t").textContent = item.result.name;
     div.querySelector(".s").textContent = `${item.result.origin_region} · ${item.result.estimated_era}`;
-    div.onclick = () => { currentImage = item.thumb; showResult(item.result, item.thumb); };
+    const open = () => { currentImage = item.thumb; showResult(item.result, item.thumb); };
+    div.onclick = open;
+    div.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } };
     $("history").appendChild(div);
   });
 }
 
 /* --- photo intake --- */
 $("dropzone").onclick = () => $("fileInput").click();
+$("dropzone").onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("fileInput").click(); } };
 $("fileInput").onchange = (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -458,13 +522,19 @@ $("shareBtn").onclick = () => {
 };
 
 /* --- paywall --- */
-function openPaywall(){ $("paywall").classList.remove("hidden"); }
+function openPaywall(){ $("paywall").classList.remove("hidden"); $("trialBtn").focus(); }
 $("pwClose").onclick = () => $("paywall").classList.add("hidden");
 document.querySelectorAll(".plan").forEach((p) => {
-  p.onclick = () => {
-    document.querySelectorAll(".plan").forEach((x) => x.classList.remove("on"));
+  const select = () => {
+    document.querySelectorAll(".plan").forEach((x) => {
+      x.classList.remove("on");
+      x.setAttribute("aria-checked", "false");
+    });
     p.classList.add("on");
+    p.setAttribute("aria-checked", "true");
   };
+  p.onclick = select;
+  p.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); } };
 });
 $("trialBtn").onclick = () => {
   // TODO: replace with RevenueCat / Stripe checkout before launch

@@ -1,0 +1,13 @@
+{
+  "appId": "app.rugsnap",
+  "appName": "RugSnap",
+  "webDir": "www",
+  "server": {
+    "url": "https://rugsnap.app/app",
+    "cleartext": false
+  },
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#05060a"
+  }
+}

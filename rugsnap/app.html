@@ -504,7 +504,7 @@ const FEE_STANDARD = 0.10, FEE_PRO = 0.07;
 /* Stripe Payment Links — paste the two links from your Stripe dashboard.
    Set each plan's success URL in Stripe to https://rugsnap.app/app?pro=success
    Leave a link empty ("") to keep the local test unlock (no real charge). */
-const STRIPE_LINK_YEARLY = "";
+const STRIPE_LINK_YEARLY = "https://buy.stripe.com/aFacN4dwo3Re6p690z6Zy00";
 const STRIPE_LINK_WEEKLY = "";
 
 /* Bazaar backend (Supabase). The publishable key is safe to ship client-side;
@@ -1116,7 +1116,10 @@ document.querySelectorAll(".plan").forEach((p) => {
 });
 $("trialBtn").onclick = () => {
   const plan = document.querySelector(".plan.on")?.dataset.plan || "yearly";
-  const link = plan === "weekly" ? STRIPE_LINK_WEEKLY : STRIPE_LINK_YEARLY;
+  // Prefer the selected plan's link; fall back to whichever link is configured
+  // so a plan without its own link never unlocks for free once payments are live.
+  const link = (plan === "weekly" ? STRIPE_LINK_WEEKLY : STRIPE_LINK_YEARLY)
+    || STRIPE_LINK_YEARLY || STRIPE_LINK_WEEKLY;
   if (link) {
     // Hand off to Stripe Checkout. client_reference_id ties the payment to this
     // device; prefilled_email speeds up checkout. On success Stripe redirects

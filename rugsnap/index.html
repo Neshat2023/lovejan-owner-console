@@ -512,7 +512,7 @@ if (!reduce) {
   requestAnimationFrame(tick);
 })();
 
-/* ---------- cinematic hero video (drops in when video/hero.mp4 exists) ---------- */
+/* ---------- cinematic hero video (drops in when video/hero.* exists) ---------- */
 (() => {
   const v = document.getElementById("heroVideo");
   if (!v) return;
@@ -521,7 +521,8 @@ if (!reduce) {
     document.getElementById("rugCanvas").classList.add("hidden");
   }, { once: true });
   v.addEventListener("error", () => v.remove(), { once: true });
-  v.src = "video/hero.mp4";
+  const h264 = v.canPlayType('video/mp4; codecs="avc1.4D401F"');
+  v.src = h264 ? "video/hero.mp4" : "video/hero.webm";
 })();
 </script>
 </body>

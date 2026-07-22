@@ -997,13 +997,14 @@ $("trialBtn").onclick = () => {
 /* --- language --- */
 $("langBtn").onclick = () => { store.lang = store.lang === "fa" ? "en" : "fa"; applyLang(); renderFees(); };
 
-/* --- cinematic home banner: appears only when video/hero.mp4 exists --- */
+/* --- cinematic home banner: appears only when video/hero.* exists --- */
 (() => {
   const v = $("cineVideo");
   if (!v) return;
   v.addEventListener("canplay", () => $("cineWrap").classList.remove("hidden"), { once: true });
   v.addEventListener("error", () => $("cineWrap").remove(), { once: true });
-  v.src = "video/hero.mp4";
+  const h264 = v.canPlayType('video/mp4; codecs="avc1.4D401F"');
+  v.src = h264 ? "video/hero.mp4" : "video/hero.webm";
 })();
 
 /* --- global keys --- */

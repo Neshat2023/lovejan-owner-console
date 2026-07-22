@@ -501,6 +501,12 @@ const API_URL = "/api/analyze";
 const FREE_SCANS = 2;
 const FEE_STANDARD = 0.10, FEE_PRO = 0.07;
 
+/* Stripe Payment Links — paste the two links from your Stripe dashboard.
+   Set each plan's success URL in Stripe to https://rugsnap.app/app?pro=success
+   Leave a link empty ("") to keep the local test unlock (no real charge). */
+const STRIPE_LINK_YEARLY = "";
+const STRIPE_LINK_WEEKLY = "";
+
 /* Bazaar backend (Supabase). The publishable key is safe to ship client-side;
    row-level security governs what it can do. */
 const SUPA_URL = "https://rwloxdnjfwsgetzkuras.supabase.co";
@@ -555,6 +561,7 @@ const I18N = {
     notNow:"Not now",
     scansLeft:(n)=>`<b>${n}</b> free scan${n===1?"":"s"} left`,
     proBadge:"PRO — unlimited scans",
+    proWelcome:"Welcome to Pro — unlimited appraisals unlocked. 🎉",
     errAnalyze:"Couldn't analyze the photo. Check your connection and try again.",
     errNotItem:"This doesn't look like a rug, artwork, or antique — try another photo.",
     confidence:{high:"HIGH CONFIDENCE",medium:"MEDIUM CONFIDENCE",low:"LOW CONFIDENCE"},
@@ -602,6 +609,7 @@ const I18N = {
     notNow:"حالا نه",
     scansLeft:(n)=>`<b>${n}</b> اسکن رایگان باقی مانده`,
     proBadge:"PRO — اسکن نامحدود",
+    proWelcome:"به Pro خوش آمدی — کارشناسی نامحدود فعال شد. 🎉",
     errAnalyze:"تحلیل عکس ممکن نشد. اینترنت را چک کنید و دوباره امتحان کنید.",
     errNotItem:"این عکس شبیه فرش، اثر هنری یا عتیقه نیست — عکس دیگری امتحان کنید.",
     confidence:{high:"اطمینان بالا",medium:"اطمینان متوسط",low:"اطمینان پایین"},
@@ -1107,7 +1115,19 @@ document.querySelectorAll(".plan").forEach((p) => {
   p.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); } };
 });
 $("trialBtn").onclick = () => {
-  // TODO: replace with RevenueCat / Stripe checkout before launch
+  const plan = document.querySelector(".plan.on")?.dataset.plan || "yearly";
+  const link = plan === "weekly" ? STRIPE_LINK_WEEKLY : STRIPE_LINK_YEARLY;
+  if (link) {
+    // Hand off to Stripe Checkout. client_reference_id ties the payment to this
+    // device; prefilled_email speeds up checkout. On success Stripe redirects
+    // back to /app?pro=success (see the return handler below).
+    const url = new URL(link);
+    url.searchParams.set("client_reference_id", store.deviceId);
+    if (store.email) url.searchParams.set("prefilled_email", store.email);
+    location.href = url.toString();
+    return;
+  }
+  // No Stripe link configured yet — local test unlock (no charge).
   store.pro = true;
   $("paywall").classList.add("hidden");
   renderCounter();
@@ -1134,6 +1154,18 @@ document.addEventListener("keydown", (e) => {
 
 applyLang();
 show("home");
+
+// Stripe success return: Stripe redirects here after checkout completes.
+// NOTE: this unlocks Pro on the device; server-side verification is phase 2.
+(() => {
+  const params = new URLSearchParams(location.search);
+  if (params.get("pro") === "success") {
+    store.pro = true;
+    renderCounter();
+    history.replaceState(null, "", location.pathname);
+    toast(t.proWelcome);
+  }
+})();
 
 // installable-app support (no-op where service workers are unavailable)
 if ("serviceWorker" in navigator && location.protocol === "https:") {

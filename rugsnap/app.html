@@ -7,6 +7,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="RugSnap" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icons/icon-180.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
 <title>RugSnap — Rug &amp; Antique Identifier</title>
 <style>
   /* ---------- fonts (FA only; EN rides the native SF/system stack) ---------- */
@@ -1130,6 +1134,11 @@ document.addEventListener("keydown", (e) => {
 
 applyLang();
 show("home");
+
+// installable-app support (no-op where service workers are unavailable)
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
 </script>
 </body>
 </html>

@@ -1,0 +1,5 @@
+# RugSnap — all crawlers welcome, including AI assistants and search bots.
+User-agent: *
+Allow: /
+
+Sitemap: https://www.rugsnap.app/sitemap.xml

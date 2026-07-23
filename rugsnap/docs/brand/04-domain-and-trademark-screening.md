@@ -18,7 +18,21 @@
 
 **What this changes strategically:** the umbrella name should NOT be purchased opportunistically now. The correct play is a **cleared-and-ready shortlist** that we act on when the Bible's trigger fires (second vertical launch or institutional raise), with counsel and a broker engaged at that moment. No purchase is recommended today (and per mandate, none was made).
 
-## Preliminary trademark screening — **ALL UNVERIFIED**
+## Live web knockout screening — 2026-07-23 ~21:4x UTC (search-engine level; still NOT a TESS/attorney clearance)
+
+A live web-search channel became available and was used for a first knockout pass on the finalists:
+
+| Candidate | Live finding | Effect |
+|---|---|---|
+| **Veluma** | **Active company found: "VELUMA \| creative lab"** operating veluma.net, with veluma.com also resolving — an operating branding/creative business, i.e., active commercial use in an adjacent (advertising/brand-services) space, and the .com owner is a live business, not a parked page. No federal mark surfaced in indexed TM databases (Justia/uspto.report/Trademarkia), but common-law use + an unbuyable .com are disqualifying-grade obstacles | **DEMOTED from primary** — risk reclassified Elevated; acquisition path effectively closed |
+| **Aestima** | **Aestima Limited** — active UK private company (inc. 2011, Exeter), classified under patent/copyright-agent and legal activities. No US mark surfaced. Different country and service class; Toyota "Estima" vehicle noise unchanged | Remains viable **backup**; risk Moderate (attorney must assess UK company + class overlap) |
+| **Valyt** | **Nothing found** — no company, app, or trademark using "Valyt" in indexed sources. Nearest marks: VALT (2022, alternative-investments software) and VALTS (2021, metaverse services) — phonetically distinct by a syllable but in adjacent classes; attorney to assess | **PROMOTED to primary-conditional** — cleanest live footprint AND the only finalist with verified purchasable domains (valyt.ai $160/2yr, valyt.app $9.99) |
+
+Sources: [VELUMA creative lab (veluma.net)](https://www.veluma.net/) · [veluma.com](https://veluma.com/) · [Aestima Limited — Companies House](https://find-and-update.company-information.service.gov.uk/company/07633886) · [VALT — Justia](https://trademark.justia.com/972/63/valt-97263364.html) · [VALTS — Justia](https://trademarks.justia.com/970/67/valts-97067999.html) · adjacent-name noise: [VELAURA](https://uspto.report/TM/98899103/FTK20241212160939), [VELORY](https://trademarks.justia.com/793/24/velory-79324833.html), [VELOURA](https://trademarks.justia.com/755/21/veloura-75521643.html), [VELUMAIR](https://trademarks.justia.com/987/13/velumair-98713142.html).
+
+Limits declared: search-engine-level screening finds *use*, not the authoritative federal register; a direct USPTO TESS/WIPO query and attorney opinion remain mandatory before adoption (FD4). Absence of a search result is weaker evidence than presence of one.
+
+## Preliminary trademark screening — knowledge-based baseline (superseded where the live table above differs)
 
 USPTO/WIPO/EUIPO/UKIPO and app stores are unreachable from this environment. Classifications below are reasoning from model knowledge (cutoff early 2026) and are **not** clearance opinions. Formal screening by trademark counsel is mandatory before any selection (Bible v1.1 §2.2 rule).
 

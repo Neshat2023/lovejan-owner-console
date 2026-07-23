@@ -1,7 +1,7 @@
 # RugSnap — Architecture & Strategy Document
 
 **Owner:** LoveJan, Inc. · **Author:** drafted with Claude (CEO-advisor mode) · **Date:** 2026-07-23
-**Status:** Living document. Update on every architectural decision; each major change gets a dated entry in the Decision Log.
+**Status:** Living document — the *technical deep-dive companion* to [`BIBLE.md`](./BIBLE.md), the company's master product & architecture document. Where the two conflict, the Bible wins. Update on every architectural decision; each major change gets a dated entry in the Decision Log.
 
 ---
 

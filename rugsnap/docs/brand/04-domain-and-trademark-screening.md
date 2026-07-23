@@ -46,6 +46,29 @@ The prior pass reported "Valyt: zero hits" from a keyword search that did not su
 
 Sources (this pass): [valyt.com — Solutions for Sustainable Finance](https://valyt.com/) · [valyt Solutions](https://valyt.com/solutions/) · [Aestima Ltd Mauritius — Chartered Valuation Surveyors](https://www.aestima.mu/) · [aestima.org — fintech](https://aestima.org) · [VELUMA creative lab](https://www.veluma.net/).
 
+## Founder-suggested candidates — full 3-channel screen, 2026-07-23 ~22:3x UTC (keyword + direct-visit + registrar)
+
+| Candidate | Registrar (live) | Search + direct visit | Linguistic (EN/FA) | Verdict |
+|---|---|---|---|---|
+| **Asetjan** | **.com AVAILABLE $11.25 · .ai $160 · .app $9.99 · .io $37.99** — full set open; assetjan.com also available $11.25 (defensive) | No exact-match company found; no active site resolving | "Aset"(asset)+"jan/jān" جان = Persian endearment "dear/soul." **Extends the LoveJan, Inc. parent family** (Love-jan → Aset-jan). Warm, distinctive. Caveats: "aset" is a one-vs-two-s spelling risk (buy assetjan.com defensively); "jan" opaque to non-Persian global audiences (pronunciation teaching cost) | **STRONGEST candidate to date — first to clear all three channels.** Promote to leading-conditional; attorney check + global-pronunciation judgment still required |
+| **BazarAi** | **.com TAKEN**; .ai available $160 | **Direct-space collisions:** existing "BazarAI" Google Play app (AI product-description generator for sellers) + "bazarr.ai" (AI wholesale agent) — both in our exact AI-commerce space. "Bazaar" also reads flea-market (premium tension); "-Ai" suffix violates our trend-dependent hard-reject rule | EN "bazaar"=cheap-market connotation | **REJECT** — direct-space collision + taken .com + trend suffix |
+| **BezarAi** | .com AVAILABLE $11.25; .ai $160 | Existing **"Bezar"** US design marketplace brand (Wikipedia-listed) — collision | **FA red flag: بیزار (bizār) = "loathing / averse / to hate"** — a negative meaning in the founder's own core language; also reads "bizarre" in EN | **REJECT** — negative meaning in a core language (hard-reject rule) + brand collision |
+
+| **Asetbaz** | **.com AVAILABLE $11.25 · .ai $160 · .app $9.99 · .io $37.99** — full set open; assetbaz.com also available | No exact-match company found; no active site | "Aset"(asset)+"baz" باز = Persian agentive suffix "dealer/player/one obsessed with." **Positive read:** عتیقه‌باز = antique-collector/enthusiast — literally our audience. **Risk read:** "-باز" also carries a roguish/hustler undertone (حقه‌باز = con-artist, بورس‌باز = speculator) — a real tension for a *trust* brand. Domains fully available | **Viable but connotation-flagged** — clears availability+occupancy like Asetjan, but "-baz" ambivalence (collector vs. hustler) is riskier for a trust positioning than "jan" (unambiguously warm). Founder is the native-speaker judge here |
+
+| **AestAi** | **.com TAKEN**; .ai $160 · .app $9.99 · .io available | No exact "Aestai" company, but **"Aestari Technologies" (aestari.ai)** — an AI-consulting firm — is phonetically close; ".com taken" | "Aest" is an opaque truncation (aesthetic? aestimate?); "-Ai" trend suffix | **REJECT** — taken .com + near-name AI-consulting collision + trend suffix + opaque root |
+
+### Consolidated live ranking of founder candidates (2026-07-23)
+1. **Asetjan** — clears all three channels; warm, on the LoveJan family; only flags are the aset/asset spelling (defensively coverable) and global-pronunciation of "jan." **Leading.**
+2. **Asetbaz** — clears all three channels; full domain set open; single flag is the "-baz" connotation (collector عتیقه‌باز ✓ vs. hustler حقه‌باز ✗) — native-speaker judgment call.
+3. *(reject)* BazarAi — direct-space app collision + taken .com + trend suffix.
+4. *(reject)* BezarAi — بیزار negative FA meaning + Bezar brand collision.
+5. *(reject)* AestAi — taken .com + Aestari collision + trend suffix.
+
+**Asetjan strategic note:** it is the only screened name that (a) has an available exact .com, (b) shows no active same/adjacent-space occupant, and (c) reinforces existing brand equity — LoveJan (corporate) → **Asetjan** (valuables platform) → RugSnap (rug wedge) is a coherent, Persian-rooted family. The honest counter: a جان-suffixed name reads as warm and authentic to the diaspora but may feel ethnically specific / hard to pronounce for a mass global audience — a real trade-off for a "global multi-billion-dollar" ambition, to weigh against its availability and warmth. Attorney knockout (ASET Partners and other "ASET" orgs exist — different spaces, preliminary lower-apparent risk) still required (FD4).
+
+Sources (founder-candidate pass): [BazarAI — Google Play](https://play.google.com/store/apps/details?id=org.droidhood.bazaria) · [bazarr.ai](https://www.trustpilot.com/review/bazarr.ai) · [Bezar (design marketplace) — Wikipedia](https://en.wikipedia.org/wiki/Bezar) · registrar data via Vercel API (2026-07-23).
+
 ## Preliminary trademark screening — knowledge-based baseline (superseded where the live table above differs)
 
 USPTO/WIPO/EUIPO/UKIPO and app stores are unreachable from this environment. Classifications below are reasoning from model knowledge (cutoff early 2026) and are **not** clearance opinions. Formal screening by trademark counsel is mandatory before any selection (Bible v1.1 §2.2 rule).

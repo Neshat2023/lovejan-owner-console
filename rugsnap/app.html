@@ -735,8 +735,8 @@ let currentResult = null;
 let currentListing = null;
 let marketFilter = "all";
 
-const SCREENS = ["home","previewScreen","loadingScreen","resultScreen","marketScreen","listingScreen","sellScreen"];
-const MARKET_SCREENS = new Set(["marketScreen","listingScreen"]);
+const SCREENS = ["home","previewScreen","loadingScreen","resultScreen","marketScreen","listingScreen","sellScreen","ordersScreen"];
+const MARKET_SCREENS = new Set(["marketScreen","listingScreen","ordersScreen"]);
 
 function applyLang() {
   t = I18N[store.lang];

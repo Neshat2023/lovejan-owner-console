@@ -553,7 +553,7 @@ const FEE_STANDARD = 0.10, FEE_PRO = 0.07;
    Set each plan's success URL in Stripe to https://rugsnap.app/app?pro=success
    Leave a link empty ("") to keep the local test unlock (no real charge). */
 const STRIPE_LINK_YEARLY = "https://buy.stripe.com/aFacN4dwo3Re6p690z6Zy00";
-const STRIPE_LINK_WEEKLY = "";
+const STRIPE_LINK_WEEKLY = "https://buy.stripe.com/7sY8wO1NG3Re28Q50n6Zy01";
 
 /* Bazaar backend (Supabase). The publishable key is safe to ship client-side;
    row-level security governs what it can do. */
@@ -605,7 +605,7 @@ const I18N = {
     pk3b:"Lower Bazaar fee", pk3:"7% instead of 10% when you sell",
     pk4b:"Collection history", pk4:"every scan saved on device",
     save:"SAVE 84%", yr:"yr", wk:"wk", yearlyNote:"7-day free trial", weeklyNote:"Billed weekly",
-    startTrial:"Start 7-day free trial", pwNote:"Cancel anytime. Trial converts to the selected plan unless cancelled.",
+    startTrial:"Start 7-day free trial", startWeekly:"Subscribe — $4.99/week", pwNote:"Cancel anytime. Trial converts to the selected plan unless cancelled.",
     notNow:"Not now",
     scansLeft:(n)=>`<b>${n}</b> free scan${n===1?"":"s"} left`,
     proBadge:"PRO — unlimited scans",
@@ -668,7 +668,7 @@ const I18N = {
     pk3b:"کارمزد کمتر بازار", pk3:"۷٪ به‌جای ۱۰٪ هنگام فروش",
     pk4b:"آرشیو مجموعه", pk4:"همه اسکن‌ها روی دستگاه شما",
     save:"۸۴٪ تخفیف", yr:"سال", wk:"هفته", yearlyNote:"۷ روز تست رایگان", weeklyNote:"پرداخت هفتگی",
-    startTrial:"شروع ۷ روز رایگان", pwNote:"هر زمان می‌توانید لغو کنید. بعد از دوره تست، پلن انتخابی فعال می‌شود.",
+    startTrial:"شروع ۷ روز رایگان", startWeekly:"اشتراک هفتگی — $4.99", pwNote:"هر زمان می‌توانید لغو کنید. بعد از دوره تست، پلن انتخابی فعال می‌شود.",
     notNow:"حالا نه",
     scansLeft:(n)=>`<b>${n}</b> اسکن رایگان باقی مانده`,
     proBadge:"PRO — اسکن نامحدود",
@@ -1262,6 +1262,10 @@ $("publishBtn").onclick = async () => {
 /* --- paywall --- */
 function openPaywall(){ $("paywall").classList.remove("hidden"); $("trialBtn").focus(); }
 $("pwClose").onclick = () => $("paywall").classList.add("hidden");
+function updateTrialBtn() {
+  const plan = document.querySelector(".plan.on")?.dataset.plan || "yearly";
+  $("trialBtn").textContent = plan === "weekly" ? t.startWeekly : t.startTrial;
+}
 document.querySelectorAll(".plan").forEach((p) => {
   const select = () => {
     document.querySelectorAll(".plan").forEach((x) => {
@@ -1270,6 +1274,7 @@ document.querySelectorAll(".plan").forEach((p) => {
     });
     p.classList.add("on");
     p.setAttribute("aria-checked", "true");
+    updateTrialBtn();
   };
   p.onclick = select;
   p.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); } };
@@ -1297,7 +1302,7 @@ $("trialBtn").onclick = () => {
 };
 
 /* --- language --- */
-$("langBtn").onclick = () => { store.lang = store.lang === "fa" ? "en" : "fa"; applyLang(); renderFees(); };
+$("langBtn").onclick = () => { store.lang = store.lang === "fa" ? "en" : "fa"; applyLang(); renderFees(); updateTrialBtn(); };
 
 /* --- cinematic home banner: appears only when video/hero.* exists --- */
 (() => {

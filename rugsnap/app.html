@@ -119,9 +119,33 @@
     font-variant-numeric:tabular-nums}
 
   /* ---------- preview / loading ---------- */
-  .preview{width:100%;border-radius:16px;display:block;max-height:340px;object-fit:cover}
+  .preview{width:100%;border-radius:16px;display:block;max-height:300px;object-fit:contain;background:var(--glass-2)}
   .frame{background:var(--glass);border:1px solid var(--stroke);border-radius:var(--r-lg);padding:12px;
     backdrop-filter:blur(14px)}
+  /* provenance checkbox — override the global uppercase + input{width:100%} rules */
+  .prov-check{display:flex;align-items:flex-start;gap:10px;width:100%;margin:16px 0 4px;
+    font-size:13px;font-weight:500;letter-spacing:normal;text-transform:none;color:var(--mut);line-height:1.45;cursor:pointer}
+  .prov-check input{width:18px;height:18px;flex:0 0 auto;margin:1px 0 0;accent-color:var(--cyan);cursor:pointer}
+  .prov-check span{flex:1 1 auto}
+  /* sell: add extra photos */
+  .ph-add{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .ph-add .slot{width:74px;height:74px;border-radius:14px;overflow:hidden;position:relative;flex:0 0 auto;
+    border:1px solid var(--stroke);background:var(--glass-2);display:grid;place-items:center}
+  .ph-add .slot img{width:100%;height:100%;object-fit:cover;display:block}
+  .ph-add .slot.add{border-style:dashed;border-color:rgba(34,211,238,.5);color:var(--cyan);cursor:pointer;
+    font-size:26px;font-weight:300;transition:.2s}
+  .ph-add .slot.add:hover{background:rgba(34,211,238,.08)}
+  .ph-add .slot .rm{position:absolute;top:3px;inset-inline-end:3px;width:20px;height:20px;border-radius:50%;
+    border:none;background:rgba(3,4,8,.72);color:#fff;font-size:13px;line-height:1;cursor:pointer;display:grid;place-items:center}
+  /* listing gallery */
+  .lh-wrap{position:relative;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--stroke)}
+  .lh-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(30px) brightness(.5);transform:scale(1.2)}
+  .lh-main{position:relative;z-index:1;width:100%;max-height:min(62vh,520px);object-fit:contain;display:block}
+  .lh-thumbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .lh-thumbs button{width:60px;height:60px;border-radius:12px;overflow:hidden;padding:0;border:2px solid transparent;
+    background:var(--glass-2);cursor:pointer;flex:0 0 auto;transition:.2s}
+  .lh-thumbs button.on{border-color:var(--cyan)}
+  .lh-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
   .loading-card{background:var(--glass);border:1px solid var(--stroke);border-radius:var(--r-lg);
     padding:32px 24px;text-align:center;margin-top:32px;backdrop-filter:blur(14px)}
   .loading-title{font-size:19px;font-weight:700;letter-spacing:-.02em}
@@ -401,7 +425,8 @@
   <!-- LISTING DETAIL -->
   <section id="listingScreen" class="hidden">
     <div class="listing-col-a">
-    <div class="listing-hero"><img id="lstImg" alt="" /></div>
+    <div class="lh-wrap"><div class="lh-bg" id="lstBg"></div><img class="lh-main" id="lstImg" alt="" /></div>
+    <div class="lh-thumbs" id="lstThumbs"></div>
     </div>
     <div class="listing-col-b">
     <h1 id="lstTitle" class="lst-title"></h1>
@@ -423,7 +448,11 @@
   <section id="sellScreen" class="hidden">
     <h1 data-i18n="sellTitle">List it in the Bazaar</h1>
     <p class="mut small" data-i18n="sellSub">Your appraisal card becomes the listing — buyers see the full analysis.</p>
-    <div class="frame" style="margin-top:14px"><img class="preview" id="sellImg" alt="" style="max-height:180px" /></div>
+    <div class="frame" style="margin-top:14px"><img class="preview" id="sellImg" alt="" style="max-height:220px" /></div>
+    <label data-i18n="addPhotos">More photos (optional)</label>
+    <div class="ph-add" id="phAdd"></div>
+    <p class="mut small" data-i18n="addPhotosHint" style="margin-top:2px">Add the label, the back, or close-ups — up to 3 more.</p>
+    <input type="file" id="sellPhotoInput" accept="image/*" multiple class="hidden" />
     <label for="sellTitleInput" data-i18n="lTitle">Title</label>
     <input id="sellTitleInput" />
     <label for="sellPriceInput" data-i18n="lPrice">Asking price (USD)</label>
@@ -435,8 +464,8 @@
     <label for="sellNoteInput" data-i18n="lNote">Note to buyers (optional)</label>
     <textarea id="sellNoteInput" rows="3"></textarea>
     <div class="fee-box" id="feeBox"></div>
-    <label class="prov-check" style="display:flex;gap:8px;align-items:flex-start;margin-top:14px;font-size:13px;color:var(--mut);cursor:pointer">
-      <input type="checkbox" id="sellProvenance" style="margin-top:3px;flex:none" />
+    <label class="prov-check">
+      <input type="checkbox" id="sellProvenance" />
       <span data-i18n="provAttest">I confirm the origin and authenticity of this item to the best of my knowledge.</span>
     </label>
     <button class="btn ghost hidden" id="sellPayoutBtn" style="margin-top:12px" data-i18n="payoutSetup">Set up payouts to get paid</button>
@@ -598,6 +627,7 @@ const I18N = {
     markShipped:"Mark as shipped", confirmReceipt:"I received it — release payment",
     trackingPrompt:"Tracking number (optional):", shippedOk:"Marked as shipped — the buyer can now confirm receipt.",
     releasedOk:"Payment released to the seller. 🎉", loading:"Loading…",
+    addPhotos:"More photos (optional)", addPhotosHint:"Add the label, the back, or close-ups — up to 3 more.",
     shareText:(r)=>`I identified my ${r.name} with RugSnap — estimated $${fmt(r.estimated_value_low_usd)}–$${fmt(r.estimated_value_high_usd)}!`,
   },
   fa: {
@@ -660,6 +690,7 @@ const I18N = {
     markShipped:"ثبتِ ارسال", confirmReceipt:"دریافت کردم — پول را آزاد کن",
     trackingPrompt:"کد رهگیری (اختیاری):", shippedOk:"به‌عنوان ارسال‌شده ثبت شد — حالا خریدار می‌تواند تأیید کند.",
     releasedOk:"پول به فروشنده آزاد شد. 🎉", loading:"در حال بارگذاری…",
+    addPhotos:"عکس‌های بیشتر (اختیاری)", addPhotosHint:"برچسب، پشتِ کالا یا نمای نزدیک را اضافه کن — تا ۳ عکسِ دیگر.",
     shareText:(r)=>`با راگ‌اسنپ «${r.name}» را شناسایی کردم — ارزش تقریبی $${fmt(r.estimated_value_low_usd)} تا $${fmt(r.estimated_value_high_usd)}!`,
   },
 };
@@ -936,7 +967,7 @@ let remoteListings = [];
 async function loadMarket() {
   try {
     const res = await fetch(
-      `${SUPA_URL}/rest/v1/listings?select=id,device_id,category,title,price_usd,city,note,meta,facts,photo_url` +
+      `${SUPA_URL}/rest/v1/listings?select=id,device_id,category,title,price_usd,city,note,meta,facts,photo_url,photos` +
       `&status=eq.active&order=created_at.desc&limit=48`,
       { headers: SUPA_HEADERS },
     );
@@ -947,6 +978,7 @@ async function loadMarket() {
       remote: true,
       category: r.category,
       img: r.photo_url,
+      photos: (r.photos && r.photos.length ? r.photos : [r.photo_url]).filter(Boolean),
       price: r.price_usd,
       mine: r.device_id === store.deviceId,
       text: { title: r.title, meta: r.meta, city: r.city, note: r.note, facts: r.facts || [] },
@@ -988,10 +1020,33 @@ function renderMarket() {
     });
 }
 
+function setHero(gallery, i) {
+  const src = gallery[i] || "";
+  $("lstImg").src = src;
+  $("lstBg").style.backgroundImage = src ? `url("${src.replace(/"/g, "%22")}")` : "none";
+}
+
 function openListing(item) {
   currentListing = item;
   const x = listingText(item);
-  $("lstImg").src = item.img || item.thumb;
+  const gallery = (item.photos && item.photos.length ? item.photos : [item.img || item.thumb]).filter(Boolean);
+  setHero(gallery, 0);
+  const thumbs = $("lstThumbs");
+  thumbs.innerHTML = "";
+  if (gallery.length > 1) {
+    gallery.forEach((src, i) => {
+      const b = document.createElement("button");
+      b.className = i === 0 ? "on" : "";
+      const im = document.createElement("img");
+      im.src = src; im.alt = "";
+      b.appendChild(im);
+      b.onclick = () => {
+        setHero(gallery, i);
+        thumbs.querySelectorAll("button").forEach((x2, j) => x2.classList.toggle("on", j === i));
+      };
+      thumbs.appendChild(b);
+    });
+  }
   $("lstTitle").textContent = x.title;
   $("lstMeta").textContent = x.meta;
   $("lstPrice").textContent = `$${fmt(item.price)}`;
@@ -1081,6 +1136,8 @@ $("sellBtn").onclick = () => {
   $("sellNoteInput").value = "";
   renderFees();
   $("sellProvenance").checked = false;
+  sellExtraPhotos = [];
+  renderPhAdd();
   $("sellPayoutBtn").classList.toggle("hidden", !MARKET_ON);
   show("sellScreen");
 };
@@ -1096,6 +1153,46 @@ function renderFees() {
     <div class="fee-line"><span>${t.feeFee(Math.round(rate * 100))}</span><span class="n">−$${fmt(fee)}</span></div>
     <div class="fee-line total"><span>${t.feeGet}</span><span class="n">$${fmt(price - fee)}</span></div>`;
 }
+
+/* sell: extra photos (label, back, close-ups) for the listing gallery */
+let sellExtraPhotos = [];
+function renderPhAdd() {
+  const wrap = $("phAdd");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  sellExtraPhotos.forEach((src, i) => {
+    const slot = document.createElement("div");
+    slot.className = "slot";
+    slot.innerHTML = `<img alt=""><button class="rm" type="button" aria-label="remove">×</button>`;
+    slot.querySelector("img").src = src;
+    slot.querySelector(".rm").onclick = () => { sellExtraPhotos.splice(i, 1); renderPhAdd(); };
+    wrap.appendChild(slot);
+  });
+  if (sellExtraPhotos.length < 3) {
+    const add = document.createElement("div");
+    add.className = "slot add";
+    add.textContent = "+";
+    add.setAttribute("role", "button");
+    add.setAttribute("aria-label", "add photo");
+    add.onclick = () => $("sellPhotoInput").click();
+    wrap.appendChild(add);
+  }
+}
+$("sellPhotoInput").onchange = async (e) => {
+  const files = [...(e.target.files || [])];
+  for (const f of files) {
+    if (sellExtraPhotos.length >= 3) break;
+    if (!f.type.startsWith("image/")) continue;
+    const dataUrl = await new Promise((resolve) => {
+      const rd = new FileReader();
+      rd.onload = () => resolve(rd.result);
+      rd.readAsDataURL(f);
+    });
+    sellExtraPhotos.push(dataUrl);
+  }
+  e.target.value = "";
+  renderPhAdd();
+};
 
 $("publishBtn").onclick = async () => {
   const r = currentResult;
@@ -1115,15 +1212,20 @@ $("publishBtn").onclick = async () => {
   };
   $("publishBtn").disabled = true;
   try {
-    // photo first, then the row that references it
-    const photoName = `${store.deviceId}/${Date.now()}.jpg`;
-    const blob = await (await fetch(currentThumb || currentImage)).blob();
-    const up = await fetch(`${SUPA_URL}/storage/v1/object/listing-photos/${photoName}`, {
-      method: "POST",
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "image/jpeg" },
-      body: blob,
-    });
-    if (!up.ok) throw new Error("photo_" + up.status);
+    // upload the appraisal photo plus any extras, then the row that references them
+    const uploadOne = async (src, i) => {
+      const name = `${store.deviceId}/${Date.now()}-${i}.jpg`;
+      const b = await (await fetch(src)).blob();
+      const u = await fetch(`${SUPA_URL}/storage/v1/object/listing-photos/${name}`, {
+        method: "POST",
+        headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": b.type || "image/jpeg" },
+        body: b,
+      });
+      if (!u.ok) throw new Error("photo_" + u.status);
+      return `${SUPA_URL}/storage/v1/object/public/listing-photos/${name}`;
+    };
+    const photos = [await uploadOne(currentThumb || currentImage, 0)];
+    for (let i = 0; i < sellExtraPhotos.length; i++) photos.push(await uploadOne(sellExtraPhotos[i], i + 1));
     const res = await fetch(`${SUPA_URL}/rest/v1/listings`, {
       method: "POST",
       headers: SUPA_HEADERS,
@@ -1138,7 +1240,8 @@ $("publishBtn").onclick = async () => {
         meta: listing.meta,
         facts: listing.facts,
         appraisal: { ...r, seller_attestation: true },
-        photo_url: `${SUPA_URL}/storage/v1/object/public/listing-photos/${photoName}`,
+        photo_url: photos[0],
+        photos,
       }),
     });
     if (!res.ok) throw new Error("listing_" + res.status);

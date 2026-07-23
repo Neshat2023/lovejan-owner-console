@@ -18,9 +18,11 @@ not shipped code. Sources were current as of research in July 2026.
 - **Cross-listing:** eBay Sell APIs work for **electronics/collectibles** only — **eBay and
   Etsy ban Iranian/Persian-origin rugs outright**. Best Buy's marketplace is invite-only
   (Mirakl); its Products API is useful only as an electronics **pricing reference**.
-- **Biggest risk:** our flagship category (Persian/Iranian rugs) sits on top of **live US
-  sanctions** — a legal question before it's a payments question. Appraising is low-risk;
-  *transacting* is where the risk concentrates.
+- **Scope (owner decision):** global — **everywhere Stripe supports, which excludes sanctioned
+  countries**. Rugs are **included**; Stripe Connect enforces the non-sanctioned-country rule and
+  OFAC screening for us, and a seller "origin & authenticity" attestation is captured at listing
+  time. Importing *new* Iranian-origin rugs into the US stays off the table; appraisal is
+  unrestricted.
 
 ## Payment model (Stripe Connect)
 
@@ -72,12 +74,15 @@ Escrow.com's licensed API is a **later** upgrade for very-high-value antiques ($
 
 ## Legal / tax / compliance (US)
 
-- **⚠️ Iranian/Persian rugs & US sanctions:** importing new Persian rugs is illegal (OFAC,
-  reimposed 2018); domestic resale of rugs already lawfully in the US is provenance-dependent
-  and legally murky; eBay/Etsy ban them regardless of age. **Decision needed before enabling
-  rug checkout:** domestic-only + provenance attestation + OFAC SDN screening, or exclude
-  Iranian-origin from the *marketplace* (appraisal stays available). Get sanctions-aware legal
-  sign-off.
+- **Iranian/Persian rugs & US sanctions — owner decision (made):** the Bazaar operates
+  **globally, everywhere except sanctioned jurisdictions**, and rugs are **included**. The
+  sanctioned act is *importing* Iranian-origin goods; RugSnap facilitates sales between people
+  who are already outside the embargo (a rug already lawfully in the US/elsewhere, or a sale
+  between two non-embargoed parties), which is a different matter. We rely on Stripe Connect to
+  **enforce supported (non-sanctioned) countries and run OFAC screening** during seller
+  onboarding — so we don't maintain a sanctions list ourselves — and we keep a lightweight
+  **seller "origin & authenticity" attestation** at listing time for a clean record. Importing
+  new rugs from Iran into the US stays off the table. (Appraisal is unrestricted regardless.)
 - **Marketplace facilitator sales tax:** once RugSnap lists goods **and** processes payment,
   RugSnap is the facilitator and must collect/remit after crossing a state's economic nexus
   (commonly $100k/200 txns; CA/NY $500k). Turn on **Stripe Tax (marketplace mode)** from day one.
@@ -102,3 +107,26 @@ reference-price APIs, freight automation.
 fee + a delayed transfer.** It turns messages into real checkout, inherits Stripe's licenses
 (no money-transmitter registration), captures our take-rate, and is the foundation escrow,
 shipping-gated release, and tax all attach to.
+
+## Going live — owner setup (the code is already written)
+
+The whole engine is built and merged: seller onboarding (`/api/connect/onboard`,
+`/api/connect/status`), checkout (`/api/checkout`), the Stripe webhook (`/api/webhook`), and
+escrow ship/confirm/list (`/api/orders/*`), plus the app UI (Buy button, "set up payouts", the
+origin/authenticity checkbox) — all gated by `/api/market/enabled` so it stays invisible until:
+
+1. **Stripe → enable Connect:** Dashboard → Connect → Get started → platform, **Express** accounts.
+2. **Add environment variables in Vercel** (rugsnap project → Settings → Environment Variables),
+   then redeploy:
+   - `STRIPE_SECRET_KEY` — Stripe → Developers → API keys (Secret key).
+   - `SUPABASE_SERVICE_ROLE_KEY` — Supabase → Project Settings → API (service_role key).
+   - `STRIPE_WEBHOOK_SECRET` — from step 3.
+3. **Create the Stripe webhook:** Stripe → Developers → Webhooks → Add endpoint
+   `https://rugsnap.app/api/webhook`, events `checkout.session.completed` and
+   `checkout.session.expired`; copy its **Signing secret** into `STRIPE_WEBHOOK_SECRET`.
+4. **First live test together:** list an item, set up payouts, buy it from another device,
+   confirm receipt → verify the seller transfer lands and the fee stays on the platform.
+
+**Built now vs deferred:** soft escrow releases when the **buyer confirms receipt** (v1);
+automatic delivery detection + auto-release via a **Shippo** tracking webhook, shipping-label
+purchase, and the Pro fee discount are the next phase.

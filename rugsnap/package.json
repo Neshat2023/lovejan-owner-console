@@ -5,6 +5,7 @@
   "type": "module",
   "description": "RugSnap — AI Persian & Oriental rug and antique identifier",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.113.0"
+    "@anthropic-ai/sdk": "^0.113.0",
+    "stripe": "^22.3.2"
   }
 }

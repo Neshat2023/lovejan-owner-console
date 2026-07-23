@@ -412,7 +412,8 @@
     <div class="chips" id="lstFacts" style="margin-top:12px"></div>
     <h2 data-i18n="hSellerNote">Seller's note</h2>
     <div class="prose" id="lstNote"></div>
-    <button class="btn" id="offerBtn" style="margin-top:18px" data-i18n="offerBtn">Make an offer</button>
+    <button class="btn gold hidden" id="buyBtn" style="margin-top:18px" data-i18n="buyNow">Buy now</button>
+    <button class="btn" id="offerBtn" style="margin-top:10px" data-i18n="offerBtn">Make an offer</button>
     <button class="btn ghost" id="backToMarket" style="margin-top:10px" data-i18n="backMarket">Back to the Bazaar</button>
     </div>
   </section>
@@ -433,7 +434,12 @@
     <label for="sellNoteInput" data-i18n="lNote">Note to buyers (optional)</label>
     <textarea id="sellNoteInput" rows="3"></textarea>
     <div class="fee-box" id="feeBox"></div>
-    <button class="btn" id="publishBtn" style="margin-top:16px" data-i18n="publishBtn">Publish listing</button>
+    <label class="prov-check" style="display:flex;gap:8px;align-items:flex-start;margin-top:14px;font-size:13px;color:var(--mut);cursor:pointer">
+      <input type="checkbox" id="sellProvenance" style="margin-top:3px;flex:none" />
+      <span data-i18n="provAttest">I confirm the origin and authenticity of this item to the best of my knowledge.</span>
+    </label>
+    <button class="btn ghost hidden" id="sellPayoutBtn" style="margin-top:12px" data-i18n="payoutSetup">Set up payouts to get paid</button>
+    <button class="btn" id="publishBtn" style="margin-top:12px" data-i18n="publishBtn">Publish listing</button>
     <button class="btn ghost" id="cancelSell" style="margin-top:10px" data-i18n="cancel">Cancel</button>
   </section>
 </div>
@@ -569,6 +575,12 @@ const I18N = {
     errAnalyze:"Couldn't analyze the photo. Check your connection and try again.",
     errNotItem:"This doesn't look like something RugSnap can appraise — try a rug, artwork, antique, gadget, or collectible.",
     confidence:{high:"HIGH CONFIDENCE",medium:"MEDIUM CONFIDENCE",low:"LOW CONFIDENCE"},
+    buyNow:"Buy now", payoutSetup:"Set up payouts to get paid", sellerNotReady:"This seller hasn't finished setting up payouts yet.",
+    provAttest:"I confirm the origin and authenticity of this item to the best of my knowledge.",
+    provRequired:"Please confirm origin & authenticity to list.",
+    buyEmailPrompt:"Enter your email for the receipt and order updates:",
+    orderSuccess:"Payment received — held safely until you confirm the item arrived. 🎉",
+    payoutsDone:"Payouts connected — you can sell for real now. 🎉",
     shareText:(r)=>`I identified my ${r.name} with RugSnap — estimated $${fmt(r.estimated_value_low_usd)}–$${fmt(r.estimated_value_high_usd)}!`,
   },
   fa: {
@@ -617,6 +629,12 @@ const I18N = {
     errAnalyze:"تحلیل عکس ممکن نشد. اینترنت را چک کنید و دوباره امتحان کنید.",
     errNotItem:"این عکس چیزی نیست که راگ‌اسنپ بتواند کارشناسی کند — فرش، اثر هنری، عتیقه، گجت یا کلکسیونی امتحان کنید.",
     confidence:{high:"اطمینان بالا",medium:"اطمینان متوسط",low:"اطمینان پایین"},
+    buyNow:"خرید", payoutSetup:"تنظیم حساب برای دریافت پول", sellerNotReady:"این فروشنده هنوز تنظیم دریافت پول را کامل نکرده است.",
+    provAttest:"تأیید می‌کنم که مبدأ و اصالت این کالا تا جای دانشم درست است.",
+    provRequired:"برای ثبت آگهی، مبدأ و اصالت را تأیید کن.",
+    buyEmailPrompt:"ایمیلت را برای رسید و پیگیری سفارش وارد کن:",
+    orderSuccess:"پرداخت انجام شد — پول امن نگه داشته می‌شود تا رسیدن کالا را تأیید کنی. 🎉",
+    payoutsDone:"دریافت پول فعال شد — حالا می‌توانی واقعی بفروشی. 🎉",
     shareText:(r)=>`با راگ‌اسنپ «${r.name}» را شناسایی کردم — ارزش تقریبی $${fmt(r.estimated_value_low_usd)} تا $${fmt(r.estimated_value_high_usd)}!`,
   },
 };
@@ -962,6 +980,13 @@ function openListing(item) {
     s.textContent = f;
     fc.appendChild(s);
   });
+  const buyBtn = $("buyBtn");
+  if (MARKET_ON && item.remote && !item.mine) {
+    buyBtn.classList.remove("hidden");
+    buyBtn.onclick = () => startCheckout(item);
+  } else {
+    buyBtn.classList.add("hidden");
+  }
   show("listingScreen");
 }
 
@@ -1030,6 +1055,8 @@ $("sellBtn").onclick = () => {
   $("sellEmailInput").value = store.email;
   $("sellNoteInput").value = "";
   renderFees();
+  $("sellProvenance").checked = false;
+  $("sellPayoutBtn").classList.toggle("hidden", !MARKET_ON);
   show("sellScreen");
 };
 $("cancelSell").onclick = () => show("resultScreen");
@@ -1051,6 +1078,7 @@ $("publishBtn").onclick = async () => {
   const email = $("sellEmailInput").value.trim();
   if (!r || !price || price < 1) return;
   if (!EMAIL_RE.test(email)) { toast(t.errEmail); return; }
+  if (!$("sellProvenance").checked) { toast(t.provRequired); return; }
   store.email = email;
   const listing = {
     category: catOf(r),
@@ -1084,7 +1112,7 @@ $("publishBtn").onclick = async () => {
         seller_email: email,
         meta: listing.meta,
         facts: listing.facts,
-        appraisal: r,
+        appraisal: { ...r, seller_attestation: true },
         photo_url: `${SUPA_URL}/storage/v1/object/public/listing-photos/${photoName}`,
       }),
     });
@@ -1172,6 +1200,50 @@ show("home");
     history.replaceState(null, "", location.pathname);
     toast(t.proWelcome);
   }
+})();
+
+/* ---------- Bazaar real payments (Stripe Connect + soft escrow) ---------- */
+let MARKET_ON = false;
+fetch("/api/market/enabled").then((r) => r.json()).then((d) => { MARKET_ON = !!(d && d.enabled); }).catch(() => {});
+
+$("sellPayoutBtn").onclick = async () => {
+  const btn = $("sellPayoutBtn");
+  btn.disabled = true;
+  try {
+    const res = await fetch("/api/connect/onboard", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId: store.deviceId }),
+    });
+    const d = await res.json();
+    if (d.url) { location.href = d.url; return; }
+    toast(d.error || t.errNet);
+  } catch { toast(t.errNet); }
+  btn.disabled = false;
+};
+
+async function startCheckout(item) {
+  const email = store.email || (prompt(t.buyEmailPrompt) || "").trim();
+  if (email && !EMAIL_RE.test(email)) { toast(t.errEmail); return; }
+  if (email) store.email = email;
+  const btn = $("buyBtn");
+  btn.disabled = true;
+  try {
+    const res = await fetch("/api/checkout", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ listingId: item.id, buyerEmail: email || "", buyerDeviceId: store.deviceId }),
+    });
+    const d = await res.json();
+    if (d.url) { location.href = d.url; return; }
+    toast(d.error === "seller hasn't finished setting up payouts yet" ? t.sellerNotReady : (d.error || t.errNet));
+  } catch { toast(t.errNet); }
+  btn.disabled = false;
+}
+
+// Checkout / payout-onboarding return handlers.
+(() => {
+  const p = new URLSearchParams(location.search);
+  if (p.get("order") === "success") { history.replaceState(null, "", location.pathname); toast(t.orderSuccess); }
+  else if (p.get("connect") === "done") { history.replaceState(null, "", location.pathname); toast(t.payoutsDone); }
 })();
 
 // installable-app support (no-op where service workers are unavailable)

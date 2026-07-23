@@ -127,20 +127,29 @@
     font-size:13px;font-weight:500;letter-spacing:normal;text-transform:none;color:var(--mut);line-height:1.45;cursor:pointer}
   .prov-check input{width:18px;height:18px;flex:0 0 auto;margin:1px 0 0;accent-color:var(--cyan);cursor:pointer}
   .prov-check span{flex:1 1 auto}
-  /* sell: add extra photos */
-  .ph-add{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-  .ph-add .slot{width:74px;height:74px;border-radius:14px;overflow:hidden;position:relative;flex:0 0 auto;
-    border:1px solid var(--stroke);background:var(--glass-2);display:grid;place-items:center}
-  .ph-add .slot img{width:100%;height:100%;object-fit:cover;display:block}
-  .ph-add .slot.add{border-style:dashed;border-color:rgba(34,211,238,.5);color:var(--cyan);cursor:pointer;
-    font-size:26px;font-weight:300;transition:.2s}
-  .ph-add .slot.add:hover{background:rgba(34,211,238,.08)}
-  .ph-add .slot .rm{position:absolute;top:3px;inset-inline-end:3px;width:20px;height:20px;border-radius:50%;
-    border:none;background:rgba(3,4,8,.72);color:#fff;font-size:13px;line-height:1;cursor:pointer;display:grid;place-items:center}
+  /* sell: photo grid — cover (from the appraisal) + up to 5 more */
+  .ph-head{display:flex;align-items:center;justify-content:space-between;margin-top:16px}
+  .ph-head label{margin:0}
+  .ph-count{font-size:12px;font-weight:700;color:var(--cyan);font-variant-numeric:tabular-nums;
+    background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.35);border-radius:999px;padding:2px 10px}
+  .ph-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+  .ph-grid .slot{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;
+    border:1px solid var(--stroke);background:var(--glass-2)}
+  .ph-grid .slot img{width:100%;height:100%;object-fit:cover;display:block}
+  .ph-grid .slot .tag{position:absolute;bottom:6px;inset-inline-start:6px;background:rgba(3,4,8,.72);color:#fff;
+    font-size:10px;font-weight:700;letter-spacing:.02em;border-radius:999px;padding:2px 8px;pointer-events:none}
+  .ph-grid .slot.add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    border:1px dashed rgba(34,211,238,.55);color:var(--cyan);cursor:pointer;font-size:12px;font-weight:600;
+    background:rgba(34,211,238,.05);transition:.2s;text-align:center;padding:6px}
+  .ph-grid .slot.add:hover{background:rgba(34,211,238,.12);box-shadow:var(--glow-cyan)}
+  .ph-grid .slot .rm{position:absolute;top:5px;inset-inline-end:5px;width:22px;height:22px;border-radius:50%;
+    border:none;background:rgba(3,4,8,.72);color:#fff;font-size:14px;line-height:1;cursor:pointer;display:grid;place-items:center}
   /* listing gallery */
   .lh-wrap{position:relative;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--stroke)}
   .lh-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(30px) brightness(.5);transform:scale(1.2)}
   .lh-main{position:relative;z-index:1;width:100%;max-height:min(62vh,520px);object-fit:contain;display:block}
+  .lh-count{position:absolute;z-index:2;bottom:10px;inset-inline-end:10px;background:rgba(3,4,8,.72);color:#fff;
+    font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 10px;font-variant-numeric:tabular-nums;pointer-events:none}
   .lh-thumbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
   .lh-thumbs button{width:60px;height:60px;border-radius:12px;overflow:hidden;padding:0;border:2px solid transparent;
     background:var(--glass-2);cursor:pointer;flex:0 0 auto;transition:.2s}
@@ -214,6 +223,9 @@
     font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:999px;
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   body.rtl .mcard .appr-badge,body.rtl .mcard .mine-badge{letter-spacing:.01em}
+  .mcard .ph-badge{position:absolute;bottom:8px;inset-inline-end:8px;display:inline-flex;align-items:center;gap:4px;
+    background:rgba(3,4,8,.72);color:#fff;font-size:10.5px;font-weight:700;border-radius:999px;padding:3px 8px;
+    font-variant-numeric:tabular-nums}
   .mcard .mbody{padding:11px 13px 13px}
   .mcard .mt{font-weight:600;font-size:14px;line-height:1.35;letter-spacing:-.01em}
   .mcard .mm{font-size:11.5px;color:var(--dim);margin-top:2px}
@@ -425,7 +437,7 @@
   <!-- LISTING DETAIL -->
   <section id="listingScreen" class="hidden">
     <div class="listing-col-a">
-    <div class="lh-wrap"><div class="lh-bg" id="lstBg"></div><img class="lh-main" id="lstImg" alt="" /></div>
+    <div class="lh-wrap"><div class="lh-bg" id="lstBg"></div><img class="lh-main" id="lstImg" alt="" /><span class="lh-count hidden" id="lstCount"></span></div>
     <div class="lh-thumbs" id="lstThumbs"></div>
     </div>
     <div class="listing-col-b">
@@ -448,10 +460,14 @@
   <section id="sellScreen" class="hidden">
     <h1 data-i18n="sellTitle">List it in the Bazaar</h1>
     <p class="mut small" data-i18n="sellSub">Your appraisal card becomes the listing — buyers see the full analysis.</p>
-    <div class="frame" style="margin-top:14px"><img class="preview" id="sellImg" alt="" style="max-height:220px" /></div>
-    <label data-i18n="addPhotos">More photos (optional)</label>
-    <div class="ph-add" id="phAdd"></div>
-    <p class="mut small" data-i18n="addPhotosHint" style="margin-top:2px">Add the label, the back, or close-ups — up to 3 more.</p>
+    <div class="ph-head">
+      <label data-i18n="photosTitle">Photos</label>
+      <span class="ph-count" id="phCount">1/6</span>
+    </div>
+    <div class="ph-grid" id="phGrid">
+      <div class="slot cover"><img id="sellImg" alt="" /><span class="tag" data-i18n="coverBadge">Cover</span></div>
+    </div>
+    <p class="mut small" data-i18n="addPhotosHint" style="margin-top:6px">Listings with the label, the back, and close-ups sell faster — add up to 5 more photos.</p>
     <input type="file" id="sellPhotoInput" accept="image/*" multiple class="hidden" />
     <label for="sellTitleInput" data-i18n="lTitle">Title</label>
     <input id="sellTitleInput" />
@@ -627,7 +643,10 @@ const I18N = {
     markShipped:"Mark as shipped", confirmReceipt:"I received it — release payment",
     trackingPrompt:"Tracking number (optional):", shippedOk:"Marked as shipped — the buyer can now confirm receipt.",
     releasedOk:"Payment released to the seller. 🎉", loading:"Loading…",
-    addPhotos:"More photos (optional)", addPhotosHint:"Add the label, the back, or close-ups — up to 3 more.",
+    photosTitle:"Photos", coverBadge:"Cover", addPhotoBtn:"Add photo",
+    addPhotosHint:"Listings with the label, the back, and close-ups sell faster — add up to 5 more photos.",
+    photosFull:"That's the max — 6 photos per listing.",
+    uploadingPhoto:(i,n)=>`Uploading photo ${i}/${n}…`,
     shareText:(r)=>`I identified my ${r.name} with RugSnap — estimated $${fmt(r.estimated_value_low_usd)}–$${fmt(r.estimated_value_high_usd)}!`,
   },
   fa: {
@@ -690,7 +709,10 @@ const I18N = {
     markShipped:"ثبتِ ارسال", confirmReceipt:"دریافت کردم — پول را آزاد کن",
     trackingPrompt:"کد رهگیری (اختیاری):", shippedOk:"به‌عنوان ارسال‌شده ثبت شد — حالا خریدار می‌تواند تأیید کند.",
     releasedOk:"پول به فروشنده آزاد شد. 🎉", loading:"در حال بارگذاری…",
-    addPhotos:"عکس‌های بیشتر (اختیاری)", addPhotosHint:"برچسب، پشتِ کالا یا نمای نزدیک را اضافه کن — تا ۳ عکسِ دیگر.",
+    photosTitle:"عکس‌ها", coverBadge:"عکس اصلی", addPhotoBtn:"افزودن عکس",
+    addPhotosHint:"آگهی‌هایی که عکسِ برچسب، پشتِ کالا و نمای نزدیک دارند زودتر فروخته می‌شوند — تا ۵ عکس دیگر اضافه کن.",
+    photosFull:"حداکثر ۶ عکس برای هر آگهی.",
+    uploadingPhoto:(i,n)=>`آپلود عکس ${i} از ${n}…`,
     shareText:(r)=>`با راگ‌اسنپ «${r.name}» را شناسایی کردم — ارزش تقریبی $${fmt(r.estimated_value_low_usd)} تا $${fmt(r.estimated_value_high_usd)}!`,
   },
 };
@@ -1006,9 +1028,10 @@ function renderMarket() {
     .forEach((item) => {
       const x = listingText(item);
       const appraised = !!((x.facts && x.facts.length) || item.appraisal);
+      const nPhotos = (item.photos || []).filter(Boolean).length;
       const card = document.createElement("button");
       card.className = "mcard";
-      card.innerHTML = `<span class="ph"><img loading="lazy" alt="">${item.mine ? `<span class="mine-badge">${t.yours}</span>` : ""}${appraised ? `<span class="appr-badge">✓ ${t.appraised}</span>` : ""}</span>
+      card.innerHTML = `<span class="ph"><img loading="lazy" alt="">${item.mine ? `<span class="mine-badge">${t.yours}</span>` : ""}${appraised ? `<span class="appr-badge">✓ ${t.appraised}</span>` : ""}${nPhotos > 1 ? `<span class="ph-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2"/></svg>${nPhotos}</span>` : ""}</span>
         <span class="mbody" style="display:block"><span class="mt" style="display:block"></span>
         <span class="mm" style="display:block"></span>
         <span class="mp" style="display:block">$${fmt(item.price)}</span></span>`;
@@ -1020,17 +1043,40 @@ function renderMarket() {
     });
 }
 
+let galPhotos = [], galIndex = 0;
 function setHero(gallery, i) {
-  const src = gallery[i] || "";
+  galPhotos = gallery;
+  galIndex = (i + gallery.length) % gallery.length;
+  const src = gallery[galIndex] || "";
   $("lstImg").src = src;
   $("lstBg").style.backgroundImage = src ? `url("${src.replace(/"/g, "%22")}")` : "none";
+  const c = $("lstCount");
+  c.classList.toggle("hidden", gallery.length < 2);
+  c.textContent = `${galIndex + 1}/${gallery.length}`;
+  $("lstThumbs").querySelectorAll("button").forEach((b, j) => b.classList.toggle("on", j === galIndex));
+}
+
+// Gallery hero: tap advances to the next photo; swipe works in both directions
+// (mirrored under RTL so the gesture feels natural in Farsi).
+{
+  const hero = document.querySelector(".lh-wrap");
+  let touchX = null;
+  hero.addEventListener("touchstart", (e) => { touchX = e.touches[0].clientX; }, { passive: true });
+  hero.addEventListener("touchend", (e) => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    touchX = null;
+    if (Math.abs(dx) < 40 || galPhotos.length < 2) return;
+    const rtl = document.body.classList.contains("rtl");
+    setHero(galPhotos, galIndex + ((dx < 0) !== rtl ? 1 : -1));
+  }, { passive: true });
+  hero.addEventListener("click", () => { if (galPhotos.length > 1) setHero(galPhotos, galIndex + 1); });
 }
 
 function openListing(item) {
   currentListing = item;
   const x = listingText(item);
   const gallery = (item.photos && item.photos.length ? item.photos : [item.img || item.thumb]).filter(Boolean);
-  setHero(gallery, 0);
   const thumbs = $("lstThumbs");
   thumbs.innerHTML = "";
   if (gallery.length > 1) {
@@ -1040,13 +1086,11 @@ function openListing(item) {
       const im = document.createElement("img");
       im.src = src; im.alt = "";
       b.appendChild(im);
-      b.onclick = () => {
-        setHero(gallery, i);
-        thumbs.querySelectorAll("button").forEach((x2, j) => x2.classList.toggle("on", j === i));
-      };
+      b.onclick = () => setHero(gallery, i);
       thumbs.appendChild(b);
     });
   }
+  setHero(gallery, 0);
   $("lstTitle").textContent = x.title;
   $("lstMeta").textContent = x.meta;
   $("lstPrice").textContent = `$${fmt(item.price)}`;
@@ -1154,41 +1198,66 @@ function renderFees() {
     <div class="fee-line total"><span>${t.feeGet}</span><span class="n">$${fmt(price - fee)}</span></div>`;
 }
 
-/* sell: extra photos (label, back, close-ups) for the listing gallery */
+/* sell: photo grid — the appraisal shot is the cover; sellers add up to 5 more
+   (label, back, close-ups). Extras are downscaled client-side before upload. */
+const MAX_EXTRA_PHOTOS = 5;
+const CAMERA_SVG = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2"/></svg>`;
 let sellExtraPhotos = [];
 function renderPhAdd() {
-  const wrap = $("phAdd");
-  if (!wrap) return;
-  wrap.innerHTML = "";
+  const grid = $("phGrid");
+  if (!grid) return;
+  grid.querySelectorAll(".slot:not(.cover)").forEach((n) => n.remove());
   sellExtraPhotos.forEach((src, i) => {
     const slot = document.createElement("div");
     slot.className = "slot";
     slot.innerHTML = `<img alt=""><button class="rm" type="button" aria-label="remove">×</button>`;
     slot.querySelector("img").src = src;
     slot.querySelector(".rm").onclick = () => { sellExtraPhotos.splice(i, 1); renderPhAdd(); };
-    wrap.appendChild(slot);
+    grid.appendChild(slot);
   });
-  if (sellExtraPhotos.length < 3) {
+  if (sellExtraPhotos.length < MAX_EXTRA_PHOTOS) {
     const add = document.createElement("div");
     add.className = "slot add";
-    add.textContent = "+";
+    add.innerHTML = `${CAMERA_SVG}<span data-i18n="addPhotoBtn">${t.addPhotoBtn}</span>`;
     add.setAttribute("role", "button");
-    add.setAttribute("aria-label", "add photo");
+    add.setAttribute("tabindex", "0");
+    add.setAttribute("aria-label", t.addPhotoBtn);
     add.onclick = () => $("sellPhotoInput").click();
-    wrap.appendChild(add);
+    add.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("sellPhotoInput").click(); } };
+    grid.appendChild(add);
   }
+  const count = $("phCount");
+  if (count) count.textContent = `${1 + sellExtraPhotos.length}/${1 + MAX_EXTRA_PHOTOS}`;
+}
+// Downscale to ≤1600px JPEG so 10 MB phone shots upload fast; fall back to the
+// original bytes if the browser can't decode the format.
+async function shrinkPhoto(file) {
+  const dataUrl = await new Promise((resolve) => {
+    const rd = new FileReader();
+    rd.onload = () => resolve(rd.result);
+    rd.readAsDataURL(file);
+  });
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const im = new Image();
+      im.onload = () => resolve(im);
+      im.onerror = reject;
+      im.src = dataUrl;
+    });
+    const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.naturalWidth * scale);
+    canvas.height = Math.round(img.naturalHeight * scale);
+    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.85);
+  } catch { return dataUrl; }
 }
 $("sellPhotoInput").onchange = async (e) => {
   const files = [...(e.target.files || [])];
   for (const f of files) {
-    if (sellExtraPhotos.length >= 3) break;
+    if (sellExtraPhotos.length >= MAX_EXTRA_PHOTOS) { toast(t.photosFull); break; }
     if (!f.type.startsWith("image/")) continue;
-    const dataUrl = await new Promise((resolve) => {
-      const rd = new FileReader();
-      rd.onload = () => resolve(rd.result);
-      rd.readAsDataURL(f);
-    });
-    sellExtraPhotos.push(dataUrl);
+    sellExtraPhotos.push(await shrinkPhoto(f));
   }
   e.target.value = "";
   renderPhAdd();
@@ -1210,7 +1279,9 @@ $("publishBtn").onclick = async () => {
     note: $("sellNoteInput").value,
     facts: [techOf(r), marksOf(r)].concat(r.materials?.[0] ? [r.materials[0]] : []),
   };
-  $("publishBtn").disabled = true;
+  const pubBtn = $("publishBtn");
+  pubBtn.disabled = true;
+  const pubLabel = pubBtn.textContent;
   try {
     // upload the appraisal photo plus any extras, then the row that references them
     const uploadOne = async (src, i) => {
@@ -1224,8 +1295,13 @@ $("publishBtn").onclick = async () => {
       if (!u.ok) throw new Error("photo_" + u.status);
       return `${SUPA_URL}/storage/v1/object/public/listing-photos/${name}`;
     };
-    const photos = [await uploadOne(currentThumb || currentImage, 0)];
-    for (let i = 0; i < sellExtraPhotos.length; i++) photos.push(await uploadOne(sellExtraPhotos[i], i + 1));
+    const sources = [currentThumb || currentImage, ...sellExtraPhotos];
+    const photos = [];
+    for (let i = 0; i < sources.length; i++) {
+      pubBtn.textContent = t.uploadingPhoto(i + 1, sources.length);
+      photos.push(await uploadOne(sources[i], i));
+    }
+    pubBtn.textContent = pubLabel;
     const res = await fetch(`${SUPA_URL}/rest/v1/listings`, {
       method: "POST",
       headers: SUPA_HEADERS,
@@ -1250,12 +1326,13 @@ $("publishBtn").onclick = async () => {
     toast(t.listedOk);
   } catch {
     // offline or blocked: keep the listing on this device
-    store.listings = [{ id: "l-" + Date.now(), thumb: currentThumb || currentImage, price, appraisal: r, ...{ category: listing.category, text: listing } }, ...store.listings];
+    store.listings = [{ id: "l-" + Date.now(), thumb: currentThumb || currentImage, photos: [currentThumb || currentImage, ...sellExtraPhotos], price, appraisal: r, ...{ category: listing.category, text: listing } }, ...store.listings];
     renderMarket();
     show("marketScreen");
     toast(t.errNet);
   } finally {
-    $("publishBtn").disabled = false;
+    pubBtn.disabled = false;
+    pubBtn.textContent = pubLabel;
   }
 };
 

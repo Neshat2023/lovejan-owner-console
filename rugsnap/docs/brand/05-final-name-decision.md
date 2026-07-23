@@ -38,13 +38,19 @@ Story: the classical root of "estimate" — we are the appraisal company, etymol
 **5. APPRA** — *appraisal, truncated to a verb*
 Story: "just appra it" — the only candidate with new-category-verb potential. Risks: appra.com/.ai/.app all held (likely appraisal-tech neighbors — direct-space conflict risk), FA اپرا/opera collision. Best case: the verb of the category. Worst case: cease-and-desist from an existing appraisal startup.
 
-## Final recommendation — **REVISED 2026-07-23 (live knockout data; see doc 04 live table)**
+## Final recommendation — **REVISED TWICE on 2026-07-23; see doc 04 CORRECTION pass**
 
-Live web screening found an **active "VELUMA | creative lab"** operating veluma.net with veluma.com resolving — active commercial use in an adjacent branding-services space and an effectively unbuyable .com. Veluma is demoted. Valyt returned **zero** hits (no company, app, or mark found; nearest: VALT/VALTS in adjacent classes) and is the only finalist with verified purchasable domains.
+Direct-domain visits (after a keyword-search method error was caught) found **all three finalists have active same-or-adjacent-space occupants** and unavailable .coms:
+- **Valyt** → valyt.com is an active **ESG/financial-analytics consultancy** ("Solutions for Sustainable Finance") — adjacent financial-data space.
+- **Aestima** → active **valuation surveyors** (Aestima Ltd Mauritius) + fintech (aestima.org) + UK legal-services co — *direct* appraisal-space collision ("aestima" = Latin "to appraise").
+- **Veluma** → active branding **creative lab**.
 
-1. **Primary (conditional):** **Valyt** — pending (a) attorney assessment of VALT/VALTS adjacency, (b) native FA/AR sign-off on the ولایت homophone question, (c) D6 budget posture for an eventual valyt.com inquiry. Verified-available today: valyt.ai ($160/2yr) + valyt.app ($9.99).
-2. **Backup:** **Aestima** — UK Aestima Limited (patent/copyright agents, inc. 2011) found; different country/class, attorney to confirm; aestima.app verified available ($9.99).
-3. **Demoted:** **Veluma** — revisit only if the creative lab proves defunct AND counsel clears; do not broker-inquire veluma.com (owner is an operating business).
+**Revised recommendation: no umbrella finalist survives clean.** Do **not** adopt or spend on any of the three. This is a structural result (meaningful value/trust words are already owned by finance/valuation/branding firms), not a shortlist that needs one more round. Correct path:
+1. **Now:** keep RugSnap; do nothing on the umbrella (the trigger already gates it). No purchases.
+2. **At the trigger:** run a fresh naming sprint with a professional naming firm + trademark attorney, screening each candidate on BOTH keyword search AND direct-domain visit AND TESS/WIPO — biased toward **genuinely coined, empty-meaning words** (which survive precisely because they mean nothing to occupy). Budget for a broker on a coined .com then.
+3. **If forced to pick from this doc's work today** (not recommended): the least-conflicted *available* asset is a coined name not yet generated; among screened options, none clear the bar — reopen longlist doc 03's coined territory (Veluma-style morphology) with fresh direct-visit screening.
+
+**Lesson recorded for the method:** every future name check = keyword search + direct-domain visit + register query; a keyword miss is never "clean."
 4. **RugSnap:** **keep** — as the rugs wedge product brand, later endorsed ("RugSnap by <Parent>"); never extend the Snap pattern to new categories; include RugSnap in the counsel scope (Snap Inc. adjacency, preliminary/UNVERIFIED).
 5. **Architecture:** endorsed hybrid → single universal platform (doc 02, Option D→C).
 6. **Domain portfolio:** keep rugsnap.com/.app; acquire parent .com + .ai/.app + 1–2 misspellings at trigger; buy nothing today.

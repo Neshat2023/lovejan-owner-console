@@ -32,6 +32,20 @@ Sources: [VELUMA creative lab (veluma.net)](https://www.veluma.net/) · [veluma.
 
 Limits declared: search-engine-level screening finds *use*, not the authoritative federal register; a direct USPTO TESS/WIPO query and attorney opinion remain mandatory before adoption (FD4). Absence of a search result is weaker evidence than presence of one.
 
+## CORRECTION & direct-domain visit pass — 2026-07-23 ~22:1x UTC (method fix)
+
+The prior pass reported "Valyt: zero hits" from a keyword search that did not surface valyt.com — a method error (a keyword miss was treated as absence of use, violating our own "absence < presence" rule). Corrected by **visiting each finalist's domain directly and searching the brand + its space.** Findings:
+
+| Candidate | Direct finding | Space overlap with us | Verdict |
+|---|---|---|---|
+| **Valyt** | **valyt.com is an ACTIVE company — "valyt \| Solutions for Sustainable Finance," an ESG/financial-data analytics consultancy** (Home/About/Solutions/News live) | **Adjacent+ (financial analytics)** — closer to us than a creative lab | **DEMOTED — no longer clean; .com owned by an operating analytics firm** |
+| **Veluma** | Active "VELUMA \| creative lab" (veluma.net; veluma.com resolves) | Adjacent (branding services) | Demoted (unchanged) |
+| **Aestima** | **Multiple active users in our EXACT space:** Aestima Ltd (Mauritius) — Chartered **Valuation** Surveyors; aestima.org — fintech; Aestima Limited (UK) — patent/copyright agents. "Aestima" = Latin "to appraise," so it is *naturally* colonized by valuation firms | **Direct (valuation/appraisal)** — worst overlap of the three | **DEMOTED hardest — direct-space collision** |
+
+**Honest conclusion (challenging my own prior work):** all three "finalists" have active same-or-adjacent-space occupants and unavailable .coms. This is not bad luck — it's structural: any *meaningful, pronounceable, value/trust-adjacent* word is already taken by someone in finance/valuation/branding, precisely because it's a good name for those businesses too. The screen's real lesson is that a safe umbrella almost certainly requires **either** a genuinely coined/empty-meaning word (screened fresh on BOTH keyword search AND direct-domain visit) **or** acceptance of a strong non-.com — decided at the trigger with a naming firm + attorney, not rushed now.
+
+Sources (this pass): [valyt.com — Solutions for Sustainable Finance](https://valyt.com/) · [valyt Solutions](https://valyt.com/solutions/) · [Aestima Ltd Mauritius — Chartered Valuation Surveyors](https://www.aestima.mu/) · [aestima.org — fintech](https://aestima.org) · [VELUMA creative lab](https://www.veluma.net/).
+
 ## Preliminary trademark screening — knowledge-based baseline (superseded where the live table above differs)
 
 USPTO/WIPO/EUIPO/UKIPO and app stores are unreachable from this environment. Classifications below are reasoning from model knowledge (cutoff early 2026) and are **not** clearance opinions. Formal screening by trademark counsel is mandatory before any selection (Bible v1.1 §2.2 rule).

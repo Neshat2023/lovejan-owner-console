@@ -385,6 +385,7 @@
   <section id="marketScreen" class="hidden">
     <h1 data-i18n="marketTitle">The Bazaar</h1>
     <p class="mut small" data-i18n="marketSub">Pieces listed straight from their appraisal cards.</p>
+    <button class="btn ghost hidden" id="ordersBtn" style="margin:4px 0 2px" data-i18n="myOrders">My orders</button>
     <div class="filter-row" id="filterRow" role="tablist">
       <button class="chip on" data-cat="all" role="tab" aria-selected="true" data-i18n="catAll">All</button>
       <button class="chip" data-cat="rug" role="tab" aria-selected="false" data-i18n="catRugs">Rugs &amp; carpets</button>
@@ -441,6 +442,14 @@
     <button class="btn ghost hidden" id="sellPayoutBtn" style="margin-top:12px" data-i18n="payoutSetup">Set up payouts to get paid</button>
     <button class="btn" id="publishBtn" style="margin-top:12px" data-i18n="publishBtn">Publish listing</button>
     <button class="btn ghost" id="cancelSell" style="margin-top:10px" data-i18n="cancel">Cancel</button>
+  </section>
+
+  <!-- ORDERS -->
+  <section id="ordersScreen" class="hidden">
+    <h1 data-i18n="ordersTitle">My orders</h1>
+    <p class="mut small" data-i18n="ordersSub">Payment is held safely in escrow until the buyer confirms the item arrived.</p>
+    <div id="ordersList" style="margin-top:14px"></div>
+    <button class="btn ghost" id="backFromOrders" style="margin-top:14px" data-i18n="backMarket">Back to the Bazaar</button>
   </section>
 </div>
 
@@ -581,6 +590,14 @@ const I18N = {
     buyEmailPrompt:"Enter your email for the receipt and order updates:",
     orderSuccess:"Payment received — held safely until you confirm the item arrived. 🎉",
     payoutsDone:"Payouts connected — you can sell for real now. 🎉",
+    myOrders:"My orders", ordersTitle:"My orders",
+    ordersSub:"Payment is held safely in escrow until the buyer confirms the item arrived.",
+    ordersEmpty:"No orders yet — list something or buy from the Bazaar.",
+    roleSeller:"Selling", roleBuyer:"Buying",
+    orderStatus:{ pending:"Pending payment", paid:"Paid — held in escrow", shipped:"Shipped", delivered:"Delivered", released:"Completed — paid out", refunded:"Refunded", disputed:"Disputed", canceled:"Canceled" },
+    markShipped:"Mark as shipped", confirmReceipt:"I received it — release payment",
+    trackingPrompt:"Tracking number (optional):", shippedOk:"Marked as shipped — the buyer can now confirm receipt.",
+    releasedOk:"Payment released to the seller. 🎉", loading:"Loading…",
     shareText:(r)=>`I identified my ${r.name} with RugSnap — estimated $${fmt(r.estimated_value_low_usd)}–$${fmt(r.estimated_value_high_usd)}!`,
   },
   fa: {
@@ -635,6 +652,14 @@ const I18N = {
     buyEmailPrompt:"ایمیلت را برای رسید و پیگیری سفارش وارد کن:",
     orderSuccess:"پرداخت انجام شد — پول امن نگه داشته می‌شود تا رسیدن کالا را تأیید کنی. 🎉",
     payoutsDone:"دریافت پول فعال شد — حالا می‌توانی واقعی بفروشی. 🎉",
+    myOrders:"سفارش‌های من", ordersTitle:"سفارش‌های من",
+    ordersSub:"پول به‌صورت امن در اسکرو نگه داشته می‌شود تا خریدار رسیدنِ کالا را تأیید کند.",
+    ordersEmpty:"هنوز سفارشی نیست — چیزی آگهی کن یا از بازار بخر.",
+    roleSeller:"فروش", roleBuyer:"خرید",
+    orderStatus:{ pending:"در انتظار پرداخت", paid:"پرداخت‌شده — در اسکرو", shipped:"ارسال‌شده", delivered:"تحویل‌شده", released:"تکمیل‌شده — پرداخت شد", refunded:"بازگشت‌خورده", disputed:"اختلاف", canceled:"لغوشده" },
+    markShipped:"ثبتِ ارسال", confirmReceipt:"دریافت کردم — پول را آزاد کن",
+    trackingPrompt:"کد رهگیری (اختیاری):", shippedOk:"به‌عنوان ارسال‌شده ثبت شد — حالا خریدار می‌تواند تأیید کند.",
+    releasedOk:"پول به فروشنده آزاد شد. 🎉", loading:"در حال بارگذاری…",
     shareText:(r)=>`با راگ‌اسنپ «${r.name}» را شناسایی کردم — ارزش تقریبی $${fmt(r.estimated_value_low_usd)} تا $${fmt(r.estimated_value_high_usd)}!`,
   },
 };
@@ -1204,7 +1229,7 @@ show("home");
 
 /* ---------- Bazaar real payments (Stripe Connect + soft escrow) ---------- */
 let MARKET_ON = false;
-fetch("/api/market/enabled").then((r) => r.json()).then((d) => { MARKET_ON = !!(d && d.enabled); }).catch(() => {});
+fetch("/api/market/enabled").then((r) => r.json()).then((d) => { MARKET_ON = !!(d && d.enabled); toggleOrdersBtn(); }).catch(() => {});
 
 $("sellPayoutBtn").onclick = async () => {
   const btn = $("sellPayoutBtn");
@@ -1245,6 +1270,81 @@ async function startCheckout(item) {
   if (p.get("order") === "success") { history.replaceState(null, "", location.pathname); toast(t.orderSuccess); }
   else if (p.get("connect") === "done") { history.replaceState(null, "", location.pathname); toast(t.payoutsDone); }
 })();
+
+// --- Bazaar orders (buyer/seller escrow tracking) ---
+function toggleOrdersBtn() { $("ordersBtn").classList.toggle("hidden", !MARKET_ON); }
+$("ordersBtn").onclick = () => { show("ordersScreen"); loadOrders(); };
+$("backFromOrders").onclick = () => { renderMarket(); show("marketScreen"); loadMarket(); };
+
+async function loadOrders() {
+  const wrap = $("ordersList");
+  wrap.innerHTML = `<p class="mut small">${t.loading}</p>`;
+  try {
+    const res = await fetch("/api/orders/list", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId: store.deviceId }),
+    });
+    const d = await res.json();
+    renderOrders(d.orders || []);
+  } catch { wrap.innerHTML = `<p class="mut small">${t.errNet}</p>`; }
+}
+
+function renderOrders(orders) {
+  const wrap = $("ordersList");
+  if (!orders.length) { wrap.innerHTML = `<p class="mut small">${t.ordersEmpty}</p>`; return; }
+  wrap.innerHTML = "";
+  orders.forEach((o) => {
+    const seller = o.seller_device_id === store.deviceId;
+    const st = (t.orderStatus && t.orderStatus[o.status]) || o.status;
+    const card = document.createElement("div");
+    card.style.cssText = "border:1px solid var(--stroke);border-radius:14px;padding:14px 16px;margin-bottom:10px;background:var(--glass);backdrop-filter:blur(10px)";
+    card.innerHTML =
+      `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+         <span class="mut small">${seller ? t.roleSeller : t.roleBuyer}</span>
+         <span class="small" style="opacity:.9">${st}</span>
+       </div>
+       <div style="font-weight:700;margin-top:6px">$${fmt(Number(o.amount_usd))}</div>`;
+    const actions = document.createElement("div");
+    actions.style.cssText = "margin-top:10px";
+    if (seller && o.status === "paid") {
+      const b = document.createElement("button");
+      b.className = "btn"; b.textContent = t.markShipped;
+      b.onclick = () => markShipped(o.id);
+      actions.appendChild(b);
+    }
+    if (!seller && (o.status === "paid" || o.status === "shipped")) {
+      const b = document.createElement("button");
+      b.className = "btn gold"; b.textContent = t.confirmReceipt;
+      b.onclick = () => confirmReceipt(o.id);
+      actions.appendChild(b);
+    }
+    card.appendChild(actions);
+    wrap.appendChild(card);
+  });
+}
+
+async function markShipped(id) {
+  const tracking = (prompt(t.trackingPrompt) || "").trim();
+  try {
+    const res = await fetch("/api/orders/ship", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: id, deviceId: store.deviceId, tracking }),
+    });
+    const d = await res.json();
+    if (d.ok) { toast(t.shippedOk); loadOrders(); } else toast(d.error || t.errNet);
+  } catch { toast(t.errNet); }
+}
+
+async function confirmReceipt(id) {
+  try {
+    const res = await fetch("/api/orders/confirm", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: id, deviceId: store.deviceId }),
+    });
+    const d = await res.json();
+    if (d.ok) { toast(t.releasedOk); loadOrders(); } else toast(d.error || t.errNet);
+  } catch { toast(t.errNet); }
+}
 
 // installable-app support (no-op where service workers are unavailable)
 if ("serviceWorker" in navigator && location.protocol === "https:") {

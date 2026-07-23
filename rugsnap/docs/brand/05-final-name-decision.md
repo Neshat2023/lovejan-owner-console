@@ -38,11 +38,13 @@ Story: the classical root of "estimate" — we are the appraisal company, etymol
 **5. APPRA** — *appraisal, truncated to a verb*
 Story: "just appra it" — the only candidate with new-category-verb potential. Risks: appra.com/.ai/.app all held (likely appraisal-tech neighbors — direct-space conflict risk), FA اپرا/opera collision. Best case: the verb of the category. Worst case: cease-and-desist from an existing appraisal startup.
 
-## Final recommendation
+## Final recommendation — **REVISED 2026-07-23 (live knockout data; see doc 04 live table)**
 
-1. **Primary:** **Veluma** — conditional on counsel clearance + .com acquisition feasibility within budget D6.
-2. **Backup:** **Aestima** — if Veluma fails clearance/acquisition. (Vitrine drops to third: cultural brilliance, legal/SEO fragility.)
-3. **Lower-cost alternative:** **Valyt** with valyt.ai ($160, verified) — acceptable only with FA-homophone sign-off and a standing .com acquisition intent.
+Live web screening found an **active "VELUMA | creative lab"** operating veluma.net with veluma.com resolving — active commercial use in an adjacent branding-services space and an effectively unbuyable .com. Veluma is demoted. Valyt returned **zero** hits (no company, app, or mark found; nearest: VALT/VALTS in adjacent classes) and is the only finalist with verified purchasable domains.
+
+1. **Primary (conditional):** **Valyt** — pending (a) attorney assessment of VALT/VALTS adjacency, (b) native FA/AR sign-off on the ولایت homophone question, (c) D6 budget posture for an eventual valyt.com inquiry. Verified-available today: valyt.ai ($160/2yr) + valyt.app ($9.99).
+2. **Backup:** **Aestima** — UK Aestima Limited (patent/copyright agents, inc. 2011) found; different country/class, attorney to confirm; aestima.app verified available ($9.99).
+3. **Demoted:** **Veluma** — revisit only if the creative lab proves defunct AND counsel clears; do not broker-inquire veluma.com (owner is an operating business).
 4. **RugSnap:** **keep** — as the rugs wedge product brand, later endorsed ("RugSnap by <Parent>"); never extend the Snap pattern to new categories; include RugSnap in the counsel scope (Snap Inc. adjacency, preliminary/UNVERIFIED).
 5. **Architecture:** endorsed hybrid → single universal platform (doc 02, Option D→C).
 6. **Domain portfolio:** keep rugsnap.com/.app; acquire parent .com + .ai/.app + 1–2 misspellings at trigger; buy nothing today.

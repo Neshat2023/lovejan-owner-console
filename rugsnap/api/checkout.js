@@ -25,8 +25,27 @@ export default async function handler(req, res) {
       `seller_accounts?device_id=eq.${encodeURIComponent(listing.device_id)}&select=stripe_account_id,charges_enabled`,
     );
     const seller = sellers[0];
-    if (!seller?.stripe_account_id || !seller.charges_enabled) {
+    if (!seller?.stripe_account_id) {
       return res.status(409).json({ error: "seller hasn't finished setting up payouts yet" });
+    }
+    // Self-heal: the cached flag can lag behind Stripe right after onboarding,
+    // so re-check the live account status and refresh the row before rejecting.
+    if (!seller.charges_enabled) {
+      try {
+        const acct = await getStripe().accounts.retrieve(seller.stripe_account_id);
+        if (acct.charges_enabled) {
+          await supaUpdate("seller_accounts", `device_id=eq.${encodeURIComponent(listing.device_id)}`, {
+            charges_enabled: acct.charges_enabled,
+            payouts_enabled: acct.payouts_enabled,
+            details_submitted: acct.details_submitted,
+            updated_at: nowIso(),
+          });
+          seller.charges_enabled = true;
+        }
+      } catch (e) { console.error("seller status re-check failed", e); }
+      if (!seller.charges_enabled) {
+        return res.status(409).json({ error: "seller hasn't finished setting up payouts yet" });
+      }
     }
 
     const amount = Number(listing.price_usd);

@@ -24,10 +24,30 @@ export default async function handler(req, res) {
 
     const sellerCents = Math.round((Number(order.amount_usd) - Number(order.fee_usd)) * 100);
     const stripe = getStripe();
+
+    // Tie the payout to the original charge (source_transaction) so it draws from
+    // that charge's funds directly — avoids "insufficient available balance" when
+    // the charge is still settling (the classic separate-charges/transfers pitfall).
+    let piId = order.stripe_payment_intent_id;
+    if (!piId && order.stripe_checkout_session_id) {
+      try {
+        const session = await stripe.checkout.sessions.retrieve(order.stripe_checkout_session_id);
+        piId = session.payment_intent || null;
+      } catch (e) { console.error("resolve PI from session failed", e); }
+    }
+    let sourceTransaction;
+    if (piId) {
+      try {
+        const pi = await stripe.paymentIntents.retrieve(piId);
+        sourceTransaction = pi.latest_charge || undefined;
+      } catch (e) { console.error("resolve charge for transfer failed", e); }
+    }
+
     const transfer = await stripe.transfers.create({
       amount: sellerCents,
       currency: order.currency || "usd",
       destination: order.seller_account_id,
+      ...(sourceTransaction ? { source_transaction: sourceTransaction } : {}),
       metadata: { order_id: order.id },
     });
 

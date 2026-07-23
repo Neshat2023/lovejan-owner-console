@@ -1267,7 +1267,12 @@ async function startCheckout(item) {
 // Checkout / payout-onboarding return handlers.
 (() => {
   const p = new URLSearchParams(location.search);
-  if (p.get("order") === "success") { history.replaceState(null, "", location.pathname); toast(t.orderSuccess); }
+  if (p.get("order") === "success") {
+    const sid = p.get("sid");
+    if (sid) fetch("/api/orders/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sid }) }).catch(() => {});
+    history.replaceState(null, "", location.pathname);
+    toast(t.orderSuccess);
+  }
   else if (p.get("connect") === "done") { history.replaceState(null, "", location.pathname); toast(t.payoutsDone); }
 })();
 
@@ -1279,13 +1284,23 @@ $("backFromOrders").onclick = () => { renderMarket(); show("marketScreen"); load
 async function loadOrders() {
   const wrap = $("ordersList");
   wrap.innerHTML = `<p class="mut small">${t.loading}</p>`;
+  const fetchList = () => fetch("/api/orders/list", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ deviceId: store.deviceId }),
+  }).then((r) => r.json()).then((d) => d.orders || []);
   try {
-    const res = await fetch("/api/orders/list", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ deviceId: store.deviceId }),
-    });
-    const d = await res.json();
-    renderOrders(d.orders || []);
+    let orders = await fetchList();
+    // Webhook-independent: confirm any pending orders with Stripe, then reload.
+    const pending = orders.filter((o) => o.status === "pending");
+    if (pending.length) {
+      await Promise.all(pending.map((o) =>
+        fetch("/api/orders/sync", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: o.id, deviceId: store.deviceId }),
+        }).catch(() => {})));
+      orders = await fetchList();
+    }
+    renderOrders(orders);
   } catch { wrap.innerHTML = `<p class="mut small">${t.errNet}</p>`; }
 }
 

@@ -14,6 +14,8 @@
 
 **What this proves:** the short-brandable namespace is fully claimed at .com and largely at .ai/.app. Every strong candidate therefore implies **broker acquisition** (cost/feasibility UNVERIFIED, requires owner budget decision D6) — or accepting a non-.com primary, which we already live with successfully (rugsnap.app).
 
+**Founder-verified addendum (2026-07-23, GoDaddy domain search, screenshot on file):** `veluma.com` shows as TAKEN with GoDaddy **Domain Broker Service available at a $99.99 engagement fee** (anonymous inquiry, price negotiated separately) and **"144 searches in past 1-yr"** — modest demand, consistent with a potentially reasonable acquisition price (speculative). GoDaddy's "great alternative" `veluema.com` ($0.01 promo) is **rejected**: a misspelled-variant domain violates the hard rejection rule against taught spellings. Decision unchanged: no broker engagement before the trademark knockout search (FD4) — clearance precedes negotiation.
+
 **What this changes strategically:** the umbrella name should NOT be purchased opportunistically now. The correct play is a **cleared-and-ready shortlist** that we act on when the Bible's trigger fires (second vertical launch or institutional raise), with counsel and a broker engaged at that moment. No purchase is recommended today (and per mandate, none was made).
 
 ## Preliminary trademark screening — **ALL UNVERIFIED**

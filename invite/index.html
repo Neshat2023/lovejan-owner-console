@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#f3d9f4" />
-<title>منو دوست داری؟ 🥺</title>
-<meta property="og:title" content="منو دوست داری؟ 🥺" />
-<meta property="og:description" content="فقط یه سوال ساده‌ست... جواب درستش هم فقط یکیشه 😏" />
+<title>Do you love me? 🥺</title>
+<meta property="og:title" content="Do you love me? 🥺" />
+<meta property="og:description" content="It's a simple question... and there's only one right answer 😏" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet" />
 <style>
   :root{
     --ink:#2c1730; --mut:#8a7794; --line:rgba(180,140,190,.35);
@@ -19,7 +19,7 @@
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
   body{
-    font:16px/1.7 Vazirmatn,"IRANSans",Tahoma,-apple-system,BlinkMacSystemFont,sans-serif;
+    font:16px/1.6 Nunito,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     color:var(--ink);
     background:
       radial-gradient(900px 500px at 80% -10%, #ffd9ef 0%, transparent 60%),
@@ -56,7 +56,7 @@
 
   .emoji{font-size:46px;line-height:1;margin-bottom:10px;display:block;animation:bob 2.6s ease-in-out infinite}
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-  h1{font-size:26px;font-weight:800;margin:0 0 8px;letter-spacing:-.01em}
+  h1{font-size:27px;font-weight:800;margin:0 0 8px;letter-spacing:-.02em}
   .sub{color:var(--mut);font-size:14.5px;margin:0 auto 24px;max-width:300px}
 
   .step{display:none}
@@ -81,9 +81,9 @@
   }
   .poof{transform:scale(0) rotate(25deg)!important;opacity:0!important;pointer-events:none}
 
-  .taunt{color:var(--pink);font-size:14px;font-weight:600;min-height:24px;margin-top:14px}
+  .taunt{color:var(--pink);font-size:14px;font-weight:700;min-height:24px;margin-top:14px}
 
-  label{display:block;text-align:right;font-size:13.5px;font-weight:600;color:#6d5c78;margin:0 4px 7px}
+  label{display:block;text-align:left;font-size:13.5px;font-weight:700;color:#6d5c78;margin:0 4px 7px}
   input[type=date],input[type=time]{
     width:100%;padding:13px 16px;margin-bottom:16px;text-align:center;
     background:rgba(255,255,255,.75);border:1px solid var(--line);border-radius:99px;outline:none;
@@ -99,12 +99,12 @@
   .opt.sel{border-color:var(--pink);background:#fff;box-shadow:0 10px 24px rgba(216,27,96,.18);transform:translateY(-2px)}
 
   .summary{
-    text-align:right;background:rgba(255,255,255,.6);border:1px solid var(--line);
+    text-align:left;background:rgba(255,255,255,.6);border:1px solid var(--line);
     border-radius:20px;padding:16px 18px;margin-bottom:20px;font-size:15px;
   }
   .summary div{display:flex;justify-content:space-between;gap:10px;padding:6px 0}
   .summary div+div{border-top:1px dashed var(--line)}
-  .summary b{font-weight:800}
+  .summary b{font-weight:800;text-align:right}
   .k{color:var(--mut);font-size:13.5px}
 
   .link{display:inline-block;margin-top:14px;font-size:13px;color:var(--mut);text-decoration:none;border-bottom:1px dashed var(--line)}
@@ -114,7 +114,7 @@
     transition:.3s;pointer-events:none;
   }
   .toast.on{opacity:1;transform:translate(-50%,0)}
-  @media (max-width:380px){ h1{font-size:23px} .card{padding:26px 18px 22px} }
+  @media (max-width:380px){ h1{font-size:24px} .card{padding:26px 18px 22px} }
 </style>
 </head>
 <body>
@@ -126,11 +126,11 @@
   <!-- 1 — the question -->
   <section class="step on" data-step="0">
     <span class="emoji">🥺</span>
-    <h1 id="q">منو دوست داری؟</h1>
-    <p class="sub">فقط یه سوال ساده‌ست... جواب درستش هم فقط یکیشه 😏</p>
+    <h1 id="q">Do you love me?</h1>
+    <p class="sub">It's a simple question... and there's only one right answer 😏</p>
     <div class="row">
-      <button class="ghost" id="no">نه</button>
-      <button class="btn" id="yes">آره 💖</button>
+      <button class="btn" id="yes">Yes 💖</button>
+      <button class="ghost" id="no">No</button>
     </div>
     <p class="taunt" id="taunt"></p>
   </section>
@@ -138,42 +138,42 @@
   <!-- 2 — when -->
   <section class="step" data-step="1">
     <span class="emoji">📅</span>
-    <h1>کی وقت داری؟</h1>
-    <p class="sub">یه تاریخ و ساعت خوب برام انتخاب کن</p>
-    <label for="d">تاریخ</label>
+    <h1>When are you free?</h1>
+    <p class="sub">Pick a date and a time for us</p>
+    <label for="d">Date</label>
     <input type="date" id="d" />
-    <label for="t">ساعت</label>
+    <label for="t">Time</label>
     <input type="time" id="t" />
-    <button class="btn wide" id="next2">بعدی ✨</button>
+    <button class="btn wide" id="next2">Next ✨</button>
   </section>
 
   <!-- 3 — what -->
   <section class="step" data-step="2">
     <span class="emoji">🍽️</span>
-    <h1>چی سفارش میدی؟</h1>
-    <p class="sub">یه چیز خوشمزه انتخاب کن که مهمونت باشی</p>
+    <h1>What are we ordering?</h1>
+    <p class="sub">Pick something tasty — my treat, obviously</p>
     <div class="grid" id="menu">
-      <button class="opt" data-f="پیتزا"><span>🍕</span>پیتزا</button>
-      <button class="opt" data-f="قهوه"><span>☕</span>قهوه</button>
-      <button class="opt" data-f="کوبیده"><span>🍢</span>کوبیده</button>
-      <button class="opt" data-f="پاستا"><span>🍝</span>پاستا</button>
+      <button class="opt" data-f="Pizza"><span>🍕</span>Pizza</button>
+      <button class="opt" data-f="Coffee"><span>☕</span>Coffee</button>
+      <button class="opt" data-f="Kebab"><span>🍢</span>Kebab</button>
+      <button class="opt" data-f="Pasta"><span>🍝</span>Pasta</button>
     </div>
-    <button class="btn wide" id="go" disabled>بریم که بریم ❤️</button>
+    <button class="btn wide" id="go" disabled>Let's goooo ❤️</button>
   </section>
 
   <!-- 4 — done -->
   <section class="step" data-step="3">
     <span class="emoji">🎉</span>
-    <h1>قرارمون قطعی شد!</h1>
-    <p class="sub">می‌دونستم دوستم داری، دکمه‌ی «نه» هم می‌دونست 😂</p>
+    <h1>It's a date!</h1>
+    <p class="sub">I knew you loved me. The No button knew it too 😂</p>
     <div class="summary">
-      <div><span class="k">جواب</span><b>آره 💖</b></div>
-      <div><span class="k">تاریخ</span><b id="sD">—</b></div>
-      <div><span class="k">ساعت</span><b id="sT">—</b></div>
-      <div><span class="k">سفارش</span><b id="sF">—</b></div>
+      <div><span class="k">Answer</span><b>Yes 💖</b></div>
+      <div><span class="k">Date</span><b id="sD">—</b></div>
+      <div><span class="k">Time</span><b id="sT">—</b></div>
+      <div><span class="k">Order</span><b id="sF">—</b></div>
     </div>
-    <button class="btn wide" id="share">بفرست براش 💌</button>
-    <a class="link" href="#" id="again">از اول بپرس</a>
+    <button class="btn wide" id="share">Send it to them 💌</button>
+    <a class="link" href="#" id="again">Ask me again</a>
   </section>
 </main>
 
@@ -183,11 +183,11 @@
 (function(){
   var $ = function(s){ return document.querySelector(s); };
 
-  /* ---------- personalise: ?to=نازنین&from=بهنود ---------- */
+  /* ---------- personalise: ?to=Sara&from=Alex ---------- */
   var qs = new URLSearchParams(location.search);
   var to = (qs.get('to')||'').trim().slice(0,24);
   var from = (qs.get('from')||'').trim().slice(0,24);
-  if (to) $('#q').textContent = to + ' جان، منو دوست داری؟';
+  if (to) $('#q').textContent = to + ', do you love me?';
 
   /* ---------- floating hearts ---------- */
   var sky = $('#sky'), chars = ['💗','💕','🩷','✨','💖','🌸'];
@@ -218,15 +218,15 @@
     window.scrollTo(0,0);
   }
 
-  /* ---------- step 1: the shrinking "نه" ---------- */
+  /* ---------- step 1: the shrinking "No" ---------- */
   var no = $('#no'), yes = $('#yes'), taunt = $('#taunt'),
       scale = 1, taps = 0;
   var lines = [
-    'مطمئنی؟ 🥺',
-    'دکمه‌ی «نه» داره آب میره ها 😬',
-    'یه بار دیگه بزنی محو میشه 😂',
-    'الان دیگه باید ذره‌بین بیاری 🔍',
-    'خب دیگه، «نه» رفت که رفت 💨'
+    'Are you sure? 🥺',
+    'Careful, the No button is shrinking 😬',
+    'One more tap and it’s gone 😂',
+    'You’ll need a magnifying glass now 🔍',
+    'And... the No button has left the chat 💨'
   ];
 
   no.addEventListener('click', function(){
@@ -244,7 +244,7 @@
         no.style.display = 'none';
         yes.style.transform = '';
         yes.classList.add('wide');
-        taunt.textContent = 'دیدی؟ گفتم جوابش فقط یکیه 😌';
+        taunt.textContent = 'See? Told you there was only one answer 😌';
       }, 320);
       return;
     }
@@ -277,32 +277,37 @@
   });
 
   /* ---------- step 4: done ---------- */
-  function faDate(v){
+  function niceDate(v){
     if (!v) return '—';
     var p = v.split('-');
     try{
-      return new Date(p[0], p[1]-1, p[2]).toLocaleDateString('fa-IR',
-        { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+      return new Date(p[0], p[1]-1, p[2]).toLocaleDateString('en-US',
+        { weekday:'long', month:'long', day:'numeric' });
     }catch(err){ return v; }
   }
+  function niceTime(v){
+    if (!v) return '—';
+    var p = v.split(':'), h = +p[0], ap = h < 12 ? 'AM' : 'PM';
+    return ((h % 12) || 12) + ':' + p[1] + ' ' + ap;
+  }
   $('#go').addEventListener('click', function(){
-    $('#sD').textContent = faDate(d.value);
-    $('#sT').textContent = t.value || '—';
+    $('#sD').textContent = niceDate(d.value);
+    $('#sT').textContent = niceTime(t.value);
     $('#sF').textContent = food || '—';
     show(3);
     burst(60);
   });
 
   $('#share').addEventListener('click', function(){
-    var msg = 'جوابم آره بود 💖\n' +
-      'تاریخ: ' + $('#sD').textContent + '\n' +
-      'ساعت: ' + $('#sT').textContent + '\n' +
-      'سفارش: ' + $('#sF').textContent +
-      (from ? '\nمنتظرتم، ' + from + ' 😍' : '');
+    var msg = 'My answer is yes 💖\n' +
+      'Date: ' + $('#sD').textContent + '\n' +
+      'Time: ' + $('#sT').textContent + '\n' +
+      'Order: ' + $('#sF').textContent +
+      (from ? '\nCan’t wait — ' + from + ' 😍' : '');
     if (navigator.share){
       navigator.share({ text: msg }).catch(function(){});
     } else if (navigator.clipboard){
-      navigator.clipboard.writeText(msg).then(function(){ toast('کپی شد، بفرستش براش 💌'); });
+      navigator.clipboard.writeText(msg).then(function(){ toast('Copied — go send it 💌'); });
     } else {
       toast(msg);
     }

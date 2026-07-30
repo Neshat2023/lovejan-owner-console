@@ -485,6 +485,28 @@ function dates(){ withLoad(async()=>{
   }catch(e){
     $("#pubInv").innerHTML=`<p class="cap">Outside invites (migration 0095) not applied yet — this section lights up once it is.</p>`;
   }
+  // Voice calls (migration 0096) — consent-first in-app calling, no phone numbers.
+  try{
+    const c=await rpc("admin_calls_metrics");
+    const answerRate=c.calls?Math.round(c.answered/c.calls*100):0;
+    const mins=Math.round((c.avg_secs||0)/60*10)/10;
+    $("#pubInv").insertAdjacentHTML("afterend",`
+      <div style="margin-top:18px">
+      <h2 style="margin:0 0 10px">Voice calls</h2>
+      <div class="grid">
+        ${kpi(c.calls,"Calls",1)}
+        ${kpi(c.calls_7d,"Calls · 7d")}
+        ${kpi(answerRate+"%","Answered")}
+        ${kpi(mins+"m","Avg length")}
+        ${kpi(c.consented_matches,"Matches with calls on")}
+      </div>
+      <p class="cap" style="margin-top:10px">Calls are in-app WebRTC — no phone numbers exist anywhere.
+      A user can only be called after THEY flip "Allow calls" for that match. Kill switch and
+      verified-only gate live in Config (calls_*).</p></div>`);
+  }catch(e){
+    $("#pubInv").insertAdjacentHTML("afterend",
+      `<p class="cap" style="margin-top:14px">Voice calls (migration 0096) not applied yet — this section lights up once it is.</p>`);
+  }
 }); }
 
 // ---------- Moderation ----------
@@ -661,6 +683,15 @@ function config(){ withLoad(async()=>{
           <select data-cfg="public_invite_verified_only"><option value="false" ${cfg.public_invite_verified_only!=='true'?'selected':''}>false</option><option value="true" ${cfg.public_invite_verified_only==='true'?'selected':''}>true</option></select></div>
         ${numField('public_invite_daily_cap','Invite links per person per day',cfg.public_invite_daily_cap)}
         ${numField('public_invite_expiry_hours','Link expires after (hours)',cfg.public_invite_expiry_hours)}
+        <h3 style="margin-top:18px">Voice calls</h3>
+        <div class="field"><label>Calls enabled (kill switch)</label>
+          <select data-cfg="calls_enabled"><option value="true" ${cfg.calls_enabled!=='false'?'selected':''}>true</option><option value="false" ${cfg.calls_enabled==='false'?'selected':''}>false</option></select></div>
+        <div class="field"><label>Only verified users can start calls</label>
+          <select data-cfg="calls_verified_only"><option value="false" ${cfg.calls_verified_only!=='true'?'selected':''}>false</option><option value="true" ${cfg.calls_verified_only==='true'?'selected':''}>true</option></select></div>
+        ${numField('calls_ring_seconds','Ring timeout (seconds)',cfg.calls_ring_seconds)}
+        ${numField('calls_turn_url','TURN server URL (blank = STUN only)',cfg.calls_turn_url)}
+        ${numField('calls_turn_username','TURN username',cfg.calls_turn_username)}
+        ${numField('calls_turn_credential','TURN credential',cfg.calls_turn_credential)}
         <button class="btn sm" id="saveCfg">Save all</button>
       </div>
       <div class="panel"><h3>Grant comp premium</h3><p class="cap">Give a specific user free premium.</p>

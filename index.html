@@ -163,6 +163,7 @@
         <a data-view="overview" class="active"><span class="ic">📊</span> Overview</a>
         <a data-view="growth"><span class="ic">📈</span> Growth</a>
         <a data-view="engagement"><span class="ic">⚡</span> Engagement</a>
+        <a data-view="dates"><span class="ic">💌</span> Dates</a>
         <a data-view="moderation"><span class="ic">🛡️</span> Moderation <span id="modBadge"></span></a>
         <a data-view="users"><span class="ic">👤</span> Users</a>
         <a data-view="photos"><span class="ic">📷</span> Photo Review</a>
@@ -290,7 +291,7 @@ async function gate(){
 }
 
 // ---------- SVG charts (self-contained) ----------
-function fmt(n){ n=+n||0; return n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?(n/1e3).toFixed(1)+"k":(""+Math.round(n)); }
+function fmt(n){ if(typeof n==="string"&&isNaN(+n))return n; n=+n||0; return n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?(n/1e3).toFixed(1)+"k":(""+Math.round(n)); }
 function areaChart(data, color="#ff3b6b", h=210){
   const W=600,pad={l:34,r:10,t:12,b:22},n=data.length;
   const ys=data.map(d=>+d.y||0),maxY=Math.max(1,...ys);
@@ -328,14 +329,14 @@ function donut(data){
 }
 
 // ---------- routing ----------
-const titles={overview:"Overview",growth:"Growth",engagement:"Engagement",moderation:"Moderation",users:"Users",photos:"Photo Review",config:"Config",audit:"Audit log",admins:"Admins"};
+const titles={overview:"Overview",growth:"Growth",engagement:"Engagement",dates:"Date asks",moderation:"Moderation",users:"Users",photos:"Photo Review",config:"Config",audit:"Audit log",admins:"Admins"};
 $("#nav").addEventListener("click",e=>{const a=e.target.closest("a[data-view]");if(!a)return;route(a.dataset.view);});
 $("#refresh").onclick=()=>route(current);
 let current="overview";
 async function route(v){
   current=v; document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("active",a.dataset.view===v));
   $("#title").textContent=titles[v];
-  ({overview,growth,engagement,moderation,users,photos:photoReview,config,audit,admins}[v]||overview)();
+  ({overview,growth,engagement,dates,moderation,users,photos:photoReview,config,audit,admins}[v]||overview)();
 }
 async function withLoad(fn){ view.innerHTML="<p class='muted'>Loading…</p>"; try{await fn();}catch(e){view.innerHTML="<div class='panel'><p class='err'>"+esc(e.message)+"</p></div>";} }
 
@@ -420,6 +421,70 @@ function engagement(){ withLoad(async()=>{
   $("#e2").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.likes})),"#ff3b6b");
   $("#e3").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.matches})),"#8b5cf6");
   $("#e4").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.messages})),"#34d399");
+}); }
+
+// ---------- Dates (0094 date asks — the in-chat "ask them out" card) ----------
+function dates(){ withLoad(async()=>{
+  let m;
+  try{ m=await rpc("admin_date_asks_metrics"); }
+  catch(e){
+    // Only a missing function means "not set up" — anything else (auth expiry, network,
+    // 5xx) renders as a normal error so real outages don't masquerade as setup steps.
+    if(!/does not exist|find the function|PGRST202/i.test(e.message||"")) throw e;
+    view.innerHTML=`<div class="panel">
+      <h3>Date asks isn't set up yet</h3>
+      <p class="cap" style="margin-top:6px">Apply migration <b>supabase/migrations/0094_date_asks.sql</b>
+      (LoveJan repo) to the production database — Supabase Dashboard → SQL Editor → paste → Run.
+      This page lights up on the next refresh. Note: <b>date_ask_enabled</b> defaults to ON —
+      set it to false in Config first if you want to ship the app build dark.</p>
+      <p class="dim" style="font-size:12px">(${esc(e.message)})</p></div>`;
+    return;
+  }
+  const acceptRate=m.asks?Math.round(m.accepted/m.asks*100):0;
+  const matchToDate=m.matches_total?Math.round(m.dates_confirmed/m.matches_total*100):0;
+  const kpi=(v,l,a)=>`<div class="kpi ${a?'accent':''}"><div class="v num">${fmt(v)}</div><div class="l">${l}</div></div>`;
+  view.innerHTML=`
+    <div class="grid">
+      ${kpi(m.asks,"Asks sent",1)}
+      ${kpi(m.asks_7d,"Asks · 7d")}
+      ${kpi(acceptRate+"%","Accept rate")}
+      ${kpi(m.dates_confirmed,"Real dates confirmed",1)}
+      ${kpi(m.declined,"Passed (quiet)")}
+      ${kpi(matchToDate+"%","Match → date")}
+    </div>
+    <div class="cols" style="margin-top:18px">
+      <div class="panel"><h3>Asks / day</h3><p class="cap">Sent · 30d</p><div id="d1"></div></div>
+      <div class="panel"><h3>Where dates happen</h3><p class="cap">Asks by asker's home city</p><div id="d2"></div></div>
+    </div>
+    <p class="cap" style="margin-top:14px">"Real dates confirmed" counts asks where at least one person privately
+    answered "we met" — the number chats can't fake. Individual answers are never shown to the other person.</p>
+    <div id="pubInv" style="margin-top:18px"></div>`;
+  $("#d1").innerHTML=areaChart((m.daily||[]).map(d=>({x:d.d,y:d.asks})),"#ff3b6b");
+  $("#d2").innerHTML=barsH((m.by_city||[]).map(c=>({label:c.city,value:c.n})));
+  // Outside invites (migration 0095) — shareable links sent to people off LoveJan.
+  try{
+    const p=await rpc("admin_public_invites_metrics");
+    const openRate=p.invites?Math.round(p.opened/p.invites*100):0;
+    const pAccept=p.invites?Math.round(p.accepted/p.invites*100):0;
+    $("#pubInv").innerHTML=`
+      <h2 style="margin:0 0 10px">Outside invites (growth loop)</h2>
+      <div class="grid">
+        ${kpi(p.invites,"Links created",1)}
+        ${kpi(p.invites_7d,"Links · 7d")}
+        ${kpi(openRate+"%","Opened")}
+        ${kpi(pAccept+"%","Said yes")}
+        ${kpi(p.declined,"Passed")}
+      </div>
+      <div class="cols" style="margin-top:14px">
+        <div class="panel"><h3>Invites by sender's city</h3><div id="d3"></div></div>
+        <div class="panel"><h3>How it works</h3><p class="cap">Users send lovejan.app/invite links to
+        anyone — even off the app. Every "yes" is a warm intro to LoveJan; the answered page carries the
+        download CTA. Caps & kill switch live in Config (public_invite_*).</p></div>
+      </div>`;
+    $("#d3").innerHTML=barsH((p.by_city||[]).map(c=>({label:c.city,value:c.n})));
+  }catch(e){
+    $("#pubInv").innerHTML=`<p class="cap">Outside invites (migration 0095) not applied yet — this section lights up once it is.</p>`;
+  }
 }); }
 
 // ---------- Moderation ----------
@@ -584,6 +649,18 @@ function config(){ withLoad(async()=>{
         ${numField('completion_trial_days','Completion trial (days)',cfg.completion_trial_days)}
         <div class="field"><label>Completion trial enabled</label>
           <select data-cfg="completion_trial_enabled"><option value="true" ${cfg.completion_trial_enabled==='true'?'selected':''}>true</option><option value="false" ${cfg.completion_trial_enabled!=='true'?'selected':''}>false</option></select></div>
+        <h3 style="margin-top:18px">Date asks</h3>
+        <div class="field"><label>Date asks enabled (kill switch)</label>
+          <select data-cfg="date_ask_enabled"><option value="true" ${cfg.date_ask_enabled!=='false'?'selected':''}>true</option><option value="false" ${cfg.date_ask_enabled==='false'?'selected':''}>false</option></select></div>
+        ${numField('date_ask_daily_cap','Date asks per person per day',cfg.date_ask_daily_cap)}
+        ${numField('date_ask_expiry_hours','Ask expires after (hours)',cfg.date_ask_expiry_hours)}
+        <h3 style="margin-top:18px">Outside invites</h3>
+        <div class="field"><label>Outside invites enabled (kill switch)</label>
+          <select data-cfg="public_invite_enabled"><option value="true" ${cfg.public_invite_enabled!=='false'?'selected':''}>true</option><option value="false" ${cfg.public_invite_enabled==='false'?'selected':''}>false</option></select></div>
+        <div class="field"><label>Only verified users can send invite links</label>
+          <select data-cfg="public_invite_verified_only"><option value="false" ${cfg.public_invite_verified_only!=='true'?'selected':''}>false</option><option value="true" ${cfg.public_invite_verified_only==='true'?'selected':''}>true</option></select></div>
+        ${numField('public_invite_daily_cap','Invite links per person per day',cfg.public_invite_daily_cap)}
+        ${numField('public_invite_expiry_hours','Link expires after (hours)',cfg.public_invite_expiry_hours)}
         <button class="btn sm" id="saveCfg">Save all</button>
       </div>
       <div class="panel"><h3>Grant comp premium</h3><p class="cap">Give a specific user free premium.</p>
@@ -594,7 +671,7 @@ function config(){ withLoad(async()=>{
     </div>`;
   $("#monSw").onchange=async(e)=>{ try{ await rpc("admin_set_config",{p_key:"monetization_enabled",p_value:e.target.checked?"true":"false"}); toast("Monetization "+(e.target.checked?"ON":"OFF")); loadMetrics(); }catch(err){ toast(err.message); e.target.checked=!e.target.checked; } };
   $("#saveCfg").onclick=async()=>{
-    try{ for(const inp of view.querySelectorAll("[data-cfg]")){ await rpc("admin_set_config",{p_key:inp.dataset.cfg,p_value:(inp.value||"").trim()}); } toast("Config saved"); }catch(e){ toast(e.message); }
+    try{ for(const inp of view.querySelectorAll("[data-cfg]")){ const v=(inp.value||"").trim(); if(!v) continue; await rpc("admin_set_config",{p_key:inp.dataset.cfg,p_value:v}); } toast("Config saved"); }catch(e){ toast(e.message); }
   };
   $("#grantComp").onclick=async()=>{ try{ const days=parseInt($("#compDays").value||"365",10); await rpc("grant_comp",{user_id:$("#compUser").value.trim(),until:new Date(Date.now()+days*864e5).toISOString()}); toast("Comp granted "+days+"d"); }catch(e){ toast(e.message); } };
 }); }

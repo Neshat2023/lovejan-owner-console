@@ -455,9 +455,34 @@ function dates(){ withLoad(async()=>{
       <div class="panel"><h3>Where dates happen</h3><p class="cap">Asks by asker's home city</p><div id="d2"></div></div>
     </div>
     <p class="cap" style="margin-top:14px">"Real dates confirmed" counts asks where at least one person privately
-    answered "we met" — the number chats can't fake. Individual answers are never shown to the other person.</p>`;
+    answered "we met" — the number chats can't fake. Individual answers are never shown to the other person.</p>
+    <div id="pubInv" style="margin-top:18px"></div>`;
   $("#d1").innerHTML=areaChart((m.daily||[]).map(d=>({x:d.d,y:d.asks})),"#ff3b6b");
   $("#d2").innerHTML=barsH((m.by_city||[]).map(c=>({label:c.city,value:c.n})));
+  // Outside invites (migration 0095) — shareable links sent to people off LoveJan.
+  try{
+    const p=await rpc("admin_public_invites_metrics");
+    const openRate=p.invites?Math.round(p.opened/p.invites*100):0;
+    const pAccept=p.invites?Math.round(p.accepted/p.invites*100):0;
+    $("#pubInv").innerHTML=`
+      <h2 style="margin:0 0 10px">Outside invites (growth loop)</h2>
+      <div class="grid">
+        ${kpi(p.invites,"Links created",1)}
+        ${kpi(p.invites_7d,"Links · 7d")}
+        ${kpi(openRate+"%","Opened")}
+        ${kpi(pAccept+"%","Said yes")}
+        ${kpi(p.declined,"Passed")}
+      </div>
+      <div class="cols" style="margin-top:14px">
+        <div class="panel"><h3>Invites by sender's city</h3><div id="d3"></div></div>
+        <div class="panel"><h3>How it works</h3><p class="cap">Users send lovejan.app/invite links to
+        anyone — even off the app. Every "yes" is a warm intro to LoveJan; the answered page carries the
+        download CTA. Caps & kill switch live in Config (public_invite_*).</p></div>
+      </div>`;
+    $("#d3").innerHTML=barsH((p.by_city||[]).map(c=>({label:c.city,value:c.n})));
+  }catch(e){
+    $("#pubInv").innerHTML=`<p class="cap">Outside invites (migration 0095) not applied yet — this section lights up once it is.</p>`;
+  }
 }); }
 
 // ---------- Moderation ----------
@@ -627,6 +652,11 @@ function config(){ withLoad(async()=>{
           <select data-cfg="date_ask_enabled"><option value="true" ${cfg.date_ask_enabled!=='false'?'selected':''}>true</option><option value="false" ${cfg.date_ask_enabled==='false'?'selected':''}>false</option></select></div>
         ${numField('date_ask_daily_cap','Date asks per person per day',cfg.date_ask_daily_cap)}
         ${numField('date_ask_expiry_hours','Ask expires after (hours)',cfg.date_ask_expiry_hours)}
+        <h3 style="margin-top:18px">Outside invites</h3>
+        <div class="field"><label>Outside invites enabled (kill switch)</label>
+          <select data-cfg="public_invite_enabled"><option value="true" ${cfg.public_invite_enabled!=='false'?'selected':''}>true</option><option value="false" ${cfg.public_invite_enabled==='false'?'selected':''}>false</option></select></div>
+        ${numField('public_invite_daily_cap','Invite links per person per day',cfg.public_invite_daily_cap)}
+        ${numField('public_invite_expiry_hours','Link expires after (hours)',cfg.public_invite_expiry_hours)}
         <button class="btn sm" id="saveCfg">Save all</button>
       </div>
       <div class="panel"><h3>Grant comp premium</h3><p class="cap">Give a specific user free premium.</p>

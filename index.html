@@ -688,6 +688,8 @@ function config(){ withLoad(async()=>{
           <select data-cfg="calls_enabled"><option value="true" ${cfg.calls_enabled!=='false'?'selected':''}>true</option><option value="false" ${cfg.calls_enabled==='false'?'selected':''}>false</option></select></div>
         <div class="field"><label>Only verified users can start calls</label>
           <select data-cfg="calls_verified_only"><option value="false" ${cfg.calls_verified_only!=='true'?'selected':''}>false</option><option value="true" ${cfg.calls_verified_only==='true'?'selected':''}>true</option></select></div>
+        <div class="field"><label>Calls on by default for every match (true = opt-out, false = opt-in)</label>
+          <select data-cfg="calls_default_allow"><option value="true" ${cfg.calls_default_allow!=='false'?'selected':''}>true</option><option value="false" ${cfg.calls_default_allow==='false'?'selected':''}>false</option></select></div>
         ${numField('calls_ring_seconds','Ring timeout (seconds)',cfg.calls_ring_seconds)}
         ${numField('calls_turn_url','TURN server URL (blank = STUN only)',cfg.calls_turn_url)}
         ${numField('calls_turn_username','TURN username',cfg.calls_turn_username)}

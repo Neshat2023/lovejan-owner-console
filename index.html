@@ -161,6 +161,7 @@
       <div class="brand"><div class="dot"></div> LoveJan</div>
       <nav id="nav">
         <a data-view="overview" class="active"><span class="ic">📊</span> Overview</a>
+        <a data-view="intel"><span class="ic">🧠</span> Intelligence <span id="sigBadge"></span></a>
         <a data-view="growth"><span class="ic">📈</span> Growth</a>
         <a data-view="engagement"><span class="ic">⚡</span> Engagement</a>
         <a data-view="dates"><span class="ic">💌</span> Dates</a>
@@ -300,8 +301,12 @@ function areaChart(data, color="#ff3b6b", h=210){
   let line="",area="";
   data.forEach((d,i)=>{const x=X(i),y=Y(+d.y||0);line+=(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)+" ";});
   area=line+`L ${X(n-1).toFixed(1)} ${h-pad.b} L ${X(0).toFixed(1)} ${h-pad.b} Z`;
-  let grid="";for(let g=0;g<=3;g++){const gy=pad.t+g/3*(h-pad.t-pad.b);grid+=`<line class="grid-l" x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}"/>`;
-    grid+=`<text x="4" y="${gy+3}" fill="#6f6883" font-size="10">${fmt(maxY*(1-g/3))}</text>`;}
+  // Small ranges (maxY<=3) round to duplicate labels like "2,1,1,0"; skip a
+  // label when it repeats the one above it rather than printing it twice.
+  let grid="",prevLbl=null;
+  for(let g=0;g<=3;g++){const gy=pad.t+g/3*(h-pad.t-pad.b);grid+=`<line class="grid-l" x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}"/>`;
+    const t=fmt(maxY*(1-g/3));
+    if(t!==prevLbl){grid+=`<text x="4" y="${gy+3}" fill="#6f6883" font-size="10">${t}</text>`;prevLbl=t;}}
   const step=Math.max(1,Math.floor(n/6));let lbl="";
   data.forEach((d,i)=>{if(i%step===0||i===n-1)lbl+=`<text x="${X(i)}" y="${h-6}" fill="#6f6883" font-size="9" text-anchor="middle">${esc((d.x||"").slice(5))}</text>`;});
   const last=data[n-1]||{y:0};
@@ -329,19 +334,27 @@ function donut(data){
 }
 
 // ---------- routing ----------
-const titles={overview:"Overview",growth:"Growth",engagement:"Engagement",dates:"Date asks",moderation:"Moderation",users:"Users",photos:"Photo Review",config:"Config",audit:"Audit log",admins:"Admins"};
+const titles={overview:"Overview",intel:"Intelligence",growth:"Growth",engagement:"Engagement",dates:"Date asks",moderation:"Moderation",users:"Users",photos:"Photo Review",config:"Config",audit:"Audit log",admins:"Admins"};
 $("#nav").addEventListener("click",e=>{const a=e.target.closest("a[data-view]");if(!a)return;route(a.dataset.view);});
 $("#refresh").onclick=()=>route(current);
 let current="overview";
 async function route(v){
   current=v; document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("active",a.dataset.view===v));
   $("#title").textContent=titles[v];
-  ({overview,growth,engagement,dates,moderation,users,photos:photoReview,config,audit,admins}[v]||overview)();
+  ({overview,intel,growth,engagement,dates,moderation,users,photos:photoReview,config,audit,admins}[v]||overview)();
 }
 async function withLoad(fn){ view.innerHTML="<p class='muted'>Loading…</p>"; try{await fn();}catch(e){view.innerHTML="<div class='panel'><p class='err'>"+esc(e.message)+"</p></div>";} }
 
 let METRICS=null;
-async function loadMetrics(){ METRICS=await rpc("admin_metrics"); $("#monPill").className="pill "+(METRICS.monetization_enabled?"on":"off"); $("#monPill").textContent="Monetization "+(METRICS.monetization_enabled?"ON":"OFF (free)"); $("#modBadge").innerHTML=METRICS.reports_pending?`<span class="badge">${METRICS.reports_pending}</span>`:""; return METRICS; }
+async function loadMetrics(){ METRICS=await rpc("admin_metrics"); $("#monPill").className="pill "+(METRICS.monetization_enabled?"on":"off"); $("#monPill").textContent="Monetization "+(METRICS.monetization_enabled?"ON":"OFF (free)"); $("#modBadge").innerHTML=METRICS.reports_pending?`<span class="badge">${METRICS.reports_pending}</span>`:""; loadSignalBadge(); return METRICS; }
+
+// Signal count in the sidebar, so a critical signal is visible from every view.
+// Failure here must never block a page, so it degrades to a silent no-badge.
+async function loadSignalBadge(){
+  try{ const s=await rpc("admin_signals",{p_days:7}); const n=s.counts.critical||s.counts.total;
+       $("#sigBadge").innerHTML=n?`<span class="badge">${n}</span>`:""; }
+  catch{ $("#sigBadge").innerHTML=""; }
+}
 
 // ---------- Overview ----------
 function overview(){ withLoad(async()=>{
@@ -384,6 +397,90 @@ function overview(){ withLoad(async()=>{
   $("#c1").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.signups})),"#ff3b6b");
   $("#c2").innerHTML=barsH((m.top_cities||[]).slice(0,7).map(c=>({label:c.city,value:c.n})));
   $("#c3").innerHTML=donut((m.by_country||[]).map(c=>({label:c.country||"—",value:c.n})));
+}); }
+
+// ---------- Intelligence ----------
+// Reads admin_signals(), which ranks safety above growth and carries the rule
+// behind every signal so it can be argued with rather than merely believed.
+let INTEL_DAYS=7;
+function intel(){ withLoad(async()=>{
+  const s=await rpc("admin_signals",{p_days:INTEL_DAYS});
+  const f=s.funnel.funnel, b=s.funnel.balance, q=s.funnel.liquidity;
+  // Refresh the sidebar badge from this response rather than a second RPC, so
+  // it stays correct when the user reloads while sitting on this page.
+  $("#sigBadge").innerHTML=(s.counts.critical||s.counts.total)?`<span class="badge">${s.counts.critical||s.counts.total}</span>`:"";
+  const sev={critical:["#ff3b6b","Critical"],warn:["#f0a92b","Attention"]};
+
+  // Funnel stages are strict subsets, so each row shows both the absolute count
+  // and the loss versus the stage above it — the loss is the actionable part.
+  const stages=[["Signed up",f.signed_up],["Started profile",f.has_profile],["Named themselves",f.named],["Added a photo",f.with_photo],["Verified",f.verified]];
+  const top=stages[0][1]||1;
+  const funnelRows=stages.map((st,i)=>{
+    const pct=Math.round(100*st[1]/top);
+    const lost=i?stages[i-1][1]-st[1]:0;
+    const lostPct=i&&stages[i-1][1]?Math.round(100*lost/stages[i-1][1]):0;
+    return `<tr>
+      <td style="width:150px">${st[0]}</td>
+      <td style="width:100%"><div style="background:#ffffff10;border-radius:5px;height:22px;position:relative">
+        <div style="background:linear-gradient(90deg,#ff3b6b,#8b5cf6);width:${pct}%;height:100%;border-radius:5px"></div></div></td>
+      <td style="text-align:right;white-space:nowrap"><b class="num">${fmt(st[1])}</b> <span class="dim">${pct}%</span></td>
+      <td style="text-align:right;white-space:nowrap">${i&&lost>0?`<span class="d down">−${lost} (${lostPct}%)</span>`:'<span class="dim">—</span>'}</td>
+    </tr>`;}).join("");
+
+  const womenPct=(b.new_women+b.new_men)?Math.round(100*b.new_women/(b.new_women+b.new_men)):0;
+  const ratio=b.total_women?(b.total_men/b.total_women).toFixed(1):"—";
+  const replyPct=q.matches?Math.round(100*q.matches_messaged/q.matches):0;
+
+  const signalCards=s.signals.length?s.signals.map(g=>{
+    const c=sev[g.severity]||["#8b5cf6","Note"];
+    return `<div class="panel" style="border-left:3px solid ${c[0]};margin-bottom:10px">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div><span class="pill" style="background:${c[0]}22;color:${c[0]};border-color:${c[0]}55">${c[1]}</span>
+          <h3 style="margin:8px 0 4px">${esc(g.title)}</h3></div>
+        <button class="btn ghost sm" data-goto="${esc(g.action)}">Open ${esc(g.action)} →</button>
+      </div>
+      <p style="margin:2px 0 8px">${esc(g.detail)}</p>
+      <p class="cap">Rule: ${esc(g.rule)}</p>
+    </div>`;}).join(""):
+    `<div class="panel"><h3>Nothing needs your attention</h3>
+       <p class="cap">Every rule below its threshold for the last ${INTEL_DAYS} days. This is a real all-clear, not an empty view.</p></div>`;
+
+  view.innerHTML=`
+    <div class="row" style="justify-content:space-between;margin-bottom:14px">
+      <div class="row" style="gap:6px">
+        ${[7,14,30,90].map(d=>`<button class="btn ${d===INTEL_DAYS?'':'ghost'} sm" data-days="${d}">${d}d</button>`).join("")}
+      </div>
+      <span class="dim">${s.counts.critical} critical · ${s.counts.warn} attention</span>
+    </div>
+    ${signalCards}
+    <div class="cols" style="margin-top:18px">
+      <div class="panel"><h3>Acquisition funnel</h3><p class="cap">Last ${INTEL_DAYS} days, measured from account creation — not from profile rows, so people who never started onboarding are counted</p>
+        <table style="margin-top:10px">${funnelRows}</table></div>
+      <div class="panel"><h3>Marketplace balance</h3><p class="cap">The number that decides whether the network compounds</p>
+        <table style="margin-top:10px">
+          <tr><td>New women / men</td><td style="text-align:right"><b class="num">${b.new_women}</b> / <b class="num">${b.new_men}</b> <span class="dim">(${womenPct}% women)</span></td></tr>
+          <tr><td>Whole base</td><td style="text-align:right"><b class="num">${b.total_women}</b> women · <b class="num">${b.total_men}</b> men</td></tr>
+          <tr><td>Men per woman</td><td style="text-align:right"><b class="num">${ratio}</b></td></tr>
+          <tr><td>Verified women / men</td><td style="text-align:right"><b class="num">${b.verified_women}</b> / <b class="num">${b.verified_men}</b></td></tr>
+          <tr><td>Seeking women / men</td><td style="text-align:right"><b class="num">${b.seeking_women}</b> / <b class="num">${b.seeking_men}</b></td></tr>
+        </table>
+        <h3 style="margin-top:18px">Liquidity</h3>
+        <table style="margin-top:8px">
+          <tr><td>Likes</td><td style="text-align:right"><b class="num">${fmt(q.likes)}</b></td></tr>
+          <tr><td>Matches</td><td style="text-align:right"><b class="num">${fmt(q.matches)}</b></td></tr>
+          <tr><td>Matches with a message</td><td style="text-align:right"><b class="num">${fmt(q.matches_messaged)}</b> <span class="dim">(${replyPct}%)</span></td></tr>
+          <tr><td>People who sent a message</td><td style="text-align:right"><b class="num">${fmt(q.active_senders)}</b></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px"><h3>Signups vs women</h3>
+      <p class="cap">Daily. The gap between the two lines is the balance problem made visible.</p>
+      <div id="i1"></div><div id="i2"></div></div>`;
+
+  $("#i1").innerHTML=areaChart((s.funnel.daily||[]).map(d=>({x:d.d,y:d.signups})),"#ff3b6b",160);
+  $("#i2").innerHTML=areaChart((s.funnel.daily||[]).map(d=>({x:d.d,y:d.women})),"#8b5cf6",160);
+  view.querySelectorAll("[data-days]").forEach(b=>b.onclick=()=>{ INTEL_DAYS=+b.dataset.days; intel(); });
+  view.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>route(b.dataset.goto));
 }); }
 
 // ---------- Growth ----------

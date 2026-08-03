@@ -455,7 +455,14 @@ function intel(){ withLoad(async()=>{
     ${signalCards}
     <div class="cols" style="margin-top:18px">
       <div class="panel"><h3>Acquisition funnel</h3><p class="cap">Last ${INTEL_DAYS} days, measured from account creation — not from profile rows, so people who never started onboarding are counted</p>
-        <table style="margin-top:10px">${funnelRows}</table></div>
+        <table style="margin-top:10px">${funnelRows}</table>
+        ${(s.funnel.by_provider||[]).length?`<h3 style="margin-top:18px">Loss by door</h3>
+        <p class="cap">iOS saves nothing until the final submit (a loss = died inside the form). Web autosaves from the first keystroke (a loss = never typed).</p>
+        <table style="margin-top:8px">${s.funnel.by_provider.map(p=>`
+          <tr><td>${esc(p.provider==='apple'?'iOS (Apple)':p.provider==='email'?'Web (email)':p.provider)}</td>
+          <td style="text-align:right"><b class="num">${p.no_profile}</b> / ${p.signups} lost
+          ${+p.no_profile?`<span class="d ${+p.drop_pct>=30?'down':'dim'}">${p.drop_pct}%</span>`:'<span class="dim">—</span>'}</td></tr>`).join("")}
+        </table>`:""}</div>
       <div class="panel"><h3>Marketplace balance</h3><p class="cap">The number that decides whether the network compounds</p>
         <table style="margin-top:10px">
           <tr><td>New women / men</td><td style="text-align:right"><b class="num">${b.new_women}</b> / <b class="num">${b.new_men}</b> <span class="dim">(${womenPct}% women)</span></td></tr>

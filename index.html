@@ -167,7 +167,7 @@
         <a data-view="dates"><span class="ic">💌</span> Dates</a>
         <a data-view="moderation"><span class="ic">🛡️</span> Moderation <span id="modBadge"></span></a>
         <a data-view="users"><span class="ic">👤</span> Users</a>
-        <a data-view="photos"><span class="ic">📷</span> Photo Review</a>
+        <a data-view="photos"><span class="ic">📷</span> Photo Review <span id="photoBadge"></span></a>
         <a data-view="config"><span class="ic">⚙️</span> Config</a>
         <a data-view="audit"><span class="ic">📜</span> Audit</a>
         <a data-view="admins"><span class="ic">🔑</span> Admins</a>
@@ -354,6 +354,15 @@ async function loadSignalBadge(){
   try{ const s=await rpc("admin_signals",{p_days:7}); const n=s.counts.critical||s.counts.total;
        $("#sigBadge").innerHTML=n?`<span class="badge">${n}</span>`:""; }
   catch{ $("#sigBadge").innerHTML=""; }
+  loadPhotoBadge();
+}
+
+// Photos the screener flagged and no human has looked at yet. Before 0104 the flag existed in
+// the database and was visible nowhere, which made it worth nothing.
+async function loadPhotoBadge(){
+  try{ const q=await rpc("admin_photo_queue",{p_limit:100});
+       $("#photoBadge").innerHTML=q.length?`<span class="badge">${q.length}</span>`:""; }
+  catch{ $("#photoBadge").innerHTML=""; }
 }
 
 // ---------- Overview ----------
@@ -657,11 +666,60 @@ function users(){
   run();
 }
 
-// ---------- Photo Review (newest uploads across all users) ----------
+// ---------- Photo Review (flagged queue first, then newest uploads) ----------
+// The screener (moderate-photo) writes moderation_status; the byte sweep re-screens any photo
+// whose storage bytes changed. Both are useless unless a human sees the result — this is where.
+const FLAG_COPY={
+  identity_review:{t:"Not this person",d:"A clear face that matches neither their verification faceprint nor their primary photo."},
+  review:{t:"Borderline content",d:"Close to the nudity line — kept up, waiting on a judgement call."},
+  pending:{t:"Never screened",d:"Screening was dispatched but no verdict came back yet."},
+  blocked:{t:"Blocked",d:"Marked blocked but the row is still here — worth a look."},
+};
+async function flaggedPanel(){
+  let q; try{ q=await rpc("admin_photo_queue",{p_limit:100}); }catch(e){ return ""; }
+  if(!q.length) return `<div class="panel"><p class="dim">Nothing flagged. Every photo on file has been screened and passed. ✓</p></div>`;
+  // One signed-URL fetch per affected person (the queue is small by construction).
+  const urls={},names={};
+  for(const uid of [...new Set(q.map(f=>f.user_id))]){
+    try{ const {photos}=await edge("admin-media",{action:"list",user_id:uid});
+         photos.forEach(p=>{ const k=uid+"|"+(p.name||"").split(".")[0].toUpperCase();
+                             urls[k]=p.url; names[k]=p.name; }); }
+    catch{ /* a missing preview must not hide the flag itself */ }
+  }
+  return `<div class="panel">
+    <h2>Needs your eyes <span class="badge">${q.length}</span></h2>
+    <p class="cap">Flagged by the screener and not yet judged by a person. “Looks fine” only clears the
+    flag — it never changes the photo or the account. Delete and Remove badge are the destructive ones.</p>
+    <div class="preview-grid">${q.map(f=>{
+      const c=FLAG_COPY[f.status]||{t:f.status,d:""};
+      const key=f.user_id+"|"+String(f.photo_id).toUpperCase();
+      const u=urls[key], fname=names[key]||"";
+      const ev = f.decision==="identity_mismatch"
+        ? `Best face match <b>${Math.round(f.confidence||0)}%</b> — we approve at 80%.`
+        : (f.evidence?`${esc(f.evidence)} ${f.confidence?`<b>${Math.round(f.confidence)}%</b>`:""}`:"");
+      return `<div class="pcell flagged" data-photo="${esc(f.photo_id)}" data-user="${esc(f.user_id)}" data-fname="${esc(fname)}">
+        <div class="photo">${u?`<img src="${esc(u)}" loading="lazy"/>`:`<div class="dim" style="display:grid;place-items:center;height:100%;font-size:11px">no preview</div>`}</div>
+        <div class="pcap">
+          <span class="pname" data-open="${esc(f.user_id)}"><b>${esc(f.name)||'—'}</b></span>
+          ${f.verified?' <span class="tag ok">verified ✓</span>':''}${f.suspended?' <span class="tag susp">susp</span>':''}
+          <div style="margin-top:4px"><span class="tag ${f.status==='identity_review'?'susp':'off'}">${c.t}</span>
+            ${f.is_primary?' <span class="tag">primary</span>':(f.shown_first?' <span class="tag">shown first</span>':'')}</div>
+          <div class="dim" style="font-size:11px;margin-top:5px">${c.d}</div>
+          ${ev?`<div class="dim" style="font-size:11px;margin-top:3px">${ev}</div>`:""}
+          <div class="row" style="margin-top:7px;gap:6px;flex-wrap:wrap">
+            <button class="btn ghost sm" data-clear>Looks fine</button>
+            <button class="btn danger sm" data-drop>Delete</button>
+            ${f.verified?'<button class="btn danger sm" data-unver>Remove badge</button>':''}
+          </div>
+        </div></div>`;}).join("")}</div>
+  </div>`;
+}
 function photoReview(){ withLoad(async()=>{
+  const flagged=await flaggedPanel();
   const {photos}=await edge("admin-media",{action:"recent",limit:120});
-  if(!photos.length){ view.innerHTML="<div class='panel'><p class='dim'>No photos uploaded yet.</p></div>"; return; }
-  view.innerHTML=`<div class="panel">
+  if(!photos.length){ view.innerHTML=flagged+"<div class='panel'><p class='dim'>No photos uploaded yet.</p></div>"; return; }
+  view.innerHTML=flagged+`<div class="panel">
+    <h2>All photos</h2>
     <p class="cap">Newest uploads first · ${photos.length} shown · tap a name to open that person · Delete removes the photo permanently.</p>
     <div class="preview-grid">${photos.map(p=>`
       <div class="pcell" data-name="${esc(p.name)}" data-user="${esc(p.user_id)}">
@@ -671,7 +729,27 @@ function photoReview(){ withLoad(async()=>{
       </div>`).join("")}</div>
   </div>`;
   view.querySelectorAll(".pname[data-open]").forEach(t=>t.onclick=()=>openUser(t.dataset.open));
-  view.querySelectorAll(".pcell .del").forEach(b=>b.onclick=async()=>{
+  // Flagged-queue actions. Each one re-renders so the badge and the list stay honest.
+  view.querySelectorAll(".pcell.flagged [data-clear]").forEach(b=>b.onclick=async()=>{
+    const c=b.closest(".pcell");
+    try{ await rpc("admin_photo_clear",{p_photo:c.dataset.photo}); toast("Flag cleared"); photoReview(); loadPhotoBadge(); }
+    catch(e){ toast(e.message); }
+  });
+  view.querySelectorAll(".pcell.flagged [data-drop]").forEach(b=>b.onclick=async()=>{
+    const c=b.closest(".pcell");
+    if(!c.dataset.fname){ toast("No storage file found for this photo — open the person instead."); return; }
+    if(!confirm("Delete this photo permanently?"))return;
+    try{ await edge("admin-media",{action:"delete",user_id:c.dataset.user,name:c.dataset.fname});
+         toast("Photo deleted"); photoReview(); loadPhotoBadge(); }
+    catch(e){ toast(e.message); }
+  });
+  view.querySelectorAll(".pcell.flagged [data-unver]").forEach(b=>b.onclick=async()=>{
+    const c=b.closest(".pcell");
+    if(!confirm("Remove this person's verified badge? They can re-verify with a new selfie."))return;
+    try{ await rpc("admin_set_verified",{p_user:c.dataset.user,p_verified:false}); toast("Badge removed"); photoReview(); }
+    catch(e){ toast(e.message); }
+  });
+  view.querySelectorAll(".pcell:not(.flagged) .del").forEach(b=>b.onclick=async()=>{
     const cell=b.closest(".pcell"); const name=cell.dataset.name, uid=cell.dataset.user;
     if(!confirm("Delete this photo permanently?"))return;
     try{ await edge("admin-media",{action:"delete",user_id:uid,name}); toast("Photo deleted"); cell.remove(); }

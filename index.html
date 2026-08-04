@@ -397,6 +397,7 @@ function overview(){ withLoad(async()=>{
           <tr><td>Comp premium (active)</td><td style="text-align:right"><b class="num">${m.comp_active}</b></td></tr>
           <tr><td>Free daily like cap</td><td style="text-align:right"><b class="num">${m.free_daily_like_cap??'—'}</b></td></tr>
         </table>
+        <div id="revenueSlot"></div>
       </div>
     </div>
     <div class="cols" style="margin-top:16px">
@@ -406,6 +407,21 @@ function overview(){ withLoad(async()=>{
   $("#c1").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.signups})),"#ff3b6b");
   $("#c2").innerHTML=barsH((m.top_cities||[]).slice(0,7).map(c=>({label:c.city,value:c.n})));
   $("#c3").innerHTML=donut((m.by_country||[]).map(c=>({label:c.country||"—",value:c.n})));
+  // Revenue (purchases ledger, 0107). Lights up once the migration is applied; until then the
+  // RPC doesn't exist and this stays silent — same degrade-to-nothing rule as the daily brief.
+  try{
+    const rv=await rpc("admin_revenue_metrics");
+    if(rv&&rv.purchases_total>0){
+      $("#revenueSlot").innerHTML=`<h2 style="margin-top:18px">Revenue (list-price)</h2>
+        <table>
+          <tr><td>Payers</td><td style="text-align:right"><b class="num">${rv.payers}</b></td></tr>
+          <tr><td>Initial / renewals</td><td style="text-align:right"><b class="num">${rv.initial_subs}</b> / <b class="num">${rv.renewals}</b></td></tr>
+          <tr><td>All-time (USD list)</td><td style="text-align:right"><b class="num">$${Number(rv.usd_list_total).toFixed(2)}</b></td></tr>
+          <tr><td>Last 30 days</td><td style="text-align:right"><b class="num">$${Number(rv.last_30d_usd_list).toFixed(2)}</b></td></tr>
+        </table>
+        <p class="cap">List prices, before Apple's cut and taxes — direction, not accounting.</p>`;
+    }
+  }catch(e){ /* 0107 not applied yet */ }
 }); }
 
 // ---------- Intelligence ----------
@@ -897,6 +913,11 @@ function config(){ withLoad(async()=>{
         <div class="field"><label>Calls on by default for every match (true = opt-out, false = opt-in)</label>
           <select data-cfg="calls_default_allow"><option value="true" ${cfg.calls_default_allow!=='false'?'selected':''}>true</option><option value="false" ${cfg.calls_default_allow==='false'?'selected':''}>false</option></select></div>
         ${numField('calls_ring_seconds','Ring timeout (seconds)',cfg.calls_ring_seconds)}
+        <h3 style="margin-top:18px">App updates (0109)</h3>
+        <p class="cap">latest = soft banner in the app; min = hard gate ("update to continue").
+        Blank = feature off. Set latest first, raise min only for real breakage.</p>
+        ${numField('latest_ios_build','Latest iOS build (soft nudge)',cfg.latest_ios_build)}
+        ${numField('min_ios_build','Minimum iOS build (hard gate)',cfg.min_ios_build)}
         ${numField('calls_turn_url','TURN server URL (blank = STUN only)',cfg.calls_turn_url)}
         ${numField('calls_turn_username','TURN username',cfg.calls_turn_username)}
         ${numField('calls_turn_credential','TURN credential',cfg.calls_turn_credential)}

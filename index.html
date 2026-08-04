@@ -412,7 +412,30 @@ function overview(){ withLoad(async()=>{
 // Reads admin_signals(), which ranks safety above growth and carries the rule
 // behind every signal so it can be argued with rather than merely believed.
 let INTEL_DAYS=7;
+// The daily brief is the layer above the signals: an agent reads the same numbers,
+// compares them with yesterday, and writes what changed / why it matters / what to do.
+// Written server-side into intelligence_briefs (0105) once a day; this only renders.
+// Absence of a brief must cost nothing — the card simply doesn't appear.
+async function briefCard(){
+  try{
+    const b=await rpc("admin_latest_brief");
+    if(!b||!b.headline) return "";
+    const when=new Date(b.brief_date+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"});
+    return `<div class="panel" style="border-left:3px solid #8b5cf6;margin-bottom:14px">
+      <div class="row" style="justify-content:space-between;align-items:baseline">
+        <h2 style="margin:0">🧿 Daily brief · ${when}</h2>
+        <span class="dim" style="font-size:11px">written by ${esc(b.model)}</span>
+      </div>
+      <p style="font-size:15px;margin:10px 0 6px"><b>${esc(b.headline)}</b></p>
+      <div dir="rtl" style="text-align:right;line-height:1.9;white-space:pre-wrap">${esc(b.body_fa)}</div>
+      <details style="margin-top:8px"><summary class="dim" style="cursor:pointer">English</summary>
+        <div style="line-height:1.7;white-space:pre-wrap;margin-top:6px">${esc(b.body_en)}</div></details>
+    </div>`;
+  }catch(e){ return ""; } // RPC missing or non-admin → no card, never a broken page
+}
+
 function intel(){ withLoad(async()=>{
+  const brief=await briefCard();
   const s=await rpc("admin_signals",{p_days:INTEL_DAYS});
   const f=s.funnel.funnel, b=s.funnel.balance, q=s.funnel.liquidity;
   // Refresh the sidebar badge from this response rather than a second RPC, so
@@ -461,6 +484,7 @@ function intel(){ withLoad(async()=>{
       </div>
       <span class="dim">${s.counts.critical} critical · ${s.counts.warn} attention</span>
     </div>
+    ${brief}
     ${signalCards}
     <div class="cols" style="margin-top:18px">
       <div class="panel"><h3>Acquisition funnel</h3><p class="cap">Last ${INTEL_DAYS} days, measured from account creation — not from profile rows, so people who never started onboarding are counted</p>

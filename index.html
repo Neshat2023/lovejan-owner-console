@@ -167,6 +167,7 @@
         <a data-view="moderation"><span class="ic">🛡️</span> Moderation <span id="modBadge"></span></a>
         <a data-view="users"><span class="ic">👤</span> Users</a>
         <a data-view="photos"><span class="ic">📷</span> Photo Review</a>
+        <a data-view="verify"><span class="ic">🪪</span> Verification <span id="verBadge"></span></a>
         <a data-view="discovery"><span class="ic">🧭</span> Discovery</a>
         <a data-view="notify"><span class="ic">🔔</span> Notifications</a>
         <a data-view="config"><span class="ic">⚙️</span> Config</a>
@@ -331,19 +332,23 @@ function donut(data){
 }
 
 // ---------- routing ----------
-const titles={overview:"Overview",growth:"Growth",engagement:"Engagement",moderation:"Moderation",users:"Users",photos:"Photo Review",discovery:"Discovery pool",notify:"Notifications",config:"Config",audit:"Audit log",admins:"Admins"};
+const titles={overview:"Overview",growth:"Growth",engagement:"Engagement",moderation:"Moderation",users:"Users",photos:"Photo Review",verify:"Verification review",discovery:"Discovery pool",notify:"Notifications",config:"Config",audit:"Audit log",admins:"Admins"};
 $("#nav").addEventListener("click",e=>{const a=e.target.closest("a[data-view]");if(!a)return;route(a.dataset.view);});
 $("#refresh").onclick=()=>route(current);
 let current="overview";
 async function route(v){
   current=v; document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("active",a.dataset.view===v));
   $("#title").textContent=titles[v];
-  ({overview,growth,engagement,moderation,users,photos:photoReview,discovery,notify,config,audit,admins}[v]||overview)();
+  ({overview,growth,engagement,moderation,users,photos:photoReview,verify:verifyReview,discovery,notify,config,audit,admins}[v]||overview)();
 }
 async function withLoad(fn){ view.innerHTML="<p class='muted'>Loading…</p>"; try{await fn();}catch(e){view.innerHTML="<div class='panel'><p class='err'>"+esc(e.message)+"</p></div>";} }
 
 let METRICS=null;
-async function loadMetrics(){ METRICS=await rpc("admin_metrics"); $("#monPill").className="pill "+(METRICS.monetization_enabled?"on":"off"); $("#monPill").textContent="Monetization "+(METRICS.monetization_enabled?"ON":"OFF (free)"); $("#modBadge").innerHTML=METRICS.reports_pending?`<span class="badge">${METRICS.reports_pending}</span>`:""; return METRICS; }
+async function loadMetrics(){ METRICS=await rpc("admin_metrics"); $("#monPill").className="pill "+(METRICS.monetization_enabled?"on":"off"); $("#monPill").textContent="Monetization "+(METRICS.monetization_enabled?"ON":"OFF (free)"); $("#modBadge").innerHTML=METRICS.reports_pending?`<span class="badge">${METRICS.reports_pending}</span>`:"";
+  // A queue nobody can see is a queue nobody works. Put the number where it cannot be missed —
+  // eight people sat waiting up to eleven days precisely because nothing ever showed a count.
+  rpc("admin_verification_queue").then(rows=>{ $("#verBadge").innerHTML=(rows&&rows.length)?`<span class="badge">${rows.length}</span>`:""; }).catch(()=>{});
+  return METRICS; }
 
 // ---------- Health strip ----------
 // The whole backend is fail-closed and silent, which is right for users and blinding for the
@@ -490,6 +495,61 @@ function users(){
   $("#usearch").onclick=run; $("#uq").addEventListener("keydown",e=>{if(e.key==="Enter")run();});
   run();
 }
+
+// ---------- Verification review ----------
+// This screen exists because the queue behind it had no reader. verify-identity started routing
+// "this doesn't look like the same person" cases into manual_verification_requests, and
+// request_manual_verification() had been writing rows since July — but nothing could list them
+// and nothing could resolve them, so eight people sat waiting, the oldest for eleven days.
+//
+// The judgement being made here is "is this the same human?", so the photos have to be ON the
+// screen. A table of user ids cannot answer that question, and an owner who cannot answer it
+// will simply not use the queue.
+function verifyReview(){ withLoad(async()=>{
+  const rows=await rpc("admin_verification_queue")||[];
+  if(!rows.length){ view.innerHTML="<div class='panel'><p class='dim'>Nobody is waiting. 🎉</p></div>"; return; }
+  view.innerHTML=`<div class="panel">
+    <p class="cap">${rows.length} waiting · oldest first · approving restores the blue badge immediately.</p>
+    <div id="vqueue"></div>
+  </div>`;
+  const q=$("#vqueue");
+  for(const r of rows){
+    const days=Math.floor((Date.now()-new Date(r.requested_at))/86400000);
+    const el=document.createElement("div");
+    el.className="panel"; el.style.margin="10px 0";
+    el.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
+        <div><b class="pname" data-open="${esc(r.user_id)}" style="cursor:pointer">${esc(r.display_name||"—")}</b>
+          <span class="dim" style="font-size:12px"> · waiting ${days} day${days===1?"":"s"}</span></div>
+        <div class="dim" style="font-size:12px">
+          ${r.reason?`flagged: <b>${esc(r.reason)}</b> · `:""}last attempt: ${esc(r.last_outcome||"none")}${r.last_similarity!=null?` (${r.last_similarity}%)`:""} · ${r.photo_count} photo${r.photo_count===1?"":"s"}
+        </div>
+      </div>
+      ${r.reason==="identity_changed"?`<p class="err" style="font-size:12px;margin:6px 0">Their new selfie did not match the face this account verified with before. Approve only if you are sure it is still the same person.</p>`:""}
+      <div class="preview-grid vphotos" style="margin-top:8px"><span class="dim">loading photos…</span></div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="btn ok" data-approve="${esc(r.request_id)}">Approve — restore badge</button>
+        <button class="btn danger" data-reject="${esc(r.request_id)}">Reject</button>
+      </div>`;
+    q.appendChild(el);
+    // Photos load per-row so one slow fetch never blanks the whole queue.
+    edge("admin-media",{action:"list",user_id:r.user_id}).then(({photos})=>{
+      const box=el.querySelector(".vphotos");
+      box.innerHTML=(photos&&photos.length)
+        ? photos.map(p=>`<div class="pcell"><div class="photo">${p.url?`<img src="${esc(p.url)}" loading="lazy"/>`:`<div class="dim">no preview</div>`}</div></div>`).join("")
+        : `<span class="dim">No photos on this account — that alone is usually why they failed.</span>`;
+    }).catch(()=>{ el.querySelector(".vphotos").innerHTML="<span class='dim'>Couldn't load photos.</span>"; });
+  }
+  q.querySelectorAll(".pname[data-open]").forEach(t=>t.onclick=()=>openUser(t.dataset.open));
+  const decide=async(id,approve)=>{
+    if(!approve && !confirm("Reject this person? Their badge stays off — they can try again from the app."))return;
+    try{ await rpc("admin_resolve_verification",{p_request:id,p_approve:approve});
+         toast(approve?"Approved — badge restored":"Rejected"); verifyReview(); }
+    catch(e){ toast(e.message); }
+  };
+  q.querySelectorAll("[data-approve]").forEach(b=>b.onclick=()=>decide(b.dataset.approve,true));
+  q.querySelectorAll("[data-reject]").forEach(b=>b.onclick=()=>decide(b.dataset.reject,false));
+}); }
 
 // ---------- Photo Review (newest uploads across all users) ----------
 function photoReview(){ withLoad(async()=>{

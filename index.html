@@ -344,13 +344,35 @@ async function withLoad(fn){ view.innerHTML="<p class='muted'>Loading…</p>"; t
 let METRICS=null;
 async function loadMetrics(){ METRICS=await rpc("admin_metrics"); $("#monPill").className="pill "+(METRICS.monetization_enabled?"on":"off"); $("#monPill").textContent="Monetization "+(METRICS.monetization_enabled?"ON":"OFF (free)"); $("#modBadge").innerHTML=METRICS.reports_pending?`<span class="badge">${METRICS.reports_pending}</span>`:""; return METRICS; }
 
+// ---------- Health strip ----------
+// The whole backend is fail-closed and silent, which is right for users and blinding for the
+// owner: push reached ZERO people for weeks and nothing anywhere said so. This is the other
+// half of failing closed — failing closed AND saying so, on the first screen.
+function healthStrip(h){
+  if(!h||!h.checks) return "";
+  const bad = h.checks.filter(c=>c.status!=="ok");
+  if(!bad.length) return `<div class="panel" style="border-color:#2c6"><b class="good">All systems nominal.</b>
+    <span class="muted" style="font-size:12px"> ${h.checks.length} checks passed.</span></div>`;
+  return `<div class="panel" style="border-color:${bad.some(c=>c.status==='alert')?'#a33':'#a83'}">
+    <b class="${bad.some(c=>c.status==='alert')?'err':''}">${bad.filter(c=>c.status==='alert').length} alert(s), ${bad.filter(c=>c.status==='warn').length} warning(s)</b>
+    <table style="margin-top:8px"><tbody>
+    ${bad.map(c=>`<tr>
+      <td style="width:78px"><span class="pill ${c.status==='alert'?'off':'on'}">${c.status.toUpperCase()}</span></td>
+      <td><b>${esc(c.label)}</b> — <span class="num">${esc(String(c.value??'—'))}</span>
+          <div class="muted" style="font-size:12px">${esc(c.hint||"")}</div></td>
+    </tr>`).join("")}
+    </tbody></table></div>`;
+}
+
 // ---------- Overview ----------
 function overview(){ withLoad(async()=>{
+  const health = await rpc("admin_health").catch(()=>null);
   const m=await loadMetrics(); const ts=await rpc("admin_timeseries",{p_days:30});
   const likeRate=m.swipes?Math.round(m.likes/m.swipes*100):0, matchRate=m.likes?Math.round(m.matches*2/m.likes*100):0;
   const dauToday=(ts[ts.length-1]||{}).dau||0;
   const kpi=(v,l,a,d)=>`<div class="kpi ${a?'accent':''}"><div class="v num">${fmt(v)}</div><div class="l">${l}</div>${d?`<div class="d ${d[0]}">${d[1]}</div>`:""}</div>`;
   view.innerHTML=`
+    ${healthStrip(health)}
     <div class="grid">
       ${kpi(m.profiles,"Profiles",1,["up","+"+m.signups_7d+" this week"])}
       ${kpi(dauToday,"Active today")}

@@ -167,6 +167,7 @@
         <a data-view="moderation"><span class="ic">🛡️</span> Moderation <span id="modBadge"></span></a>
         <a data-view="users"><span class="ic">👤</span> Users</a>
         <a data-view="photos"><span class="ic">📷</span> Photo Review</a>
+        <a data-view="discovery"><span class="ic">🧭</span> Discovery</a>
         <a data-view="notify"><span class="ic">🔔</span> Notifications</a>
         <a data-view="config"><span class="ic">⚙️</span> Config</a>
         <a data-view="audit"><span class="ic">📜</span> Audit</a>
@@ -330,14 +331,14 @@ function donut(data){
 }
 
 // ---------- routing ----------
-const titles={overview:"Overview",growth:"Growth",engagement:"Engagement",moderation:"Moderation",users:"Users",photos:"Photo Review",notify:"Notifications",config:"Config",audit:"Audit log",admins:"Admins"};
+const titles={overview:"Overview",growth:"Growth",engagement:"Engagement",moderation:"Moderation",users:"Users",photos:"Photo Review",discovery:"Discovery pool",notify:"Notifications",config:"Config",audit:"Audit log",admins:"Admins"};
 $("#nav").addEventListener("click",e=>{const a=e.target.closest("a[data-view]");if(!a)return;route(a.dataset.view);});
 $("#refresh").onclick=()=>route(current);
 let current="overview";
 async function route(v){
   current=v; document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("active",a.dataset.view===v));
   $("#title").textContent=titles[v];
-  ({overview,growth,engagement,moderation,users,photos:photoReview,notify,config,audit,admins}[v]||overview)();
+  ({overview,growth,engagement,moderation,users,photos:photoReview,discovery,notify,config,audit,admins}[v]||overview)();
 }
 async function withLoad(fn){ view.innerHTML="<p class='muted'>Loading…</p>"; try{await fn();}catch(e){view.innerHTML="<div class='panel'><p class='err'>"+esc(e.message)+"</p></div>";} }
 
@@ -586,6 +587,66 @@ async function openConvo(matchId, backUserId){
   $("#cBack").onclick=()=>openUser(backUserId);
   drawer.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{ if(!confirm("Delete this message?"))return; try{ await rpc("admin_delete_message",{p_message:b.dataset.del}); toast("Message deleted"); openConvo(matchId,backUserId);}catch(e){toast(e.message);} });
 }
+
+// ---------- Discovery pool ----------
+// "Why does the deck feel empty?" has two completely different answers — the app is broken,
+// or most accounts simply cannot be shown — and nothing in the console could tell them apart.
+// This names the FIRST failing condition per person, so "14 have no photos" becomes a to-do
+// list. It also shows the city split, which is the real story: a healthy-looking pool spread
+// across twenty cities is still an empty deck for every single person in it.
+function discovery(){ withLoad(async()=>{
+  const rows = await rpc("admin_discovery_pool");
+  const inPool = rows.filter(r=>r.discoverable);
+  const out    = rows.filter(r=>!r.discoverable);
+  const byReason = {}; out.forEach(r=>byReason[r.reason]=(byReason[r.reason]||0)+1);
+  const byCity   = {};
+  inPool.forEach(r=>{ const c=r.city||"(no city)"; byCity[c]=(byCity[c]||0)+1; });
+  const cities = Object.entries(byCity).sort((a,b)=>b[1]-a[1]);
+  const biggest = cities[0] ? cities[0][1] : 0;
+
+  view.innerHTML=`
+    <div class="grid">
+      <div class="kpi accent"><div class="v num">${fmt(inPool.length)}</div><div class="l">In the Discover pool</div></div>
+      <div class="kpi"><div class="v num">${fmt(out.length)}</div><div class="l">Cannot be shown</div></div>
+      <div class="kpi"><div class="v num">${fmt(cities.length)}</div><div class="l">Cities they're spread across</div></div>
+      <div class="kpi ${biggest<10?'':''}"><div class="v num">${fmt(biggest)}</div><div class="l">Biggest single city</div></div>
+    </div>
+
+    ${biggest < 10 ? `<div class="panel" style="border-color:#a83">
+      <b>The pool is real; the geography is the problem.</b>
+      <p class="muted" style="margin:6px 0 0">${inPool.length} people spread across ${cities.length} cities means the
+      largest local deck anyone can see is about ${biggest}. No amount of app work fixes this — it is
+      solved by concentrating signups in ONE metro until it reaches critical mass.</p></div>` : ""}
+
+    <div class="panel">
+      <h2 style="margin-top:0">Where they are</h2>
+      <table><thead><tr><th>City</th><th>People in pool</th></tr></thead><tbody>
+      ${cities.map(([c,n])=>`<tr><td>${esc(c)}</td><td class="num">${n}</td></tr>`).join("")}
+      </tbody></table>
+    </div>
+
+    <div class="panel">
+      <h2 style="margin-top:0">Why ${out.length} can't be shown</h2>
+      <table><thead><tr><th>Reason</th><th>People</th></tr></thead><tbody>
+      ${Object.entries(byReason).sort((a,b)=>b[1]-a[1])
+        .map(([r,n])=>`<tr><td>${esc(r)}</td><td class="num">${n}</td></tr>`).join("")}
+      </tbody></table>
+    </div>
+
+    <div class="panel">
+      <h2 style="margin-top:0">Everyone, newest activity first</h2>
+      <table><thead><tr><th>Name</th><th>City</th><th>Photos</th><th>Verified</th><th>Status</th></tr></thead><tbody>
+      ${rows.map(r=>`<tr>
+        <td>${esc(r.display_name||"(no name)")}</td>
+        <td class="muted">${esc(r.city||"—")}</td>
+        <td class="num">${r.photos}</td>
+        <td>${r.verified?"✓":""}</td>
+        <td>${r.discoverable?'<span class="pill on">in pool</span>'
+                            :'<span class="pill off">'+esc(r.reason)+'</span>'}</td>
+      </tr>`).join("")}
+      </tbody></table>
+    </div>`;
+});}
 
 // ---------- Notifications ----------
 // Send to ONE user or broadcast. Every path is gated server-side by app.is_admin(); this page

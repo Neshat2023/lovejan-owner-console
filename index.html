@@ -525,10 +525,13 @@ function verifyReview(){ withLoad(async()=>{
           ${r.reason?`flagged: <b>${esc(r.reason)}</b> · `:""}last attempt: ${esc(r.last_outcome||"none")}${r.last_similarity!=null?` (${r.last_similarity}%)`:""} · ${r.photo_count} photo${r.photo_count===1?"":"s"}
         </div>
       </div>
-      ${r.reason==="identity_changed"?`<p class="err" style="font-size:12px;margin:6px 0">Their new selfie did not match the face this account verified with before. Approve only if you are sure it is still the same person.</p>`:""}
+      <p class="${r.reason==="identity_changed"?"err":"dim"}" style="font-size:12px;margin:6px 0">
+        <b>Why they're stuck:</b> ${esc(r.blocker||"unknown")} — ${esc(r.recommendation||"")}</p>
       <div class="preview-grid vphotos" style="margin-top:8px"><span class="dim">loading photos…</span></div>
-      <div style="margin-top:10px;display:flex;gap:8px">
-        <button class="btn ok" data-approve="${esc(r.request_id)}">Approve — restore badge</button>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        ${r.can_approve
+          ? `<button class="btn ok" data-approve="${esc(r.request_id)}">Approve — restore badge</button>`
+          : `<button class="btn" disabled title="They have no main photo, so the badge would attest to nothing.">Approve — unavailable</button>`}
         <button class="btn danger" data-reject="${esc(r.request_id)}">Reject</button>
       </div>`;
     q.appendChild(el);

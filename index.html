@@ -596,6 +596,7 @@ async function openConvo(matchId, backUserId){
 // across twenty cities is still an empty deck for every single person in it.
 function discovery(){ withLoad(async()=>{
   const rows = await rpc("admin_discovery_pool");
+  const corr = await rpc("admin_corridor").catch(()=>null);
   const inPool = rows.filter(r=>r.discoverable);
   const out    = rows.filter(r=>!r.discoverable);
   const byReason = {}; out.forEach(r=>byReason[r.reason]=(byReason[r.reason]||0)+1);
@@ -605,6 +606,20 @@ function discovery(){ withLoad(async()=>{
   const biggest = cities[0] ? cities[0][1] : 0;
 
   view.innerHTML=`
+    ${corr?`<div class="panel" style="border-color:#2c6">
+      <h2 style="margin-top:0">Tehrangeles corridor · LA + Orange County</h2>
+      <p class="muted" style="margin:0 0 10px">The one market we are concentrating on. LA→Irvine is 56km,
+      inside the 80km default radius, so everyone here can already see everyone else.
+      <b>Share of pool is the number to move</b> — the rest is vanity.</p>
+      <div class="grid">
+        <div class="kpi accent"><div class="v num">${fmt(corr.total)}</div><div class="l">People in corridor</div></div>
+        <div class="kpi"><div class="v num">${corr.share_of_pool}%</div><div class="l">Share of whole pool</div></div>
+        <div class="kpi"><div class="v num">${fmt(corr.women)} / ${fmt(corr.men)}</div><div class="l">Women / Men</div></div>
+        <div class="kpi"><div class="v num">${fmt(corr.joined_7d)}</div><div class="l">Joined last 7 days</div></div>
+        <div class="kpi"><div class="v num">${fmt(corr.verified)}</div><div class="l">Verified here</div></div>
+      </div>
+      <p class="muted" style="font-size:12px;margin-top:8px">Cities: ${(corr.cities||[]).map(esc).join(" · ")||"—"}</p>
+    </div>`:""}
     <div class="grid">
       <div class="kpi accent"><div class="v num">${fmt(inPool.length)}</div><div class="l">In the Discover pool</div></div>
       <div class="kpi"><div class="v num">${fmt(out.length)}</div><div class="l">Cannot be shown</div></div>

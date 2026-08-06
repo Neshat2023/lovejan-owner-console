@@ -34,9 +34,10 @@
   .dot{width:30px;height:30px;border-radius:9px;background:var(--grad);box-shadow:0 6px 20px rgba(255,59,107,.35)}
   .sub{color:var(--mut);margin:6px 0 22px}
   label{display:block;font-size:12px;color:var(--mut);margin:14px 0 6px;font-weight:600}
-  input,select{width:100%;padding:11px 12px;background:var(--panel2);border:1px solid var(--line);
+  input,select,textarea{width:100%;padding:11px 12px;background:var(--panel2);border:1px solid var(--line);
         border-radius:10px;color:var(--txt);outline:none;font:inherit}
-  input:focus,select:focus{border-color:var(--purple)}
+  textarea{resize:vertical;min-height:76px}
+  input:focus,select:focus,textarea:focus{border-color:var(--purple)}
   .btn{padding:11px 14px;border-radius:10px;color:#fff;font-weight:700;background:var(--grad)}
   .btn.block{width:100%;margin-top:16px}
   .btn.sm{padding:7px 11px;font-weight:600;font-size:13px;border-radius:9px}
@@ -161,13 +162,12 @@
       <div class="brand"><div class="dot"></div> LoveJan</div>
       <nav id="nav">
         <a data-view="overview" class="active"><span class="ic">📊</span> Overview</a>
-        <a data-view="intel"><span class="ic">🧠</span> Intelligence <span id="sigBadge"></span></a>
         <a data-view="growth"><span class="ic">📈</span> Growth</a>
         <a data-view="engagement"><span class="ic">⚡</span> Engagement</a>
-        <a data-view="dates"><span class="ic">💌</span> Dates</a>
         <a data-view="moderation"><span class="ic">🛡️</span> Moderation <span id="modBadge"></span></a>
         <a data-view="users"><span class="ic">👤</span> Users</a>
-        <a data-view="photos"><span class="ic">📷</span> Photo Review <span id="photoBadge"></span></a>
+        <a data-view="photos"><span class="ic">📷</span> Photo Review</a>
+        <a data-view="notify"><span class="ic">🔔</span> Notifications</a>
         <a data-view="config"><span class="ic">⚙️</span> Config</a>
         <a data-view="audit"><span class="ic">📜</span> Audit</a>
         <a data-view="admins"><span class="ic">🔑</span> Admins</a>
@@ -292,7 +292,7 @@ async function gate(){
 }
 
 // ---------- SVG charts (self-contained) ----------
-function fmt(n){ if(typeof n==="string"&&isNaN(+n))return n; n=+n||0; return n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?(n/1e3).toFixed(1)+"k":(""+Math.round(n)); }
+function fmt(n){ n=+n||0; return n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?(n/1e3).toFixed(1)+"k":(""+Math.round(n)); }
 function areaChart(data, color="#ff3b6b", h=210){
   const W=600,pad={l:34,r:10,t:12,b:22},n=data.length;
   const ys=data.map(d=>+d.y||0),maxY=Math.max(1,...ys);
@@ -301,12 +301,8 @@ function areaChart(data, color="#ff3b6b", h=210){
   let line="",area="";
   data.forEach((d,i)=>{const x=X(i),y=Y(+d.y||0);line+=(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1)+" ";});
   area=line+`L ${X(n-1).toFixed(1)} ${h-pad.b} L ${X(0).toFixed(1)} ${h-pad.b} Z`;
-  // Small ranges (maxY<=3) round to duplicate labels like "2,1,1,0"; skip a
-  // label when it repeats the one above it rather than printing it twice.
-  let grid="",prevLbl=null;
-  for(let g=0;g<=3;g++){const gy=pad.t+g/3*(h-pad.t-pad.b);grid+=`<line class="grid-l" x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}"/>`;
-    const t=fmt(maxY*(1-g/3));
-    if(t!==prevLbl){grid+=`<text x="4" y="${gy+3}" fill="#6f6883" font-size="10">${t}</text>`;prevLbl=t;}}
+  let grid="";for(let g=0;g<=3;g++){const gy=pad.t+g/3*(h-pad.t-pad.b);grid+=`<line class="grid-l" x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}"/>`;
+    grid+=`<text x="4" y="${gy+3}" fill="#6f6883" font-size="10">${fmt(maxY*(1-g/3))}</text>`;}
   const step=Math.max(1,Math.floor(n/6));let lbl="";
   data.forEach((d,i)=>{if(i%step===0||i===n-1)lbl+=`<text x="${X(i)}" y="${h-6}" fill="#6f6883" font-size="9" text-anchor="middle">${esc((d.x||"").slice(5))}</text>`;});
   const last=data[n-1]||{y:0};
@@ -334,36 +330,19 @@ function donut(data){
 }
 
 // ---------- routing ----------
-const titles={overview:"Overview",intel:"Intelligence",growth:"Growth",engagement:"Engagement",dates:"Date asks",moderation:"Moderation",users:"Users",photos:"Photo Review",config:"Config",audit:"Audit log",admins:"Admins"};
+const titles={overview:"Overview",growth:"Growth",engagement:"Engagement",moderation:"Moderation",users:"Users",photos:"Photo Review",notify:"Notifications",config:"Config",audit:"Audit log",admins:"Admins"};
 $("#nav").addEventListener("click",e=>{const a=e.target.closest("a[data-view]");if(!a)return;route(a.dataset.view);});
 $("#refresh").onclick=()=>route(current);
 let current="overview";
 async function route(v){
   current=v; document.querySelectorAll("#nav a").forEach(a=>a.classList.toggle("active",a.dataset.view===v));
   $("#title").textContent=titles[v];
-  ({overview,intel,growth,engagement,dates,moderation,users,photos:photoReview,config,audit,admins}[v]||overview)();
+  ({overview,growth,engagement,moderation,users,photos:photoReview,notify,config,audit,admins}[v]||overview)();
 }
 async function withLoad(fn){ view.innerHTML="<p class='muted'>Loading…</p>"; try{await fn();}catch(e){view.innerHTML="<div class='panel'><p class='err'>"+esc(e.message)+"</p></div>";} }
 
 let METRICS=null;
-async function loadMetrics(){ METRICS=await rpc("admin_metrics"); $("#monPill").className="pill "+(METRICS.monetization_enabled?"on":"off"); $("#monPill").textContent="Monetization "+(METRICS.monetization_enabled?"ON":"OFF (free)"); $("#modBadge").innerHTML=METRICS.reports_pending?`<span class="badge">${METRICS.reports_pending}</span>`:""; loadSignalBadge(); return METRICS; }
-
-// Signal count in the sidebar, so a critical signal is visible from every view.
-// Failure here must never block a page, so it degrades to a silent no-badge.
-async function loadSignalBadge(){
-  try{ const s=await rpc("admin_signals",{p_days:7}); const n=s.counts.critical||s.counts.total;
-       $("#sigBadge").innerHTML=n?`<span class="badge">${n}</span>`:""; }
-  catch{ $("#sigBadge").innerHTML=""; }
-  loadPhotoBadge();
-}
-
-// Photos the screener flagged and no human has looked at yet. Before 0104 the flag existed in
-// the database and was visible nowhere, which made it worth nothing.
-async function loadPhotoBadge(){
-  try{ const q=await rpc("admin_photo_queue",{p_limit:100});
-       $("#photoBadge").innerHTML=q.length?`<span class="badge">${q.length}</span>`:""; }
-  catch{ $("#photoBadge").innerHTML=""; }
-}
+async function loadMetrics(){ METRICS=await rpc("admin_metrics"); $("#monPill").className="pill "+(METRICS.monetization_enabled?"on":"off"); $("#monPill").textContent="Monetization "+(METRICS.monetization_enabled?"ON":"OFF (free)"); $("#modBadge").innerHTML=METRICS.reports_pending?`<span class="badge">${METRICS.reports_pending}</span>`:""; return METRICS; }
 
 // ---------- Overview ----------
 function overview(){ withLoad(async()=>{
@@ -397,7 +376,6 @@ function overview(){ withLoad(async()=>{
           <tr><td>Comp premium (active)</td><td style="text-align:right"><b class="num">${m.comp_active}</b></td></tr>
           <tr><td>Free daily like cap</td><td style="text-align:right"><b class="num">${m.free_daily_like_cap??'—'}</b></td></tr>
         </table>
-        <div id="revenueSlot"></div>
       </div>
     </div>
     <div class="cols" style="margin-top:16px">
@@ -407,136 +385,6 @@ function overview(){ withLoad(async()=>{
   $("#c1").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.signups})),"#ff3b6b");
   $("#c2").innerHTML=barsH((m.top_cities||[]).slice(0,7).map(c=>({label:c.city,value:c.n})));
   $("#c3").innerHTML=donut((m.by_country||[]).map(c=>({label:c.country||"—",value:c.n})));
-  // Revenue (purchases ledger, 0107). Lights up once the migration is applied; until then the
-  // RPC doesn't exist and this stays silent — same degrade-to-nothing rule as the daily brief.
-  try{
-    const rv=await rpc("admin_revenue_metrics");
-    if(rv&&rv.purchases_total>0){
-      $("#revenueSlot").innerHTML=`<h2 style="margin-top:18px">Revenue (list-price)</h2>
-        <table>
-          <tr><td>Payers</td><td style="text-align:right"><b class="num">${rv.payers}</b></td></tr>
-          <tr><td>Initial / renewals</td><td style="text-align:right"><b class="num">${rv.initial_subs}</b> / <b class="num">${rv.renewals}</b></td></tr>
-          <tr><td>All-time (USD list)</td><td style="text-align:right"><b class="num">$${Number(rv.usd_list_total).toFixed(2)}</b></td></tr>
-          <tr><td>Last 30 days</td><td style="text-align:right"><b class="num">$${Number(rv.last_30d_usd_list).toFixed(2)}</b></td></tr>
-        </table>
-        <p class="cap">List prices, before Apple's cut and taxes — direction, not accounting.</p>`;
-    }
-  }catch(e){ /* 0107 not applied yet */ }
-}); }
-
-// ---------- Intelligence ----------
-// Reads admin_signals(), which ranks safety above growth and carries the rule
-// behind every signal so it can be argued with rather than merely believed.
-let INTEL_DAYS=7;
-// The daily brief is the layer above the signals: an agent reads the same numbers,
-// compares them with yesterday, and writes what changed / why it matters / what to do.
-// Written server-side into intelligence_briefs (0105) once a day; this only renders.
-// Absence of a brief must cost nothing — the card simply doesn't appear.
-async function briefCard(){
-  try{
-    const b=await rpc("admin_latest_brief");
-    if(!b||!b.headline) return "";
-    const when=new Date(b.brief_date+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"});
-    return `<div class="panel" style="border-left:3px solid #8b5cf6;margin-bottom:14px">
-      <div class="row" style="justify-content:space-between;align-items:baseline">
-        <h2 style="margin:0">🧿 Daily brief · ${when}</h2>
-        <span class="dim" style="font-size:11px">written by ${esc(b.model)}</span>
-      </div>
-      <p style="font-size:15px;margin:10px 0 6px"><b>${esc(b.headline)}</b></p>
-      <div dir="rtl" style="text-align:right;line-height:1.9;white-space:pre-wrap">${esc(b.body_fa)}</div>
-      <details style="margin-top:8px"><summary class="dim" style="cursor:pointer">English</summary>
-        <div style="line-height:1.7;white-space:pre-wrap;margin-top:6px">${esc(b.body_en)}</div></details>
-    </div>`;
-  }catch(e){ return ""; } // RPC missing or non-admin → no card, never a broken page
-}
-
-function intel(){ withLoad(async()=>{
-  const brief=await briefCard();
-  const s=await rpc("admin_signals",{p_days:INTEL_DAYS});
-  const f=s.funnel.funnel, b=s.funnel.balance, q=s.funnel.liquidity;
-  // Refresh the sidebar badge from this response rather than a second RPC, so
-  // it stays correct when the user reloads while sitting on this page.
-  $("#sigBadge").innerHTML=(s.counts.critical||s.counts.total)?`<span class="badge">${s.counts.critical||s.counts.total}</span>`:"";
-  const sev={critical:["#ff3b6b","Critical"],warn:["#f0a92b","Attention"]};
-
-  // Funnel stages are strict subsets, so each row shows both the absolute count
-  // and the loss versus the stage above it — the loss is the actionable part.
-  const stages=[["Signed up",f.signed_up],["Started profile",f.has_profile],["Named themselves",f.named],["Added a photo",f.with_photo],["Verified",f.verified]];
-  const top=stages[0][1]||1;
-  const funnelRows=stages.map((st,i)=>{
-    const pct=Math.round(100*st[1]/top);
-    const lost=i?stages[i-1][1]-st[1]:0;
-    const lostPct=i&&stages[i-1][1]?Math.round(100*lost/stages[i-1][1]):0;
-    return `<tr>
-      <td style="width:150px">${st[0]}</td>
-      <td style="width:100%"><div style="background:#ffffff10;border-radius:5px;height:22px;position:relative">
-        <div style="background:linear-gradient(90deg,#ff3b6b,#8b5cf6);width:${pct}%;height:100%;border-radius:5px"></div></div></td>
-      <td style="text-align:right;white-space:nowrap"><b class="num">${fmt(st[1])}</b> <span class="dim">${pct}%</span></td>
-      <td style="text-align:right;white-space:nowrap">${i&&lost>0?`<span class="d down">−${lost} (${lostPct}%)</span>`:'<span class="dim">—</span>'}</td>
-    </tr>`;}).join("");
-
-  const womenPct=(b.new_women+b.new_men)?Math.round(100*b.new_women/(b.new_women+b.new_men)):0;
-  const ratio=b.total_women?(b.total_men/b.total_women).toFixed(1):"—";
-  const replyPct=q.matches?Math.round(100*q.matches_messaged/q.matches):0;
-
-  const signalCards=s.signals.length?s.signals.map(g=>{
-    const c=sev[g.severity]||["#8b5cf6","Note"];
-    return `<div class="panel" style="border-left:3px solid ${c[0]};margin-bottom:10px">
-      <div class="row" style="justify-content:space-between;align-items:flex-start">
-        <div><span class="pill" style="background:${c[0]}22;color:${c[0]};border-color:${c[0]}55">${c[1]}</span>
-          <h3 style="margin:8px 0 4px">${esc(g.title)}</h3></div>
-        <button class="btn ghost sm" data-goto="${esc(g.action)}">Open ${esc(g.action)} →</button>
-      </div>
-      <p style="margin:2px 0 8px">${esc(g.detail)}</p>
-      <p class="cap">Rule: ${esc(g.rule)}</p>
-    </div>`;}).join(""):
-    `<div class="panel"><h3>Nothing needs your attention</h3>
-       <p class="cap">Every rule below its threshold for the last ${INTEL_DAYS} days. This is a real all-clear, not an empty view.</p></div>`;
-
-  view.innerHTML=`
-    <div class="row" style="justify-content:space-between;margin-bottom:14px">
-      <div class="row" style="gap:6px">
-        ${[7,14,30,90].map(d=>`<button class="btn ${d===INTEL_DAYS?'':'ghost'} sm" data-days="${d}">${d}d</button>`).join("")}
-      </div>
-      <span class="dim">${s.counts.critical} critical · ${s.counts.warn} attention</span>
-    </div>
-    ${brief}
-    ${signalCards}
-    <div class="cols" style="margin-top:18px">
-      <div class="panel"><h3>Acquisition funnel</h3><p class="cap">Last ${INTEL_DAYS} days, measured from account creation — not from profile rows, so people who never started onboarding are counted</p>
-        <table style="margin-top:10px">${funnelRows}</table>
-        ${(s.funnel.by_provider||[]).length?`<h3 style="margin-top:18px">Loss by door</h3>
-        <p class="cap">iOS saves nothing until the final submit (a loss = died inside the form). Web autosaves from the first keystroke (a loss = never typed).</p>
-        <table style="margin-top:8px">${s.funnel.by_provider.map(p=>`
-          <tr><td>${esc(p.provider==='apple'?'iOS (Apple)':p.provider==='email'?'Web (email)':p.provider)}</td>
-          <td style="text-align:right"><b class="num">${p.no_profile}</b> / ${p.signups} lost
-          ${+p.no_profile?`<span class="d ${+p.drop_pct>=30?'down':'dim'}">${p.drop_pct}%</span>`:'<span class="dim">—</span>'}</td></tr>`).join("")}
-        </table>`:""}</div>
-      <div class="panel"><h3>Marketplace balance</h3><p class="cap">The number that decides whether the network compounds</p>
-        <table style="margin-top:10px">
-          <tr><td>New women / men</td><td style="text-align:right"><b class="num">${b.new_women}</b> / <b class="num">${b.new_men}</b> <span class="dim">(${womenPct}% women)</span></td></tr>
-          <tr><td>Whole base</td><td style="text-align:right"><b class="num">${b.total_women}</b> women · <b class="num">${b.total_men}</b> men</td></tr>
-          <tr><td>Men per woman</td><td style="text-align:right"><b class="num">${ratio}</b></td></tr>
-          <tr><td>Verified women / men</td><td style="text-align:right"><b class="num">${b.verified_women}</b> / <b class="num">${b.verified_men}</b></td></tr>
-          <tr><td>Seeking women / men</td><td style="text-align:right"><b class="num">${b.seeking_women}</b> / <b class="num">${b.seeking_men}</b></td></tr>
-        </table>
-        <h3 style="margin-top:18px">Liquidity</h3>
-        <table style="margin-top:8px">
-          <tr><td>Likes</td><td style="text-align:right"><b class="num">${fmt(q.likes)}</b></td></tr>
-          <tr><td>Matches</td><td style="text-align:right"><b class="num">${fmt(q.matches)}</b></td></tr>
-          <tr><td>Matches with a message</td><td style="text-align:right"><b class="num">${fmt(q.matches_messaged)}</b> <span class="dim">(${replyPct}%)</span></td></tr>
-          <tr><td>People who sent a message</td><td style="text-align:right"><b class="num">${fmt(q.active_senders)}</b></td></tr>
-        </table>
-      </div>
-    </div>
-    <div class="panel" style="margin-top:16px"><h3>Signups vs women</h3>
-      <p class="cap">Daily. The gap between the two lines is the balance problem made visible.</p>
-      <div id="i1"></div><div id="i2"></div></div>`;
-
-  $("#i1").innerHTML=areaChart((s.funnel.daily||[]).map(d=>({x:d.d,y:d.signups})),"#ff3b6b",160);
-  $("#i2").innerHTML=areaChart((s.funnel.daily||[]).map(d=>({x:d.d,y:d.women})),"#8b5cf6",160);
-  view.querySelectorAll("[data-days]").forEach(b=>b.onclick=()=>{ INTEL_DAYS=+b.dataset.days; intel(); });
-  view.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>route(b.dataset.goto));
 }); }
 
 // ---------- Growth ----------
@@ -574,92 +422,6 @@ function engagement(){ withLoad(async()=>{
   $("#e2").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.likes})),"#ff3b6b");
   $("#e3").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.matches})),"#8b5cf6");
   $("#e4").innerHTML=areaChart(ts.map(d=>({x:d.d,y:d.messages})),"#34d399");
-}); }
-
-// ---------- Dates (0094 date asks — the in-chat "ask them out" card) ----------
-function dates(){ withLoad(async()=>{
-  let m;
-  try{ m=await rpc("admin_date_asks_metrics"); }
-  catch(e){
-    // Only a missing function means "not set up" — anything else (auth expiry, network,
-    // 5xx) renders as a normal error so real outages don't masquerade as setup steps.
-    if(!/does not exist|find the function|PGRST202/i.test(e.message||"")) throw e;
-    view.innerHTML=`<div class="panel">
-      <h3>Date asks isn't set up yet</h3>
-      <p class="cap" style="margin-top:6px">Apply migration <b>supabase/migrations/0094_date_asks.sql</b>
-      (LoveJan repo) to the production database — Supabase Dashboard → SQL Editor → paste → Run.
-      This page lights up on the next refresh. Note: <b>date_ask_enabled</b> defaults to ON —
-      set it to false in Config first if you want to ship the app build dark.</p>
-      <p class="dim" style="font-size:12px">(${esc(e.message)})</p></div>`;
-    return;
-  }
-  const acceptRate=m.asks?Math.round(m.accepted/m.asks*100):0;
-  const matchToDate=m.matches_total?Math.round(m.dates_confirmed/m.matches_total*100):0;
-  const kpi=(v,l,a)=>`<div class="kpi ${a?'accent':''}"><div class="v num">${fmt(v)}</div><div class="l">${l}</div></div>`;
-  view.innerHTML=`
-    <div class="grid">
-      ${kpi(m.asks,"Asks sent",1)}
-      ${kpi(m.asks_7d,"Asks · 7d")}
-      ${kpi(acceptRate+"%","Accept rate")}
-      ${kpi(m.dates_confirmed,"Real dates confirmed",1)}
-      ${kpi(m.declined,"Passed (quiet)")}
-      ${kpi(matchToDate+"%","Match → date")}
-    </div>
-    <div class="cols" style="margin-top:18px">
-      <div class="panel"><h3>Asks / day</h3><p class="cap">Sent · 30d</p><div id="d1"></div></div>
-      <div class="panel"><h3>Where dates happen</h3><p class="cap">Asks by asker's home city</p><div id="d2"></div></div>
-    </div>
-    <p class="cap" style="margin-top:14px">"Real dates confirmed" counts asks where at least one person privately
-    answered "we met" — the number chats can't fake. Individual answers are never shown to the other person.</p>
-    <div id="pubInv" style="margin-top:18px"></div>`;
-  $("#d1").innerHTML=areaChart((m.daily||[]).map(d=>({x:d.d,y:d.asks})),"#ff3b6b");
-  $("#d2").innerHTML=barsH((m.by_city||[]).map(c=>({label:c.city,value:c.n})));
-  // Outside invites (migration 0095) — shareable links sent to people off LoveJan.
-  try{
-    const p=await rpc("admin_public_invites_metrics");
-    const openRate=p.invites?Math.round(p.opened/p.invites*100):0;
-    const pAccept=p.invites?Math.round(p.accepted/p.invites*100):0;
-    $("#pubInv").innerHTML=`
-      <h2 style="margin:0 0 10px">Outside invites (growth loop)</h2>
-      <div class="grid">
-        ${kpi(p.invites,"Links created",1)}
-        ${kpi(p.invites_7d,"Links · 7d")}
-        ${kpi(openRate+"%","Opened")}
-        ${kpi(pAccept+"%","Said yes")}
-        ${kpi(p.declined,"Passed")}
-      </div>
-      <div class="cols" style="margin-top:14px">
-        <div class="panel"><h3>Invites by sender's city</h3><div id="d3"></div></div>
-        <div class="panel"><h3>How it works</h3><p class="cap">Users send lovejan.app/invite links to
-        anyone — even off the app. Every "yes" is a warm intro to LoveJan; the answered page carries the
-        download CTA. Caps & kill switch live in Config (public_invite_*).</p></div>
-      </div>`;
-    $("#d3").innerHTML=barsH((p.by_city||[]).map(c=>({label:c.city,value:c.n})));
-  }catch(e){
-    $("#pubInv").innerHTML=`<p class="cap">Outside invites (migration 0095) not applied yet — this section lights up once it is.</p>`;
-  }
-  // Voice calls (migration 0096) — consent-first in-app calling, no phone numbers.
-  try{
-    const c=await rpc("admin_calls_metrics");
-    const answerRate=c.calls?Math.round(c.answered/c.calls*100):0;
-    const mins=Math.round((c.avg_secs||0)/60*10)/10;
-    $("#pubInv").insertAdjacentHTML("afterend",`
-      <div style="margin-top:18px">
-      <h2 style="margin:0 0 10px">Voice calls</h2>
-      <div class="grid">
-        ${kpi(c.calls,"Calls",1)}
-        ${kpi(c.calls_7d,"Calls · 7d")}
-        ${kpi(answerRate+"%","Answered")}
-        ${kpi(mins+"m","Avg length")}
-        ${kpi(c.consented_matches,"Matches with calls on")}
-      </div>
-      <p class="cap" style="margin-top:10px">Calls are in-app WebRTC — no phone numbers exist anywhere.
-      A user can only be called after THEY flip "Allow calls" for that match. Kill switch and
-      verified-only gate live in Config (calls_*).</p></div>`);
-  }catch(e){
-    $("#pubInv").insertAdjacentHTML("afterend",
-      `<p class="cap" style="margin-top:14px">Voice calls (migration 0096) not applied yet — this section lights up once it is.</p>`);
-  }
 }); }
 
 // ---------- Moderation ----------
@@ -706,60 +468,11 @@ function users(){
   run();
 }
 
-// ---------- Photo Review (flagged queue first, then newest uploads) ----------
-// The screener (moderate-photo) writes moderation_status; the byte sweep re-screens any photo
-// whose storage bytes changed. Both are useless unless a human sees the result — this is where.
-const FLAG_COPY={
-  identity_review:{t:"Not this person",d:"A clear face that matches neither their verification faceprint nor their primary photo."},
-  review:{t:"Borderline content",d:"Close to the nudity line — kept up, waiting on a judgement call."},
-  pending:{t:"Never screened",d:"Screening was dispatched but no verdict came back yet."},
-  blocked:{t:"Blocked",d:"Marked blocked but the row is still here — worth a look."},
-};
-async function flaggedPanel(){
-  let q; try{ q=await rpc("admin_photo_queue",{p_limit:100}); }catch(e){ return ""; }
-  if(!q.length) return `<div class="panel"><p class="dim">Nothing flagged. Every photo on file has been screened and passed. ✓</p></div>`;
-  // One signed-URL fetch per affected person (the queue is small by construction).
-  const urls={},names={};
-  for(const uid of [...new Set(q.map(f=>f.user_id))]){
-    try{ const {photos}=await edge("admin-media",{action:"list",user_id:uid});
-         photos.forEach(p=>{ const k=uid+"|"+(p.name||"").split(".")[0].toUpperCase();
-                             urls[k]=p.url; names[k]=p.name; }); }
-    catch{ /* a missing preview must not hide the flag itself */ }
-  }
-  return `<div class="panel">
-    <h2>Needs your eyes <span class="badge">${q.length}</span></h2>
-    <p class="cap">Flagged by the screener and not yet judged by a person. “Looks fine” only clears the
-    flag — it never changes the photo or the account. Delete and Remove badge are the destructive ones.</p>
-    <div class="preview-grid">${q.map(f=>{
-      const c=FLAG_COPY[f.status]||{t:f.status,d:""};
-      const key=f.user_id+"|"+String(f.photo_id).toUpperCase();
-      const u=urls[key], fname=names[key]||"";
-      const ev = f.decision==="identity_mismatch"
-        ? `Best face match <b>${Math.round(f.confidence||0)}%</b> — we approve at 80%.`
-        : (f.evidence?`${esc(f.evidence)} ${f.confidence?`<b>${Math.round(f.confidence)}%</b>`:""}`:"");
-      return `<div class="pcell flagged" data-photo="${esc(f.photo_id)}" data-user="${esc(f.user_id)}" data-fname="${esc(fname)}">
-        <div class="photo">${u?`<img src="${esc(u)}" loading="lazy"/>`:`<div class="dim" style="display:grid;place-items:center;height:100%;font-size:11px">no preview</div>`}</div>
-        <div class="pcap">
-          <span class="pname" data-open="${esc(f.user_id)}"><b>${esc(f.name)||'—'}</b></span>
-          ${f.verified?' <span class="tag ok">verified ✓</span>':''}${f.suspended?' <span class="tag susp">susp</span>':''}
-          <div style="margin-top:4px"><span class="tag ${f.status==='identity_review'?'susp':'off'}">${c.t}</span>
-            ${f.is_primary?' <span class="tag">primary</span>':(f.shown_first?' <span class="tag">shown first</span>':'')}</div>
-          <div class="dim" style="font-size:11px;margin-top:5px">${c.d}</div>
-          ${ev?`<div class="dim" style="font-size:11px;margin-top:3px">${ev}</div>`:""}
-          <div class="row" style="margin-top:7px;gap:6px;flex-wrap:wrap">
-            <button class="btn ghost sm" data-clear>Looks fine</button>
-            <button class="btn danger sm" data-drop>Delete</button>
-            ${f.verified?'<button class="btn danger sm" data-unver>Remove badge</button>':''}
-          </div>
-        </div></div>`;}).join("")}</div>
-  </div>`;
-}
+// ---------- Photo Review (newest uploads across all users) ----------
 function photoReview(){ withLoad(async()=>{
-  const flagged=await flaggedPanel();
   const {photos}=await edge("admin-media",{action:"recent",limit:120});
-  if(!photos.length){ view.innerHTML=flagged+"<div class='panel'><p class='dim'>No photos uploaded yet.</p></div>"; return; }
-  view.innerHTML=flagged+`<div class="panel">
-    <h2>All photos</h2>
+  if(!photos.length){ view.innerHTML="<div class='panel'><p class='dim'>No photos uploaded yet.</p></div>"; return; }
+  view.innerHTML=`<div class="panel">
     <p class="cap">Newest uploads first · ${photos.length} shown · tap a name to open that person · Delete removes the photo permanently.</p>
     <div class="preview-grid">${photos.map(p=>`
       <div class="pcell" data-name="${esc(p.name)}" data-user="${esc(p.user_id)}">
@@ -769,27 +482,7 @@ function photoReview(){ withLoad(async()=>{
       </div>`).join("")}</div>
   </div>`;
   view.querySelectorAll(".pname[data-open]").forEach(t=>t.onclick=()=>openUser(t.dataset.open));
-  // Flagged-queue actions. Each one re-renders so the badge and the list stay honest.
-  view.querySelectorAll(".pcell.flagged [data-clear]").forEach(b=>b.onclick=async()=>{
-    const c=b.closest(".pcell");
-    try{ await rpc("admin_photo_clear",{p_photo:c.dataset.photo}); toast("Flag cleared"); photoReview(); loadPhotoBadge(); }
-    catch(e){ toast(e.message); }
-  });
-  view.querySelectorAll(".pcell.flagged [data-drop]").forEach(b=>b.onclick=async()=>{
-    const c=b.closest(".pcell");
-    if(!c.dataset.fname){ toast("No storage file found for this photo — open the person instead."); return; }
-    if(!confirm("Delete this photo permanently?"))return;
-    try{ await edge("admin-media",{action:"delete",user_id:c.dataset.user,name:c.dataset.fname});
-         toast("Photo deleted"); photoReview(); loadPhotoBadge(); }
-    catch(e){ toast(e.message); }
-  });
-  view.querySelectorAll(".pcell.flagged [data-unver]").forEach(b=>b.onclick=async()=>{
-    const c=b.closest(".pcell");
-    if(!confirm("Remove this person's verified badge? They can re-verify with a new selfie."))return;
-    try{ await rpc("admin_set_verified",{p_user:c.dataset.user,p_verified:false}); toast("Badge removed"); photoReview(); }
-    catch(e){ toast(e.message); }
-  });
-  view.querySelectorAll(".pcell:not(.flagged) .del").forEach(b=>b.onclick=async()=>{
+  view.querySelectorAll(".pcell .del").forEach(b=>b.onclick=async()=>{
     const cell=b.closest(".pcell"); const name=cell.dataset.name, uid=cell.dataset.user;
     if(!confirm("Delete this photo permanently?"))return;
     try{ await edge("admin-media",{action:"delete",user_id:uid,name}); toast("Photo deleted"); cell.remove(); }
@@ -872,6 +565,133 @@ async function openConvo(matchId, backUserId){
   drawer.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{ if(!confirm("Delete this message?"))return; try{ await rpc("admin_delete_message",{p_message:b.dataset.del}); toast("Message deleted"); openConvo(matchId,backUserId);}catch(e){toast(e.message);} });
 }
 
+// ---------- Notifications ----------
+// Send to ONE user or broadcast. Every path is gated server-side by app.is_admin(); this page
+// only composes. Broadcast is deliberately awkward: you must Preview (dry run) before Send is
+// enabled, and Send asks again — the unrecoverable mistake here is messaging everyone twice.
+let NPICK=null;            // {id,name} selected recipient, null = broadcast
+function notify(){ withLoad(async()=>{
+  const a=await rpc("admin_push_audience");
+  const hist=await rpc("admin_push_history",{p_limit:15});
+  // With 0 device tokens nothing can arrive no matter what we send — say so loudly rather than
+  // letting the owner send into the void and conclude push is broken.
+  const deadAudience = (a.with_token||0)===0;
+  view.innerHTML=`
+    ${deadAudience?`<div class="panel" style="border-color:#a33">
+      <b class="err">No device can receive a push yet — 0 registered tokens.</b>
+      <p class="muted" style="margin:6px 0 0">The live App Store build (116) shipped without the
+      <code>aps-environment</code> entitlement, so iOS never issues a token. The entitlement is in
+      the source now; this fills in as users install build 117+. Sending before then is a no-op.</p>
+    </div>`:""}
+    <div class="grid">
+      <div class="kpi"><div class="v num">${fmt(a.users_total)}</div><div class="l">Users</div></div>
+      <div class="kpi"><div class="v num">${fmt(a.with_token)}</div><div class="l">Reachable (has token)</div></div>
+      <div class="kpi"><div class="v num">${fmt(a.opted_in)}</div><div class="l">Opted in to news</div></div>
+      <div class="kpi accent"><div class="v num">${fmt(a.broadcast_reach)}</div><div class="l">Broadcast reach</div></div>
+      <div class="kpi"><div class="v num">${fmt(a.queued)}</div><div class="l">Queued in outbox</div></div>
+    </div>
+
+    <div class="panel">
+      <h2 style="margin-top:0">Compose</h2>
+      <div class="seg" style="margin-bottom:10px">
+        <button id="nmOne">One person</button><button id="nmAll" class="on">Everyone (opted in)</button>
+      </div>
+      <div id="nOneBox" style="display:none;margin-bottom:10px">
+        <div class="row"><input id="nq" placeholder="Search name or email…" style="flex:1">
+          <button class="btn sm" id="nsearch">Search</button></div>
+        <div id="nres" class="muted" style="margin-top:6px"></div>
+      </div>
+      <input id="ntitle" maxlength="120" placeholder="Title — e.g. New in LoveJan 1.1.1">
+      <div class="muted" style="font-size:11px;margin:2px 0 8px" id="ntitlec"></div>
+      <textarea id="nbody" maxlength="400" rows="3" placeholder="Body — what's actually new, in one honest sentence."></textarea>
+      <div class="muted" style="font-size:11px;margin:2px 0 10px" id="nbodyc"></div>
+
+      <div class="panel" style="background:var(--panel3);padding:12px">
+        <div class="muted" style="font-size:11px;margin-bottom:6px">iPhone preview</div>
+        <div style="background:#1c1c1e;border-radius:14px;padding:10px 12px;max-width:360px">
+          <div style="font-size:11px;color:#8e8e93">LOVEJAN · now</div>
+          <div style="font-weight:700;color:#fff" id="pvT">Title</div>
+          <div style="color:#d1d1d6;font-size:13px" id="pvB">Body</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <button class="btn ghost" id="ndry">Preview reach (sends nothing)</button>
+        <button class="btn" id="nsend" disabled>Send</button>
+      </div>
+      <p class="muted" style="font-size:12px;margin-top:8px" id="nout">
+        Broadcast reaches only people who opted in to news (App Store rule 4.5.4). One-person sends
+        are support messages and ignore that toggle. Cooldown between broadcasts: 60 min.</p>
+    </div>
+
+    <div class="panel">
+      <h2 style="margin-top:0">Recent sends</h2>
+      <table><thead><tr><th>When</th><th>To</th><th>Title</th><th>Reached</th></tr></thead><tbody>
+      ${hist.length?hist.map(h=>`<tr>
+        <td class="muted">${new Date(h.created_at).toLocaleString()}</td>
+        <td>${h.audience==="broadcast"?"Everyone":esc(h.target_name||"—")}${h.dry_run?' <span class="muted">(preview)</span>':""}</td>
+        <td>${esc(h.title)}</td><td class="num">${fmt(h.recipients)}</td></tr>`).join("")
+        :`<tr><td colspan="4" class="muted">Nothing sent yet.</td></tr>`}
+      </tbody></table>
+    </div>`;
+
+  const T=$("#ntitle"), B=$("#nbody");
+  const sync=()=>{ $("#pvT").textContent=T.value||"Title"; $("#pvB").textContent=B.value||"Body";
+    $("#ntitlec").textContent=T.value.length+"/120"; $("#nbodyc").textContent=B.value.length+"/400";
+    $("#nsend").disabled=true; };   // any edit invalidates the previous preview
+  T.oninput=sync; B.oninput=sync; sync();
+
+  const setMode=(one)=>{ NPICK=null; $("#nOneBox").style.display=one?"":"none";
+    $("#nmOne").classList.toggle("on",one); $("#nmAll").classList.toggle("on",!one);
+    $("#nres").textContent=""; $("#nsend").disabled=true; };
+  $("#nmOne").onclick=()=>setMode(true); $("#nmAll").onclick=()=>setMode(false);
+
+  $("#nsearch").onclick=async()=>{
+    const q=$("#nq").value.trim(); if(!q) return;
+    const rows=await rpc("admin_search_users",{p_q:q});
+    $("#nres").innerHTML=rows.length?rows.slice(0,8).map(u=>
+      `<button class="btn ghost sm" data-uid="${u.id}" data-nm="${esc(u.display_name||u.email||u.id)}"
+        style="margin:3px 4px 0 0">${esc(u.display_name||"(no name)")} <span class="muted">${esc(u.email||"")}</span></button>`
+    ).join(""):"<span class='muted'>No match.</span>";
+    $("#nres").querySelectorAll("button[data-uid]").forEach(b=>b.onclick=()=>{
+      NPICK={id:b.dataset.uid,name:b.dataset.nm};
+      $("#nres").innerHTML=`Sending to <b>${esc(NPICK.name)}</b>`; $("#nsend").disabled=true;
+    });
+  };
+
+  const args=(dry)=>({p_title:T.value,p_body:B.value,p_user_id:NPICK?NPICK.id:null,p_dry_run:dry});
+  $("#ndry").onclick=async()=>{
+    try{
+      const r=await rpc("admin_send_push",args(true));
+      $("#nout").innerHTML=`Preview: this would reach <b>${fmt(r.recipients)}</b> ${r.audience==="broadcast"?"people":"device owner"}. Nothing was sent.`;
+      $("#nsend").disabled = r.recipients===0;
+      if(r.recipients===0) $("#nout").innerHTML+=" <span class='err'>Nobody to send to — Send stays disabled.</span>";
+    }catch(e){ $("#nout").innerHTML=`<span class="err">${esc(explainPush(e.message))}</span>`; }
+  };
+  $("#nsend").onclick=async()=>{
+    const who=NPICK?NPICK.name:"EVERYONE who opted in";
+    if(!confirm(`Send "${T.value}" to ${who}?\n\nThis cannot be undone once APNs accepts it.`)) return;
+    $("#nsend").disabled=true;
+    try{
+      const r=await rpc("admin_send_push",args(false));
+      $("#nout").innerHTML=`<b class="good">Sent.</b> ${fmt(r.recipients)} recipient(s), delivery: ${r.delivery}.`+
+        (r.delivery==="queued"?" Queued sends drain via the outbox sweeper (~5 min).":"");
+      setTimeout(()=>route("notify"),1200);
+    }catch(e){ $("#nout").innerHTML=`<span class="err">${esc(explainPush(e.message))}</span>`; $("#nsend").disabled=false; }
+  };
+});}
+// Turn the frozen server error tokens into something a human can act on.
+function explainPush(m){
+  if(/BROADCAST_TOO_SOON/.test(m))   return "Too soon — there's a 60-minute cooldown between broadcasts (Config: admin_broadcast_min_interval_minutes).";
+  if(/BROADCAST_TOO_LARGE/.test(m))  return "Audience is larger than the safety cap (Config: admin_broadcast_max_recipients).";
+  if(/PUSH_TITLE_REQUIRED/.test(m))  return "Title can't be empty.";
+  if(/PUSH_BODY_REQUIRED/.test(m))   return "Body can't be empty.";
+  if(/PUSH_TITLE_TOO_LONG/.test(m))  return "Title is over 120 characters.";
+  if(/PUSH_BODY_TOO_LONG/.test(m))   return "Body is over 400 characters.";
+  if(/admin only/.test(m))           return "You're not an admin on this account.";
+  return m;
+}
+
 // ---------- Config ----------
 function config(){ withLoad(async()=>{
   const rows=await tget("app_config?select=key,value"); const cfg=Object.fromEntries(rows.map(r=>[r.key,r.value]));
@@ -893,34 +713,6 @@ function config(){ withLoad(async()=>{
         ${numField('completion_trial_days','Completion trial (days)',cfg.completion_trial_days)}
         <div class="field"><label>Completion trial enabled</label>
           <select data-cfg="completion_trial_enabled"><option value="true" ${cfg.completion_trial_enabled==='true'?'selected':''}>true</option><option value="false" ${cfg.completion_trial_enabled!=='true'?'selected':''}>false</option></select></div>
-        <h3 style="margin-top:18px">Date asks</h3>
-        <div class="field"><label>Date asks enabled (kill switch)</label>
-          <select data-cfg="date_ask_enabled"><option value="true" ${cfg.date_ask_enabled!=='false'?'selected':''}>true</option><option value="false" ${cfg.date_ask_enabled==='false'?'selected':''}>false</option></select></div>
-        ${numField('date_ask_daily_cap','Date asks per person per day',cfg.date_ask_daily_cap)}
-        ${numField('date_ask_expiry_hours','Ask expires after (hours)',cfg.date_ask_expiry_hours)}
-        <h3 style="margin-top:18px">Outside invites</h3>
-        <div class="field"><label>Outside invites enabled (kill switch)</label>
-          <select data-cfg="public_invite_enabled"><option value="true" ${cfg.public_invite_enabled!=='false'?'selected':''}>true</option><option value="false" ${cfg.public_invite_enabled==='false'?'selected':''}>false</option></select></div>
-        <div class="field"><label>Only verified users can send invite links</label>
-          <select data-cfg="public_invite_verified_only"><option value="false" ${cfg.public_invite_verified_only!=='true'?'selected':''}>false</option><option value="true" ${cfg.public_invite_verified_only==='true'?'selected':''}>true</option></select></div>
-        ${numField('public_invite_daily_cap','Invite links per person per day',cfg.public_invite_daily_cap)}
-        ${numField('public_invite_expiry_hours','Link expires after (hours)',cfg.public_invite_expiry_hours)}
-        <h3 style="margin-top:18px">Voice calls</h3>
-        <div class="field"><label>Calls enabled (kill switch)</label>
-          <select data-cfg="calls_enabled"><option value="true" ${cfg.calls_enabled!=='false'?'selected':''}>true</option><option value="false" ${cfg.calls_enabled==='false'?'selected':''}>false</option></select></div>
-        <div class="field"><label>Only verified users can start calls</label>
-          <select data-cfg="calls_verified_only"><option value="false" ${cfg.calls_verified_only!=='true'?'selected':''}>false</option><option value="true" ${cfg.calls_verified_only==='true'?'selected':''}>true</option></select></div>
-        <div class="field"><label>Calls on by default for every match (true = opt-out, false = opt-in)</label>
-          <select data-cfg="calls_default_allow"><option value="true" ${cfg.calls_default_allow!=='false'?'selected':''}>true</option><option value="false" ${cfg.calls_default_allow==='false'?'selected':''}>false</option></select></div>
-        ${numField('calls_ring_seconds','Ring timeout (seconds)',cfg.calls_ring_seconds)}
-        <h3 style="margin-top:18px">App updates (0109)</h3>
-        <p class="cap">latest = soft banner in the app; min = hard gate ("update to continue").
-        Blank = feature off. Set latest first, raise min only for real breakage.</p>
-        ${numField('latest_ios_build','Latest iOS build (soft nudge)',cfg.latest_ios_build)}
-        ${numField('min_ios_build','Minimum iOS build (hard gate)',cfg.min_ios_build)}
-        ${numField('calls_turn_url','TURN server URL (blank = STUN only)',cfg.calls_turn_url)}
-        ${numField('calls_turn_username','TURN username',cfg.calls_turn_username)}
-        ${numField('calls_turn_credential','TURN credential',cfg.calls_turn_credential)}
         <button class="btn sm" id="saveCfg">Save all</button>
       </div>
       <div class="panel"><h3>Grant comp premium</h3><p class="cap">Give a specific user free premium.</p>
@@ -931,7 +723,7 @@ function config(){ withLoad(async()=>{
     </div>`;
   $("#monSw").onchange=async(e)=>{ try{ await rpc("admin_set_config",{p_key:"monetization_enabled",p_value:e.target.checked?"true":"false"}); toast("Monetization "+(e.target.checked?"ON":"OFF")); loadMetrics(); }catch(err){ toast(err.message); e.target.checked=!e.target.checked; } };
   $("#saveCfg").onclick=async()=>{
-    try{ for(const inp of view.querySelectorAll("[data-cfg]")){ const v=(inp.value||"").trim(); if(!v) continue; await rpc("admin_set_config",{p_key:inp.dataset.cfg,p_value:v}); } toast("Config saved"); }catch(e){ toast(e.message); }
+    try{ for(const inp of view.querySelectorAll("[data-cfg]")){ await rpc("admin_set_config",{p_key:inp.dataset.cfg,p_value:(inp.value||"").trim()}); } toast("Config saved"); }catch(e){ toast(e.message); }
   };
   $("#grantComp").onclick=async()=>{ try{ const days=parseInt($("#compDays").value||"365",10); await rpc("grant_comp",{user_id:$("#compUser").value.trim(),until:new Date(Date.now()+days*864e5).toISOString()}); toast("Comp granted "+days+"d"); }catch(e){ toast(e.message); } };
 }); }

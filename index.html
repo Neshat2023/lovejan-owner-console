@@ -1196,32 +1196,6 @@ function jvExplain(err){
   return m || "unknown error";
 }
 
-// Deterministic tool selection. Phase B has NO conversational model wired, so this is a keyword
-// matcher, not an intent model — and it is deliberately allowed to return null.
-const JV_TOOLMAP = [
-  ["get_system_health",     /\b(health|healthy|status|broken|wrong|alert)\b|سلامت|وضعیت|مشکل/i],
-  ["get_invariant_report",  /\b(invariant|watchdog|integrity|consistency)\b|یکپارچگ|ناسازگار/i],
-  ["get_verification_queue",/\b(verification|verify|pending|queue|waiting)\b|تایید|احراز|صف|منتظر/i],
-  ["get_moderation_queue",  /\b(moderation|photo|review|flagged)\b|عکس|مدیریت محتوا|بازبینی/i],
-  ["get_onboarding_funnel", /\b(onboarding|signup|sign[- ]?up|registration)\b|ثبت ?نام|آنبورد/i],
-  ["get_funnel",            /\b(funnel|conversion)\b|قیف|تبدیل/i],
-  ["get_growth_signals",    /\b(growth|signal|trend|retention)\b|رشد|روند/i],
-  ["get_headline_metrics",  /\b(metric|kpi|numbers|overview|how many|users|profiles)\b|آمار|چند تا|کاربر/i],
-];
-function jvPickTool(text){
-  const t = String(text || "");
-  for (const [tool, re] of JV_TOOLMAP){
-    if (re.test(t)){
-      const input = {};
-      const days = t.match(/\b(\d{1,3})\s*(?:day|days|روز)\b/i);
-      if (days && (tool === "get_funnel" || tool === "get_growth_signals"))
-        input.days = Math.min(365, Math.max(1, parseInt(days[1], 10)));
-      return {tool: tool, input: input};
-    }
-  }
-  return null;
-}
-
 // Calls the edge function directly rather than the host `edge()` helper, so the {code,message}
 // error object survives instead of being flattened into "[object Object]".
 async function jvCall(tool, input){
@@ -1238,6 +1212,35 @@ async function jvCall(tool, input){
     throw err;
   }
   return body;
+}
+
+// ---- chat mode (jarvis-tools v4) -------------------------------------------
+// Posts {message, history}. The server owns tool selection now; the browser never names a tool.
+// Same error-surfacing shape as jvCall so jvExplain() keeps working unchanged.
+async function jvChatCall(text, history){
+  const res = await fetch(SUPABASE_URL + "/functions/v1/jarvis-tools", {
+    method: "POST",
+    headers: Object.assign({"Content-Type":"application/json"}, await authHeaders()),
+    body: JSON.stringify({message: text, history: history || []}),
+  });
+  let body = null;
+  try { body = await res.json(); } catch(_) { throw new Error("HTTP " + res.status); }
+  if (!res.ok || !body || body.ok !== true){
+    const err = new Error(jvErrText(body && body.error) || ("HTTP " + res.status));
+    err.detail = body && body.error;
+    throw err;
+  }
+  return body;
+}
+
+// Prior turns for model context. ONLY real exchanges: "sys" bubbles are console-generated
+// notices (errors, "no tool matched"), and replaying them as assistant turns would teach the
+// model that refusing is its own past behaviour. Server caps at 20 turns / 8000 chars anyway.
+function jvHistory(){
+  return JV_TURNS
+    .filter(t => t.role === "me" || t.role === "bot")
+    .map(t => ({role: t.role === "me" ? "user" : "assistant", content: String(t.text || "")}))
+    .filter(t => t.content.trim().length > 0);
 }
 
 // The envelope has NO `answer` key — it carries `data`. Render that, never invent prose.
@@ -1296,6 +1299,38 @@ function jvPush(role, text, env){
 // ---- tool-activity strip ---------------------------------------------------
 // state: "idle" | "run" | "ok" | "err". We cannot name the tool before the
 // response arrives (no streaming in Phase B), so "run" says so honestly.
+// ---- chat rendering --------------------------------------------------------
+// The <details> "Evidence" block in jvBubble() JSON-stringifies whatever it is handed. For a
+// chat turn the useful payload is the tool envelopes plus provenance, NOT the chat wrapper —
+// so hand it a purpose-built object. `evidence` holds the RAW, UNREDACTED tool envelopes; the
+// model only ever saw a redacted copy of any privacy:"personal" result (constitution §5).
+function jvChatEvidence(resp){
+  if (!resp) return null;
+  return {
+    answered_by: resp.source,                 // "model:claude-sonnet-4-6"
+    observed_at: resp.observed_at,
+    environment: resp.environment,
+    language: resp.language,
+    tools_used: resp.tools_used || [],
+    usage: resp.usage || null,
+    degraded: resp.degraded || [],
+    evidence: resp.evidence || [],            // array of raw tool envelopes
+  };
+}
+
+// jvStrip() expects a tool Envelope (e.tool/e.source/e.observed_at). A chat response has no
+// `tool`, so synthesise a label from tools_used — "✓ —" would otherwise imply nothing ran.
+function jvStripChat(resp){
+  const used = (resp && resp.tools_used) || [];
+  jvStrip("ok", {
+    tool: used.length ? used.join(", ") : "conversation (no tool)",
+    source: resp && resp.source,
+    observed_at: resp && resp.observed_at,
+    environment: resp && resp.environment,
+    degraded: (resp && resp.degraded) || [],
+  });
+}
+
 function jvStrip(state, env, why){
   JV_STRIP = {state:state, env:env || null, why:why || ""};
   const strip = document.querySelector("#jvStrip");
@@ -1325,24 +1360,24 @@ async function jvSend(){
   const text = (ta.value || "").trim();
   if (!text || JV_BUSY) return;
   JV_BUSY = true; btn.disabled = true; ta.value = "";
+  // Snapshot the transcript BEFORE this turn joins it. jvHistory() reads JV_TURNS, and this
+  // message travels in `message`, not in `history` — building it after the push would send the
+  // turn twice. Snapshotting rather than slicing the last entry off afterwards: it makes no
+  // assumption about which element jvHistory() happens to keep last, so it stays correct if
+  // that filter ever changes.
+  const hist = jvHistory();
   jvPush("me", text, null);
   jvStrip("run");
   try{
-    // The edge function's contract is {tool, input} -- NOT {message}. An earlier revision posted
-    // {message:text}, which index.ts rejects with code "bad_request", so every send would have
-    // returned 400 the moment the backend deployed.
-    const pick = jvPickTool(text);
-    if (!pick){
-      // No tool matches. Saying so is a CORRECT answer -- the contract doc states that returning
-      // no tool must be normal and safe. Phase B has no conversational model, so inventing prose
-      // here would be exactly the fabricated-answer failure the directive forbids.
-      jvPush("sys", S("noTool"), null);
-      jvStrip("idle");
-      return;
-    }
-    const env = await jvCall(pick.tool, pick.input);          // never a direct table read
-    jvPush("bot", jvAnswerText(env), env);
-    jvStrip("ok", env);
+    // v4 contract: {message, history}. Tool selection moved SERVER-SIDE — the model picks from
+    // the frozen registry and the edge function executes through its one validated path. The
+    // browser deliberately no longer guesses a tool from a regex; jvPickTool is gone (PATCH 4),
+    // and it is never coming back as a "model unavailable" fallback: presenting a regex guess as
+    // an assistant answer is the fabricated-answer failure this change exists to remove.
+    // `hist` was built above, before jvPush("me", …), so it excludes the current turn.
+    const resp = await jvChatCall(text, hist);                // never a direct table read
+    jvPush("bot", resp.answer || S("noAnswer"), jvChatEvidence(resp));
+    jvStripChat(resp);
   }catch(e){
     const why = jvExplain(e);
     jvPush("sys", why, null);                                // distinct bubble: not a Jarvis answer

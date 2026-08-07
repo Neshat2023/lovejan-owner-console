@@ -170,6 +170,7 @@
         <a data-view="verify"><span class="ic">🪪</span> Verification <span id="verBadge"></span></a>
         <a data-view="discovery"><span class="ic">🧭</span> Discovery</a>
         <a data-view="notify"><span class="ic">🔔</span> Notifications</a>
+        <a data-view="jarvis"><span class="ic">🤖</span> Jarvis</a>
         <a data-view="config"><span class="ic">⚙️</span> Config</a>
         <a data-view="audit"><span class="ic">📜</span> Audit</a>
         <a data-view="admins"><span class="ic">🔑</span> Admins</a>
@@ -922,5 +923,564 @@ function admins(){ withLoad(async()=>{
   if(await refreshToken()){ try{ if(await rpc("am_i_admin")===true){ $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); route("overview"); } }catch{} }
 })();
 </script>
+
+<!-- ===== Jarvis tab (dashboard/jarvis-tab.html) ===== -->
+<style>
+  /* ---- Jarvis tab. All selectors .jv-*; colours come from index.html :root ---- */
+  .jv-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .jv-env{font-size:12px;font-weight:900;letter-spacing:.14em;padding:6px 14px;border-radius:999px;
+    color:#fff;background:linear-gradient(135deg,#f43f5e,#b91c1c);box-shadow:0 4px 18px rgba(244,63,94,.35)}
+  .jv-ro{font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px;cursor:help;
+    color:var(--good);border:1px solid rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+  .jv-seg{display:flex;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:4px;margin-left:auto}
+  .jv-seg button{background:none;color:var(--mut);border-radius:7px;padding:6px 12px;font-weight:600;font-size:13px}
+  .jv-seg button.on{background:var(--panel3);color:var(--txt)}
+
+  .jv-cols{display:grid;gap:16px;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr)}
+  @media(max-width:1000px){.jv-cols{grid-template-columns:minmax(0,1fr)}}
+
+  .jv-strip{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:12px}
+  .jv-dot{width:9px;height:9px;border-radius:50%;background:var(--dim);flex:none}
+  .jv-strip.is-run  .jv-dot{background:var(--warn);animation:jv-pulse 1s ease-in-out infinite}
+  .jv-strip.is-ok   .jv-dot{background:var(--good)}
+  .jv-strip.is-err  .jv-dot{background:var(--bad)}
+  .jv-strip.is-err{border-color:rgba(251,113,133,.45);background:rgba(251,113,133,.07)}
+  .jv-strip-main{font-weight:700}
+  .jv-strip.is-err .jv-strip-main{color:var(--bad)}
+  .jv-strip-ev{color:var(--mut);font-size:11.5px}
+  @keyframes jv-pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  @media(prefers-reduced-motion:reduce){.jv-strip.is-run .jv-dot{animation:none}}
+
+  .jv-log{height:min(52vh,520px);overflow:auto;padding:4px 2px;border:1px solid var(--line);
+    border-radius:12px;background:var(--panel2)}
+  .jv-msg{padding:9px 12px;border-radius:12px;margin:8px 10px;max-width:82%;font-size:13px}
+  .jv-msg.jv-me{background:rgba(255,59,107,.14);margin-left:auto}
+  .jv-msg.jv-bot{background:var(--panel3)}
+  .jv-msg.jv-sys{background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133,.35);max-width:100%}
+  .jv-who{font-size:11px;color:var(--dim);margin-bottom:3px;font-weight:700}
+  .jv-body{white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere}
+  /* Persian: no webfont (zero dependencies) — a system stack that actually has Arabic coverage
+     on both of Behnood's machines, plus the extra leading Persian ascenders need. */
+  .jv-fa{font-family:"Vazirmatn","IRANSans","Iranian Sans","Segoe UI","Tahoma","Geeza Pro",
+    "Noto Naskh Arabic","Noto Sans Arabic",sans-serif;line-height:1.95;unicode-bidi:isolate}
+  span.jv-fa{display:inline-block;vertical-align:baseline;line-height:1.6}
+  .jv-empty{color:var(--dim);font-size:13px;padding:14px 12px}
+
+  .jv-ev{margin-top:8px}
+  .jv-ev summary{cursor:pointer;font-size:11px;color:var(--mut);font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;list-style:none}
+  .jv-ev summary::-webkit-details-marker{display:none}
+  .jv-ev summary::before{content:"▸ "}
+  .jv-ev[open] summary::before{content:"▾ "}
+  .jv-json{margin:6px 0 0;padding:10px;background:#0d0a13;border:1px solid var(--line);border-radius:9px;
+    font:11.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#cfc9dc;
+    white-space:pre;overflow:auto;max-height:280px;direction:ltr;text-align:left}
+
+  .jv-compose{display:flex;gap:9px;align-items:flex-end;margin-top:12px}
+  .jv-compose textarea{min-height:58px;max-height:180px}
+  .jv-compose .btn{flex:none}
+
+  .jv-side .panel + .panel{margin-top:16px}
+  .jv-none{color:var(--dim);font-size:13px;margin:6px 0 0}
+  .jv-bad{color:var(--bad);font-size:12.5px;margin:6px 0 0;word-break:break-word}
+  .jv-mono{font:11.5px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .jv-appr{border-bottom:1px solid var(--line);padding:8px 0}
+  .jv-appr:last-child{border-bottom:0}
+  .jv-appr summary{cursor:pointer;font-size:13px;font-weight:600}
+  .jv-banner{border-color:#a83!important;margin-bottom:16px}
+</style>
+
+<template id="jvTpl">
+  <div class="jv-root">
+
+    <div class="jv-top">
+      <!-- constitution §10: prominent environment indicator, always visible, never a control -->
+      <span class="jv-env" title="This console talks to the live production project only.">PRODUCTION</span>
+      <span class="jv-ro" data-jv-t="readonly" data-jv-ti="readonlyTip">READ-ONLY</span>
+      <span class="muted" style="font-size:12px" data-jv-t="sub"></span>
+      <div class="jv-seg">
+        <button id="jvLangEn" class="on">EN</button>
+        <button id="jvLangFa">فارسی</button>
+      </div>
+    </div>
+
+    <div class="panel jv-banner hidden" id="jvBanner">
+      <b data-jv-t="notDeployed"></b>
+      <p class="muted jv-mono" style="margin:6px 0 0" id="jvBannerList"></p>
+    </div>
+
+    <div class="jv-cols">
+
+      <div class="panel">
+        <div class="jv-strip" id="jvStrip" aria-live="polite">
+          <span class="jv-dot"></span>
+          <span class="jv-strip-main" id="jvStripMain"></span>
+          <span class="jv-strip-ev" id="jvStripEv"></span>
+        </div>
+
+        <div class="jv-log" id="jvLog" role="log" aria-live="polite"></div>
+
+        <div class="jv-compose">
+          <textarea id="jvInput" dir="auto" rows="2" data-jv-p="placeholder"></textarea>
+          <button class="btn" id="jvSend" data-jv-t="send"></button>
+        </div>
+      </div>
+
+      <div class="jv-side">
+        <div class="panel">
+          <h3 data-jv-t="tasks"></h3>
+          <p class="cap jv-mono">jarvis_list_tasks()</p>
+          <div id="jvTasks"></div>
+        </div>
+        <div class="panel">
+          <h3 data-jv-t="approvals"></h3>
+          <p class="cap jv-mono">jarvis_pending_approvals()</p>
+          <div id="jvApprovals"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</template>
+
+<script>
+(function(){
+"use strict";
+
+// This fragment is a guest inside index.html and depends on its globals.
+if (typeof rpc !== "function" || typeof edge !== "function" || typeof route !== "function") {
+  console.error("[jarvis-tab] paste this AFTER index.html's main <script>; host helpers missing.");
+  return;
+}
+
+// ---- backend contract (none of it deployed yet — see banner at top of file) ----
+const JV_FN       = "jarvis-tools";              // TODO: supabase/functions/jarvis-tools/
+const JV_RPC_TASK = "jarvis_list_tasks";         // TODO: migration 0126+
+const JV_RPC_APPR = "jarvis_pending_approvals";  // TODO: migration 0126+
+
+// ---- chrome strings. Content is NEVER translated; only the UI furniture. ----
+const STR = {
+  en:{
+    sub:"Ask about production. Every answer carries its evidence.",
+    readonly:"READ-ONLY",
+    readonlyTip:"Phase B ships no mutating tools — Jarvis can read production and answer, it cannot change anything. This mode is fixed and cannot be switched off.",
+    send:"Send",
+    placeholder:"Ask Jarvis…   Enter to send · Shift+Enter for a new line",
+    you:"You", bot:"Jarvis", sys:"System",
+    empty:"Nothing asked yet.",
+    evidence:"Evidence",
+    stripIdle:"No tool has run yet.",
+    stripRun:"Working — the tool names itself when it reports.",
+    stripErr:"Tool unavailable",
+    lblSource:"source", lblObserved:"observed at", lblEnv:"environment",
+    tasks:"Tasks", thId:"id", thStatus:"status", thCreated:"created at", thLang:"language",
+    tasksNone:"No tasks.",
+    approvals:"Pending approvals", approvalsNone:"None pending.",
+    unavailable:"not deployed or unreachable — ",
+    noAnswer:"The tool returned no data. Open Evidence to see exactly what came back.",
+    noTool:"I have no read-only tool for that. Phase B answers system health, invariants, the verification and moderation queues, funnels, growth signals and headline metrics — nothing else. I will not guess.",
+    notDeployed:"The Jarvis backend is not installed on this project yet.",
+    bannerTail:"Until these are deployed this tab can show its chrome but cannot answer anything."
+  },
+  fa:{
+    sub:"درباره‌ی production بپرسید. هر پاسخ شواهد خودش را همراه دارد.",
+    readonly:"فقط خواندنی",
+    readonlyTip:"در فاز B هیچ ابزار تغییردهنده‌ای وجود ندارد — جارویس فقط می‌تواند production را بخواند و پاسخ دهد، نمی‌تواند چیزی را تغییر دهد. این حالت ثابت است و قابل خاموش کردن نیست.",
+    send:"ارسال",
+    placeholder:"از جارویس بپرسید…   Enter برای ارسال · Shift+Enter برای خط تازه",
+    you:"شما", bot:"جارویس", sys:"سیستم",
+    empty:"هنوز چیزی پرسیده نشده است.",
+    evidence:"شواهد",
+    stripIdle:"هنوز هیچ ابزاری اجرا نشده است.",
+    stripRun:"در حال کار — ابزار هنگام گزارش، نام خودش را اعلام می‌کند.",
+    stripErr:"ابزار در دسترس نیست",
+    lblSource:"منبع", lblObserved:"زمان مشاهده", lblEnv:"محیط",
+    tasks:"کارها", thId:"شناسه", thStatus:"وضعیت", thCreated:"زمان ایجاد", thLang:"زبان",
+    tasksNone:"کاری وجود ندارد.",
+    approvals:"تأییدهای در انتظار", approvalsNone:"چیزی در انتظار نیست.",
+    unavailable:"مستقر نشده یا در دسترس نیست — ",
+    noAnswer:"ابزار هیچ داده‌ای برنگرداند. برای دیدن دقیقاً آنچه بازگشته، شواهد را باز کنید.",
+    noTool:"برای این درخواست ابزار read-only ندارم. فاز B فقط به سلامت سیستم، invariant ها، صف تأیید و بازبینی عکس، قیف‌ها، سیگنال‌های رشد و آمار کلی جواب می‌دهد. حدس نمی‌زنم.",
+    notDeployed:"بک‌اند جارویس هنوز روی این پروژه نصب نشده است.",
+    bannerTail:"تا زمانی که این‌ها مستقر نشوند، این تب فقط ظاهرش را نشان می‌دهد و نمی‌تواند به چیزی پاسخ دهد."
+  }
+};
+let JV_LANG = localStorage.getItem("lj_jarvis_lang") === "fa" ? "fa" : "en";
+const S = k => (STR[JV_LANG] && STR[JV_LANG][k]) || STR.en[k] || k;
+
+// ---- bidi ------------------------------------------------------------------
+// Persian/Arabic script blocks. Latin letters are counted separately so that a
+// Persian sentence quoting an identifier ("build 116", "admin_metrics") stays
+// RTL, while an English sentence quoting one Persian word does not flip.
+const FA = "\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFE";
+const ZW = "\u200C\u200D";   // ZWNJ/ZWJ — invisible, so written as escapes, never literals
+const FA_LETTER = new RegExp("[" + FA + "]", "g");
+// One run = Persian words plus the spaces/punctuation that sit between them.
+const FA_RUN = new RegExp(
+  "[" + FA + ZW + "]+(?:[ \t\u00A0\u060C\u061B\u061F!?.\-]+[" + FA + ZW + "]+)*", "g");
+
+function jvScript(s){
+  s = String(s == null ? "" : s);
+  const fa = (s.match(FA_LETTER) || []).length;
+  const en = (s.match(/[A-Za-z]/g) || []).length;
+  if (!fa) return "en";
+  if (!en) return "fa";
+  return fa / (fa + en) >= 0.6 ? "fa" : "mixed";   // mixed => base LTR + isolated RTL spans
+}
+
+// Renders text with correct direction. Untrusted input: text only, never markup.
+function jvBidi(text){
+  const box = document.createElement("div");
+  box.className = "jv-body";
+  const kind = jvScript(text);
+  if (kind === "fa"){ box.dir = "rtl"; box.classList.add("jv-fa"); box.textContent = text; return box; }
+  box.dir = "ltr";
+  if (kind === "en"){ box.textContent = text; return box; }
+  let last = 0, m; FA_RUN.lastIndex = 0;
+  while ((m = FA_RUN.exec(text)) !== null){
+    if (m.index > last) box.appendChild(document.createTextNode(text.slice(last, m.index)));
+    const sp = document.createElement("span");
+    sp.dir = "rtl"; sp.className = "jv-fa"; sp.textContent = m[0];
+    box.appendChild(sp);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) box.appendChild(document.createTextNode(text.slice(last)));
+  return box;
+}
+
+// ---- small DOM helpers -----------------------------------------------------
+function jvNode(tag, text, cls){
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = (text === null || text === "") ? "—" : String(text);
+  return n;
+}
+function jvWhen(v){
+  if (v == null || v === "") return "—";
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? String(v) : d.toLocaleString();
+}
+// jarvis_* RPCs do not exist yet, so accept either shape the codebase already
+// uses: a TABLE-returning RPC (array) or a jsonb-returning one ({rows:[…]}).
+function jvRows(d){
+  if (Array.isArray(d)) return d;
+  if (d && Array.isArray(d.rows)) return d.rows;
+  return [];
+}
+// Turn a transport failure into something an owner can act on.
+// Accepts an Error, a string, or the envelope's error OBJECT {code, message}. The last case is
+// why this exists: the host helper in index.html does `throw new Error(d.error || ...)`, and the
+// edge function's failure body sets `error: {code, message}` -- an object. `new Error({...})`
+// stringifies to "[object Object]", so every unauthorized / forbidden / rate_limited / timeout
+// response used to reach the founder as that literal text.
+function jvErrText(e){
+  if (!e) return "";
+  if (typeof e === "string") return e;
+  if (typeof e.code === "string" || typeof e.message === "string")
+    return [e.code, e.message].filter(Boolean).join(": ");
+  if (e instanceof Error){
+    if (e.detail && typeof e.detail === "object") return jvErrText(e.detail);
+    return e.message === "[object Object]" ? "unreadable error object" : e.message;
+  }
+  try { return JSON.stringify(e); } catch(_) { return String(e); }
+}
+function jvExplain(err){
+  const m = jvErrText(err);
+  if (/\b404\b|Could not find the function|NOT_FOUND|Failed to fetch|NetworkError/i.test(m))
+    return S("unavailable") + m;
+  if (/^unauthorized|missing bearer/i.test(m)) return "Your session expired. Sign in again.";
+  if (/^forbidden|admin only/i.test(m))        return "You are not an admin on this account.";
+  if (/^rate_limited/i.test(m))                return "Too many requests — wait a moment.";
+  if (/^timeout/i.test(m))                     return "The tool timed out. No data was returned.";
+  return m || "unknown error";
+}
+
+// Deterministic tool selection. Phase B has NO conversational model wired, so this is a keyword
+// matcher, not an intent model — and it is deliberately allowed to return null.
+const JV_TOOLMAP = [
+  ["get_system_health",     /\b(health|healthy|status|broken|wrong|alert)\b|سلامت|وضعیت|مشکل/i],
+  ["get_invariant_report",  /\b(invariant|watchdog|integrity|consistency)\b|یکپارچگ|ناسازگار/i],
+  ["get_verification_queue",/\b(verification|verify|pending|queue|waiting)\b|تایید|احراز|صف|منتظر/i],
+  ["get_moderation_queue",  /\b(moderation|photo|review|flagged)\b|عکس|مدیریت محتوا|بازبینی/i],
+  ["get_onboarding_funnel", /\b(onboarding|signup|sign[- ]?up|registration)\b|ثبت ?نام|آنبورد/i],
+  ["get_funnel",            /\b(funnel|conversion)\b|قیف|تبدیل/i],
+  ["get_growth_signals",    /\b(growth|signal|trend|retention)\b|رشد|روند/i],
+  ["get_headline_metrics",  /\b(metric|kpi|numbers|overview|how many|users|profiles)\b|آمار|چند تا|کاربر/i],
+];
+function jvPickTool(text){
+  const t = String(text || "");
+  for (const [tool, re] of JV_TOOLMAP){
+    if (re.test(t)){
+      const input = {};
+      const days = t.match(/\b(\d{1,3})\s*(?:day|days|روز)\b/i);
+      if (days && (tool === "get_funnel" || tool === "get_growth_signals"))
+        input.days = Math.min(365, Math.max(1, parseInt(days[1], 10)));
+      return {tool: tool, input: input};
+    }
+  }
+  return null;
+}
+
+// Calls the edge function directly rather than the host `edge()` helper, so the {code,message}
+// error object survives instead of being flattened into "[object Object]".
+async function jvCall(tool, input){
+  const res = await fetch(SUPABASE_URL + "/functions/v1/jarvis-tools", {
+    method: "POST",
+    headers: Object.assign({"Content-Type":"application/json"}, await authHeaders()),
+    body: JSON.stringify({tool: tool, input: input || {}}),
+  });
+  let body = null;
+  try { body = await res.json(); } catch(_) { throw new Error("HTTP " + res.status); }
+  if (!res.ok || !body || body.ok !== true){
+    const err = new Error(jvErrText(body && body.error) || ("HTTP " + res.status));
+    err.detail = body && body.error;
+    throw err;
+  }
+  return body;
+}
+
+// The envelope has NO `answer` key — it carries `data`. Render that, never invent prose.
+// NAMED jvAnswerText, not jvRender: this fragment already declares jvRender() to mount the
+// DOM template, and two function declarations with the same name silently clobber each other.
+function jvAnswerText(env){
+  const d = env && env.data;
+  if (d === undefined || d === null) return S("noAnswer");
+  if (typeof d === "string" || typeof d === "number" || typeof d === "boolean") return String(d);
+  if (Array.isArray(d)) return d.length ? d.length + " row(s) — see Evidence" : "No rows.";
+  const keys = Object.keys(d);
+  if (!keys.length) return "Empty result.";
+  return keys.slice(0, 12)
+    .map(k => k + ": " + (typeof d[k] === "object" ? "…" : String(d[k])))
+    .join("\n");
+}
+
+// ---- state -----------------------------------------------------------------
+let JV_BUSY = false, JV_TASKS = null, JV_TASKS_ERR = null, JV_APPR = null, JV_APPR_ERR = null;
+let JV_TURNS = [];   // [{role:"me"|"bot"|"sys", text, env}] — page session only, never stored
+let JV_STRIP = {state:"idle", env:null, why:""};   // so a language switch can redraw it
+
+// ---- transcript ------------------------------------------------------------
+function jvBubble(turn){
+  const wrap = document.createElement("div");
+  wrap.className = "jv-msg " + (turn.role === "me" ? "jv-me" : turn.role === "sys" ? "jv-sys" : "jv-bot");
+  wrap.appendChild(jvNode("div", turn.role === "me" ? S("you") : turn.role === "sys" ? S("sys") : S("bot"), "jv-who"));
+  wrap.appendChild(jvBidi(turn.text));
+  if (turn.env){
+    const d = document.createElement("details"); d.className = "jv-ev";
+    d.appendChild(jvNode("summary", S("evidence")));
+    const pre = jvNode("pre", "", "jv-json");
+    pre.textContent = JSON.stringify(turn.env, null, 2);   // raw envelope, verbatim
+    d.appendChild(pre);
+    wrap.appendChild(d);
+  }
+  return wrap;
+}
+function jvRenderLog(){
+  const log = document.querySelector("#jvLog");
+  if (!log) return;
+  log.textContent = "";
+  if (!JV_TURNS.length){ log.appendChild(jvNode("p", S("empty"), "jv-empty")); return; }
+  JV_TURNS.forEach(t => log.appendChild(jvBubble(t)));
+  log.scrollTop = log.scrollHeight;                        // newest last, auto-scroll
+}
+function jvPush(role, text, env){
+  JV_TURNS.push({role:role, text:text, env:env || null});
+  const log = document.querySelector("#jvLog");
+  if (!log) return;
+  if (JV_TURNS.length === 1) log.textContent = "";
+  log.appendChild(jvBubble(JV_TURNS[JV_TURNS.length - 1]));
+  log.scrollTop = log.scrollHeight;
+}
+
+// ---- tool-activity strip ---------------------------------------------------
+// state: "idle" | "run" | "ok" | "err". We cannot name the tool before the
+// response arrives (no streaming in Phase B), so "run" says so honestly.
+function jvStrip(state, env, why){
+  JV_STRIP = {state:state, env:env || null, why:why || ""};
+  const strip = document.querySelector("#jvStrip");
+  if (!strip) return;
+  strip.className = "jv-strip is-" + state;
+  const main = document.querySelector("#jvStripMain"), ev = document.querySelector("#jvStripEv");
+  ev.textContent = "";
+  if (state === "idle"){ main.textContent = S("stripIdle"); return; }
+  if (state === "run"){  main.textContent = S("stripRun");  return; }
+  if (state === "err"){  main.textContent = S("stripErr") + " · " + (why || ""); return; }
+  // The envelope in docs/lovejan-ai-ops/21-jarvis-tool-contracts.md carries these at the TOP
+  // level. An earlier revision read them from a nested `env.evidence` object that the contract
+  // never defined, so the strip printed "source — · observed at — · environment —" while the
+  // real values sat one level up.
+  const e = env || {};
+  main.textContent = "✓ " + (e.tool || "—");
+  ev.textContent = S("lblSource") + " " + (e.source || "—")
+                 + " · " + S("lblObserved") + " " + (e.observed_at || "—")
+                 + " · " + S("lblEnv") + " " + (e.environment || "—")
+                 + (Array.isArray(e.degraded) && e.degraded.length
+                      ? " · ⚠ degraded: " + e.degraded.join(", ") : "");
+}
+
+// ---- send ------------------------------------------------------------------
+async function jvSend(){
+  const ta = document.querySelector("#jvInput"), btn = document.querySelector("#jvSend");
+  const text = (ta.value || "").trim();
+  if (!text || JV_BUSY) return;
+  JV_BUSY = true; btn.disabled = true; ta.value = "";
+  jvPush("me", text, null);
+  jvStrip("run");
+  try{
+    // The edge function's contract is {tool, input} -- NOT {message}. An earlier revision posted
+    // {message:text}, which index.ts rejects with code "bad_request", so every send would have
+    // returned 400 the moment the backend deployed.
+    const pick = jvPickTool(text);
+    if (!pick){
+      // No tool matches. Saying so is a CORRECT answer -- the contract doc states that returning
+      // no tool must be normal and safe. Phase B has no conversational model, so inventing prose
+      // here would be exactly the fabricated-answer failure the directive forbids.
+      jvPush("sys", S("noTool"), null);
+      jvStrip("idle");
+      return;
+    }
+    const env = await jvCall(pick.tool, pick.input);          // never a direct table read
+    jvPush("bot", jvAnswerText(env), env);
+    jvStrip("ok", env);
+  }catch(e){
+    const why = jvExplain(e);
+    jvPush("sys", why, null);                                // distinct bubble: not a Jarvis answer
+    jvStrip("err", null, why);
+  }finally{
+    JV_BUSY = false; btn.disabled = false;
+  }
+}
+
+// ---- side panels -----------------------------------------------------------
+function jvRenderTasks(){
+  const box = document.querySelector("#jvTasks");
+  if (!box) return;
+  box.textContent = "";
+  if (JV_TASKS_ERR){ box.appendChild(jvNode("p", JV_TASKS_ERR, "jv-bad")); return; }
+  if (!JV_TASKS){ box.appendChild(jvNode("p", "…", "jv-none")); return; }
+  if (!JV_TASKS.length){ box.appendChild(jvNode("p", S("tasksNone"), "jv-none")); return; }
+  const tbl = document.createElement("table");
+  const hr = document.createElement("tr");
+  ["thId","thStatus","thCreated","thLang"].forEach(k => hr.appendChild(jvNode("th", S(k))));
+  const thead = document.createElement("thead"); thead.appendChild(hr); tbl.appendChild(thead);
+  const tb = document.createElement("tbody");
+  JV_TASKS.forEach(function(t){
+    const tr = document.createElement("tr");
+    const id = t.id == null ? "" : String(t.id);
+    const idCell = jvNode("td", id ? id.slice(0, 8) : "—", "dim jv-mono");
+    if (id) idCell.title = id;
+    tr.appendChild(idCell);
+    const st = document.createElement("td");
+    st.appendChild(jvNode("span", t.status, "tag"));         // no colour: statuses are unspecified
+    st.firstChild.style.background = "var(--panel3)";
+    st.firstChild.style.color = "#c9c4d6";
+    tr.appendChild(st);
+    tr.appendChild(jvNode("td", jvWhen(t.created_at), "dim"));
+    tr.appendChild(jvNode("td", t.language, "dim"));
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb); box.appendChild(tbl);
+}
+
+function jvRenderApprovals(){
+  const box = document.querySelector("#jvApprovals");
+  if (!box) return;
+  box.textContent = "";
+  if (JV_APPR_ERR){ box.appendChild(jvNode("p", JV_APPR_ERR, "jv-bad")); return; }
+  if (!JV_APPR){ box.appendChild(jvNode("p", "…", "jv-none")); return; }
+  if (!JV_APPR.length){ box.appendChild(jvNode("p", S("approvalsNone"), "jv-none")); return; }
+  // The row shape is not specified anywhere yet, so this stays shape-agnostic:
+  // show id/status when those keys happen to exist, and the whole row verbatim.
+  JV_APPR.forEach(function(a, i){
+    const d = document.createElement("details"); d.className = "jv-appr";
+    const label = (a && a.id ? String(a.id) : "#" + (i + 1)) + (a && a.status ? " · " + a.status : "");
+    d.appendChild(jvNode("summary", label));
+    const pre = jvNode("pre", "", "jv-json");
+    pre.textContent = JSON.stringify(a, null, 2);
+    d.appendChild(pre);
+    box.appendChild(d);
+  });
+}
+
+async function jvLoadPanels(){
+  JV_TASKS = null; JV_TASKS_ERR = null; JV_APPR = null; JV_APPR_ERR = null;
+  jvRenderTasks(); jvRenderApprovals();
+  const missing = [];
+  await Promise.all([
+    rpc(JV_RPC_TASK).then(function(d){ JV_TASKS = jvRows(d); })
+      .catch(function(e){ JV_TASKS_ERR = jvExplain(e && e.message); missing.push(JV_RPC_TASK + "()"); }),
+    rpc(JV_RPC_APPR).then(function(d){ JV_APPR = jvRows(d); })
+      .catch(function(e){ JV_APPR_ERR = jvExplain(e && e.message); missing.push(JV_RPC_APPR + "()"); })
+  ]);
+  jvRenderTasks(); jvRenderApprovals();
+  // If the RPCs are absent the edge function almost certainly is too — say it
+  // once, at the top, instead of leaving three panels quietly empty.
+  const banner = document.querySelector("#jvBanner");
+  if (missing.length){
+    document.querySelector("#jvBannerList").textContent =
+      "missing: " + missing.join(", ") + ", edge function " + JV_FN + " — " + S("bannerTail");
+    banner.classList.remove("hidden");
+  }else{
+    banner.classList.add("hidden");
+  }
+}
+
+// ---- language --------------------------------------------------------------
+function jvApplyLang(){
+  const root = document.querySelector(".jv-root");
+  if (!root) return;
+  root.querySelectorAll("[data-jv-t]").forEach(function(n){
+    const v = S(n.dataset.jvT);
+    n.textContent = v;
+    n.dir = jvScript(v) === "fa" ? "rtl" : "ltr";
+  });
+  root.querySelectorAll("[data-jv-p]").forEach(function(n){ n.placeholder = S(n.dataset.jvP); });
+  root.querySelectorAll("[data-jv-ti]").forEach(function(n){ n.title = S(n.dataset.jvTi); });
+  document.querySelector("#jvLangEn").classList.toggle("on", JV_LANG === "en");
+  document.querySelector("#jvLangFa").classList.toggle("on", JV_LANG === "fa");
+}
+function jvSetLang(l){
+  JV_LANG = l;
+  try{ localStorage.setItem("lj_jarvis_lang", l); }catch(e){}
+  jvApplyLang();                 // chrome strings only — message text is never touched
+  jvRenderLog(); jvRenderTasks(); jvRenderApprovals();
+  jvStrip(JV_STRIP.state, JV_STRIP.env, JV_STRIP.why);   // keep the last evidence line
+}
+
+// ---- mount + route registration -------------------------------------------
+function jvRender(){
+  const host = document.querySelector("#view");
+  host.textContent = "";
+  host.appendChild(document.querySelector("#jvTpl").content.cloneNode(true));
+  jvApplyLang();
+  jvStrip("idle");
+  jvRenderLog();
+  document.querySelector("#jvLangEn").onclick = function(){ jvSetLang("en"); };
+  document.querySelector("#jvLangFa").onclick = function(){ jvSetLang("fa"); };
+  document.querySelector("#jvSend").onclick = jvSend;
+  document.querySelector("#jvInput").addEventListener("keydown", function(e){
+    if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); jvSend(); }
+  });
+  document.querySelector("#jvInput").focus();
+  jvLoadPanels();
+}
+
+// Register the view without touching index.html's `titles` literal or its
+// route map by hand: both are reachable globals from this later script.
+titles.jarvis = "Jarvis";
+const jvHostRoute = route;
+route = function(v){
+  if (v !== "jarvis") return jvHostRoute(v);
+  current = "jarvis";
+  document.querySelectorAll("#nav a").forEach(function(a){
+    a.classList.toggle("active", a.dataset.view === "jarvis");
+  });
+  document.querySelector("#title").textContent = titles.jarvis;
+  jvRender();
+};
+})();
+</script>
+
 </body>
 </html>
